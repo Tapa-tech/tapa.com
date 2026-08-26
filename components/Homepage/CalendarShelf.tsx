@@ -18,7 +18,7 @@ export const CalendarShelf: React.FC = () => {
               <span className="sc-when">IN 6 DAYS</span>
             </div>
             <div className="sc-b">
-              <div className="sc-n">Hartalika Teej</div>
+              <div className="sc-n">Hartalika Teej </div>
               <div className="sc-d">13 September · Bhadrapada Shukla Tritiya</div>
               <p className="sc-s">
                 The sand Shivalinga, the nirjala question, and why this is not the same vrat as Hariyali Teej.
