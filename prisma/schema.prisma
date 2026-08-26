@@ -1,0 +1,381 @@
+// Prisma schema for The Tapa Co.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model RitualGuide {
+  id                    String   @id @default(cuid())
+  title                 String
+  slug                  String   @unique
+  status                String   @default("DRAFT")
+
+  // Banner Content fields
+  sectionLabel          String?
+  category              String?
+  rating                String?
+  classification        String?
+  guideTitle            String?
+  guideSubtitle         String?
+
+  // Panchang Configuration fields
+  festivalName          String?
+  panchangLocation      String?
+
+  // Primary Button fields
+  primaryButtonText     String?
+  primaryButtonAction   String?
+  primaryButtonTarget   String?
+
+  // Secondary Button fields
+  secondaryButtonText   String?
+  secondaryButtonAction String?
+  secondaryButtonTarget String?
+
+  // Third Button fields
+  thirdButtonText       String?
+  thirdButtonAction     String?
+  thirdButtonTarget     String?
+
+  // Source of Truth Section fields
+  sotSectionHeading        String?
+  sotButtonText            String?
+  sotButtonAction          String?
+  sotButtonTarget          String?
+  sotPracticeLabel         String?
+  sotPracticeTitle         String?
+  sotPracticeCategory      String?
+  sotPracticeRating        String?
+  sotPracticeClassification String?
+  sotScripturalSource      String?
+  sotParentScripture       String?
+  sotSourceReference       String?
+  sotSourceUrl             String?
+  sotSourceNotes           String?
+  sotSummaryLabel          String?
+  sotCorePracticesCount    Int?
+  sotScripturalElementsCount Int?
+  sotRegionalCustomsCount  Int?
+  sotCorrectionsCount      Int?
+
+  // Story Section fields
+  storyTitle               String?
+  storyIntroduction        String?
+  storySubsectionTitle     String?
+  storyContent             String?
+  storyPracticeCategory    String?
+  storyPracticeRating       String?
+  storyPracticeClassification String?
+  storyScripturalSource    String?
+  storyContinuation        String?
+  storyImage               String?
+  storyImageAltText        String?
+  storyImageCaption        String?
+  storyImageCredit         String?
+  storyImageSource         String?
+
+  // Sankalpa Section fields
+  sankalpaTitle            String?
+  sankalpaSubtitle         String?
+  sankalpaInstruction      String?
+  sankalpaText             String?
+  sankalpaMeaning          String?
+  sankalpaExplanation      String?
+  sankalpaDetailsJson      String?
+  sankalpaNoteHeading      String?
+  sankalpaNoteContent      String?
+  sankalpaImage            String?
+
+  // Vidhi Section fields
+  vidhiDaysJson            String?
+
+  // Vrat Katha Section fields
+  kathaTitle                  String?
+  kathaSubtitle               String?
+  kathaScripturalReference    String?
+  kathaHeadline               String?
+  kathaIntroduction           String?
+  kathaCardsJson              String?
+  kathaSupportingExplanation  String?
+  kathaAudio                  String?
+  kathaAudioButtonText        String?
+  kathaAudioDuration           String?
+  kathaFullKathaButtonText    String?
+  kathaFullKathaLink          String?
+  kathaImage                  String?
+  kathaImageAltText           String?
+  kathaImageCaption           String?
+
+  // Durga Ashtami and Maha Navami Context fields
+  festivalContextTitle        String?
+  festivalContextIntroduction String?
+  festivalContextDetails      String?
+  festivalPracticeCategory    String?
+  festivalPracticeRating       String?
+  festivalClassification      String?
+  sandhiPujaInformation       String?
+
+  // Samagri Section fields
+  samagriTitle                String?
+  samagriSubtitle             String?
+  samagriItemsJson            String?
+  samagriAudio                String?
+  samagriAudioButtonText      String?
+  samagriAudioDuration        String?
+
+  // Fasting Section fields
+  fastingTitle                String?
+  fastingSubtitle             String?
+  fastingOptionsJson          String?
+  fastingGuidanceHeading      String?
+  fastingGuidanceContent      String?
+
+  // Myths & Corrections Section fields
+  mythsTitle                  String?
+  mythsSubtitle               String?
+  mythsItemsJson              String?
+
+
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([slug])
+  @@index([status])
+}
+
+model DharmicConcept {
+  id        String   @id @default(cuid())
+  title     String
+  slug      String   @unique
+  category  String   @default("General")
+  summary   String?
+  body      String
+  status    String   @default("DRAFT") // DRAFT, PUBLISHED, ARCHIVED
+
+  // Banner Section Fields
+  bannerEyebrow          String?
+  bannerRating           String?
+  bannerClassification   String?
+  bannerTitle            String?
+  bannerDescription      String?
+  bannerPrimaryCtaText   String?
+  bannerPrimaryCtaLink   String?
+  bannerSecondaryCtaText String?
+  bannerSecondaryCtaLink String?
+  bannerShareButtonText  String?
+
+  // Three Stories Section Fields
+  threeStoriesTitle          String?
+  threeStoriesIntro          String?
+  threeStoriesSupportingText String?
+  storiesItemsJson           String? // JSON array of repeatable story items
+  threeStoriesGalleryJson    String? // JSON array of gallery images
+  threeStoriesCaption        String?
+
+  // What They Share Section Fields
+  shareSectionHeading        String?
+  shareSharedContent         String?
+  shareNotSharedContent      String?
+  shareHighlightStatement    String?
+  shareSupportingDescription String?
+  shareTraditionTag          String?
+
+  // Myths & Facts Section Fields
+  mythsSectionHeading        String?
+  mythsItemsJson             String? // JSON array of repeatable myth & fact items
+  reframeLabel               String?
+  reframeContent             String?
+
+  // Related Section Fields
+  relatedRitualGuidesJson    String? // JSON array of related ritual guides
+  relatedPujansJson          String? // JSON array of related pujans
+  relatedConceptsJson        String? // JSON array of related concepts
+  relatedDatesJson           String? // JSON array of related dates
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  authorId  String?
+  author    User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+
+  @@index([slug])
+  @@index([status])
+  @@index([category])
+  @@index([authorId])
+  @@index([status, category])
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  phone         String?   @unique
+  phoneVerified DateTime?
+  password      String?
+  role          String    @default("USER") // Roles: USER, EDITOR, ADMIN
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts       Account[]
+  sessions       Session[]
+  dharmicConcepts DharmicConcept[]
+
+  @@index([email])
+  @@index([phone])
+  @@index([role])
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model OtpVerification {
+  id          String   @id @default(cuid())
+  phone       String   @unique
+  hashedOtp   String
+  attempts    Int      @default(0)
+  maxAttempts Int      @default(3)
+  expiresAt   DateTime
+  lastSentAt  DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([phone])
+}
+
+model BeginnerGuide {
+  id                     String   @id @default(cuid())
+  title                  String
+  slug                   String   @unique
+  category               String   @default("General")
+  status                 String   @default("DRAFT") // DRAFT, PUBLISHED, ARCHIVED
+
+  // Banner Section Fields
+  bannerEyebrow          String?
+  bannerBadgeText        String?
+  bannerBadgeIcon        String?
+  bannerTitle            String?
+  bannerDescription      String?
+  bannerPrimaryCtaText   String?
+  bannerPrimaryCtaAction String?
+  bannerPrimaryCtaTarget String?
+  bannerSecondaryCtaText String?
+  bannerSecondaryCtaAction String?
+  bannerSecondaryCtaTarget String?
+  bannerShareEnabled     Boolean  @default(true)
+  bannerShareButtonText  String?  @default("Share")
+
+  // Intro Section Fields
+  introHeading           String?
+  introDescription       String?
+  introImage             String?
+  introImageAltText      String?
+  introImageCaption      String?
+
+  // Why / Seven Kandas Section Fields
+  whySectionHeading      String?
+  whySectionSubtitle     String?
+  kandasJson             String? // JSON array of repeatable Kanda items
+
+  // Where to Start Section Fields
+  whereToStartHeading           String?
+  whereToStartIntro             String?
+  whereToStartHighlight         String?
+  whereToStartSupporting        String?
+  whereToStartSubHeading        String?
+  whereToStartSubIntro          String?
+  whereToStartFinalDescription  String?
+
+  // Common Worries Section Fields
+  commonWorriesHeading          String?
+  commonWorriesSubtitle         String?
+  commonWorriesJson             String? // JSON array of repeatable worry items
+  commonWorriesClosing          String?
+
+  // What to Read Next Section Fields
+  whatToReadNextHeading         String?
+  whatToReadNextSubtitle        String?
+  whatToReadNextItemsJson       String? // JSON array of repeatable related content items
+
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  @@index([slug])
+  @@index([status])
+}
+
+model PanchangEntry {
+  id            String   @id @default(cuid())
+  date          String   // e.g. "1/1/2026" or "2026-01-01"
+  dateObj       DateTime @unique
+  year          Int
+  tithiName     String   // e.g. "Trayodashi"
+  tithiDetail   String   // e.g. "13th day"
+  paksha        String   // e.g. "Shukla"
+  pakshaDetail  String   // e.g. "Waxing moon"
+  nakshatra     String   // e.g. "Rohini"
+  isAuspicious  Boolean  @default(false)
+  sunrise       String   // e.g. "6:53"
+  sunset        String   // e.g. "15:49"
+  location      String   @default("New Delhi, India")
+  source        String   @default("AUTO SYNCED")
+  lastSynced    String?  // e.g. "25/08/2026"
+  status        String   @default("PUBLISHED")
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([year])
+  @@index([date])
+}
+
+

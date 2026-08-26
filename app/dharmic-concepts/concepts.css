@@ -1,0 +1,456 @@
+.concepts-page {
+  --bg: #F2EDE4;
+  --card: #FFFFFF;
+  --dark: #1C1712;
+  --darkbar: #1A1208;
+  --pink: #FD066D;
+  --rose: #EF0F54;
+  --amber: #E8A020;
+  --gold: #A07800;
+  --yellow: #EDAB3A;
+  --body-text: #2C2010;
+  --mid-text: #5C4B12;
+  --sub-text: #8A7A68;
+  --border: #E8E0D0;
+  --border-light: #F0E8D8;
+  --hero-text: #FFFDF5;
+  --dim: #7A6A55;
+  --dimmer: #5C4E36;
+  --d-bg: #E6F1E6;
+  --d-tx: #27500A;
+  --d-bd: #C9DFC9;
+  --p-bg: #FFF8E6;
+  --p-tx: #A07800;
+  --p-bd: #EFE0B8;
+  --b-bg: #F0E9E1;
+  --b-tx: #4A3525;
+  --b-bd: #D9CBB8;
+
+  background: var(--bg);
+  color: var(--body-text);
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.concepts-page a {
+  text-decoration: none;
+  color: inherit;
+}
+
+.concepts-page button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.concepts-page .wrap {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 40px;
+}
+
+/* BREADCRUMB */
+.concepts-page .bcrumb {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  padding: 0 40px;
+}
+
+.concepts-page .bc-in {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 10px 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.concepts-page .bc-l {
+  font-size: 13px;
+  color: var(--sub-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.concepts-page .bc-l b {
+  color: var(--body-text);
+  font-weight: 500;
+}
+
+/* HERO */
+.concepts-page .hero {
+  position: relative;
+  height: 380px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  background: transparent;
+}
+
+.concepts-page .hero-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 58% 55% at 76% 32%, rgba(150, 120, 50, .30) 0%, transparent 62%),
+    radial-gradient(ellipse 46% 70% at 10% 88%, rgba(20, 26, 14, .66) 0%, transparent 56%),
+    linear-gradient(155deg, #141A0C 0%, #3A4420 34%, #1B2210 66%, #0C1006 100%);
+}
+
+.concepts-page .hero-ov {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(to right, rgba(12, 16, 6, .94) 0%, rgba(12, 16, 6, .7) 42%, rgba(12, 16, 6, .16) 74%, rgba(12, 16, 6, .02) 100%);
+}
+
+.concepts-page .hero-c {
+  position: relative;
+  z-index: 2;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 40px;
+  width: 100%;
+}
+
+.concepts-page .hero-in {
+  max-width: 660px;
+}
+
+.concepts-page .hero-ey {
+  font-size: 10px;
+  color: #E3B567;
+  letter-spacing: .9px;
+  margin-bottom: 9px;
+}
+
+.concepts-page .hero-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(230, 241, 230, .16);
+  border: 1px solid rgba(230, 241, 230, .3);
+  border-radius: 20px;
+  padding: 5px 13px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #BFE0BF;
+  margin-bottom: 12px;
+}
+
+.concepts-page .hero-h1 {
+  font-size: 40px;
+  font-weight: 700;
+  color: var(--hero-text);
+  line-height: 1.12;
+  letter-spacing: -.8px;
+  margin-bottom: 10px;
+}
+
+.concepts-page .hero-sub {
+  font-size: 16px;
+  color: #C3C8A8;
+  line-height: 1.6;
+  margin-bottom: 21px;
+}
+
+.concepts-page .hero-btns {
+  display: flex;
+  gap: 10px;
+  flex-wrap: nowrap;
+  align-items: stretch;
+}
+
+.concepts-page .hb-p {
+  background: rgba(255, 255, 255, .94);
+  border: none;
+  border-radius: 10px;
+  padding: 12px 22px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #1C1712;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+/* LAYOUT */
+.concepts-page .layout {
+  display: grid;
+  grid-template-columns: 1fr 330px;
+  gap: 44px;
+  align-items: start;
+  padding-top: 30px;
+}
+
+.concepts-page .main {
+  max-width: 720px;
+  text-align: left;
+}
+
+.concepts-page .sec-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.concepts-page .sec-plus {
+  color: var(--pink);
+  font-weight: 700;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.concepts-page .sec-title {
+  display: block;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--dark);
+  line-height: 1.2;
+}
+
+.concepts-page .sec-guide {
+  display: block;
+  font-size: 13px;
+  color: var(--sub-text);
+  margin-top: 4px;
+  line-height: 1.5;
+}
+
+.concepts-page .section-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  margin-top: 20px;
+}
+
+.concepts-page .c {
+  transition: border-color .2s, opacity .2s, transform .2s;
+}
+.concepts-page .c:hover {
+  transform: translateY(-2px);
+}
+.concepts-page .c.soon {
+  cursor: default;
+}
+
+.concepts-page .pill {
+  font-size: 10.5px;
+  padding: 4px 11px;
+  border-radius: 6px;
+  font-weight: 700;
+  display: inline-block;
+}
+
+.concepts-page .pill.d {
+  background: var(--d-bg);
+  color: var(--d-tx);
+  border: 1px solid var(--d-bd);
+}
+
+.concepts-page .pill.p {
+  background: var(--p-bg);
+  color: var(--p-tx);
+  border: 1px solid var(--p-bd);
+}
+
+.concepts-page .daily-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.concepts-page .daily-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1.5px solid var(--border-light);
+  text-align: left;
+}
+
+.concepts-page .daily-row-title {
+  font-size: 14.5px;
+  color: var(--dark);
+  font-weight: 700;
+}
+
+.concepts-page .daily-row-desc {
+  display: block;
+  font-size: 12.5px;
+  color: var(--sub-text);
+  margin-top: 2px;
+}
+
+.concepts-page .daily-read {
+  color: var(--pink);
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.concepts-page .hr {
+  height: 1px;
+  background: var(--border);
+  margin: 30px 0;
+}
+
+.concepts-page .side {
+  position: sticky;
+  top: 150px;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+
+.concepts-page .sbcomp {
+  background: var(--bg);
+  border: 1px dashed #D8CCB6;
+  border-radius: 13px;
+  padding: 14px 16px;
+  text-align: left;
+}
+
+.concepts-page .sbcomp-h {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 8px;
+}
+
+.concepts-page .sbcomp-l {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: .6px;
+}
+
+.concepts-page .sbcomp-t {
+  font-size: 12.5px;
+  color: var(--sub-text);
+  line-height: 1.6;
+  margin-bottom: 11px;
+}
+
+.concepts-page .loader {
+  width: 32px;
+  height: 32px;
+  border: 4px solid #C82A54;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+  margin: 48px auto;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.concepts-page .empty-state {
+  background: #fff;
+  border: 1px solid #EADFC9;
+  border-radius: 16px;
+  padding: 48px;
+  text-align: center;
+  color: #6b7280;
+}
+
+.concepts-page .toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: var(--dark);
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,.15);
+  z-index: 9999;
+  font-size: 13px;
+}
+
+.concepts-page .site-nav {
+  background: var(--darkbar);
+  color: #fff;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+}
+
+.concepts-page .site-nav-brand {
+  font-weight: 700;
+  font-size: 16px;
+}
+
+.concepts-page .site-nav-links {
+  display: flex;
+  gap: 20px;
+  font-size: 12px;
+  color: rgba(255,255,255,.75);
+}
+
+.concepts-page .site-nav-links a:hover {
+  color: #fff;
+}
+
+@media (max-width: 900px) {
+  .concepts-page {
+    max-width: 430px;
+    margin: 0 auto;
+    padding-bottom: 78px;
+  }
+
+  .concepts-page .wrap {
+    padding: 0 16px;
+  }
+
+  .concepts-page .bcrumb {
+    padding: 0 16px;
+  }
+
+  .concepts-page .hero {
+    height: auto;
+    min-height: 340px;
+    align-items: flex-end;
+  }
+
+  .concepts-page .hero-ov {
+    background: linear-gradient(to top, rgba(12, 16, 6, .95) 12%, rgba(12, 16, 6, .66) 48%, rgba(12, 16, 6, .2) 100%);
+  }
+
+  .concepts-page .hero-c {
+    padding: 0 16px 24px;
+  }
+
+  .concepts-page .hero-h1 {
+    font-size: 29px;
+  }
+
+  .concepts-page .hero-sub {
+    font-size: 14px;
+  }
+
+  .concepts-page .layout {
+    grid-template-columns: 1fr;
+    gap: 0;
+    padding-top: 18px;
+  }
+
+  .concepts-page .side {
+    position: static;
+    margin-top: 26px;
+  }
+
+  .concepts-page .site-nav {
+    padding: 0 20px;
+  }
+
+  .concepts-page .site-nav-links {
+    display: none;
+  }
+}
