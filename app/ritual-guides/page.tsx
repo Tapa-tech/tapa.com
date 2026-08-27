@@ -27,7 +27,6 @@ export default function RitualGuidesPage() {
           cache: 'no-store',
         });
 
-
         const beginnerJson = beginnerRes.ok
           ? await beginnerRes.json()
           : null;
@@ -46,20 +45,16 @@ export default function RitualGuidesPage() {
             ? ritualJson.data
             : [];
 
-        console.log('BEGINNER GUIDES:', beginnerData);
-        console.table(beginnerData);
+        // console.log('BEGINNER GUIDES:', beginnerData);
+        // console.table(beginnerData);
 
-        console.log('RITUAL GUIDES:', ritualData);
-        console.table(ritualData);
+        // console.log('RITUAL GUIDES:', ritualData);
+        // console.table(ritualData);
 
-        // Beginner API already returns Beginner Guides.
-        // Only PUBLISHED records should be visible publicly.
         const publishedBeginners = beginnerData.filter(
           (guide: any) => guide.status === 'PUBLISHED'
         );
 
-        // Ritual Guides API contains multiple categories.
-        // Only PUBLISHED Festive Pujans should be shown here.
         const publishedFestive = ritualData.filter(
           (guide: any) =>
             guide.status === 'PUBLISHED' &&
@@ -69,11 +64,11 @@ export default function RitualGuidesPage() {
             )
         );
 
-        console.log('PUBLISHED BEGINNER GUIDES:', publishedBeginners);
-        console.table(publishedBeginners);
+        // console.log('PUBLISHED BEGINNER GUIDES:', publishedBeginners);
+        // console.table(publishedBeginners);
 
-        console.log('PUBLISHED FESTIVE PUJANS:', publishedFestive);
-        console.table(publishedFestive);
+        // console.log('PUBLISHED FESTIVE PUJANS:', publishedFestive);
+        // console.table(publishedFestive);
 
         setBeginnerGuides(publishedBeginners);
         setFestivePujans(publishedFestive);
