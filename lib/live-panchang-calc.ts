@@ -1,152 +1,140 @@
-import * as Astronomy from 'astronomy-engine';
+import {
+  Observer,
+  getPanchangamDetails,
+  calculateRahuKalam,
+  tithiNames,
+  nakshatraNames,
+  yogaNames,
+} from '@ishubhamx/panchangam-js';
 
-export interface LivePanchangData {
-  tithiHeader: string;       // e.g. "Bhadrapada Krishna Panchami"
-  formattedFullDate: string; // e.g. "Monday, 7 September 2026 · Purnimanta"
-  pakshaDesc: string;        // e.g. "Krishna — waning"
-  nakshatra: string;         // e.g. "Rohini"
-  sunriseSunset: string;     // e.g. "6:19 / 18:32"
-  rahuKaal: string;          // e.g. "12:15 – 13:48"
-  yogaKarana: string;        // e.g. "Vyaghata · Bava"
+const DELHI_LATITUDE = 28.6139;
+const DELHI_LONGITUDE = 77.209;
+
+const IST_OFFSET_MINUTES = 330;
+
+function formatTime(date: Date | null): string {
+  if (!date) return '—';
+
+  return new Intl.DateTimeFormat('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  }).format(date);
 }
 
-function getAyanamsa(date: Date): number {
-  const year = date.getUTCFullYear();
-  const startOfYear = new Date(Date.UTC(year, 0, 0));
-  const dayOfYear = Math.floor((date.getTime() - startOfYear.getTime()) / 86400000);
-  const fracYear = year + dayOfYear / 365.25;
-  return 23.85 + (fracYear - 1950) * 0.01396;
+function formatDate(date: Date): string {
+  return new Intl.DateTimeFormat('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(date);
 }
 
-export function calculateLivePanchangData(targetDate = new Date(), lat = 28.6139, lon = 77.2090): LivePanchangData {
-  const year = targetDate.getFullYear();
-  const month = targetDate.getMonth() + 1;
-  const day = targetDate.getDate();
-
-  const observer = new Astronomy.Observer(lat, lon, 216);
-
-  // UTC noon for given date in New Delhi (5:30 IST offset => 06:30 UTC is 12:00 IST)
-  const dateUtc = new Date(Date.UTC(year, month - 1, day, 6, 30, 0));
-  const searchDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
-
-  // 1. Sunrise & Sunset
-  const sunriseTime = Astronomy.SearchRiseSet(Astronomy.Body.Sun, observer, +1, searchDate, 1);
-  const sunsetTime = Astronomy.SearchRiseSet(Astronomy.Body.Sun, observer, -1, searchDate, 1);
-
-  const getMinutes = (timeObj: any): number => {
-    if (!timeObj || !timeObj.date) return 6 * 60;
-    const d = new Date(timeObj.date.getTime() + 5.5 * 3600 * 1000);
-    return d.getUTCHours() * 60 + d.getUTCMinutes();
-  };
-
-  const formatMin = (m: number): string => {
-    const hrs = Math.floor(m / 60);
-    const mins = Math.floor(m % 60).toString().padStart(2, '0');
-    return `${hrs}:${mins}`;
-  };
-
-  const srMin = getMinutes(sunriseTime);
-  const ssMin = getMinutes(sunsetTime);
-  const sunrise = formatMin(srMin);
-  const sunset = formatMin(ssMin);
-
-  // 2. Rahu Kaal
-  const daylight = ssMin - srMin;
-  const period = daylight / 8;
-  const dayOfWeek = targetDate.getDay(); // 0 = Sun, 1 = Mon, ...
-
-  // Sun: 8, Mon: 2, Tue: 7, Wed: 5, Thu: 6, Fri: 4, Sat: 3
-  const rahuPeriodMap = [8, 2, 7, 5, 6, 4, 3];
-  const pIdx = rahuPeriodMap[dayOfWeek];
-  const rahuStartMin = srMin + (pIdx - 1) * period;
-  const rahuEndMin = srMin + pIdx * period;
-  const rahuKaal = `${formatMin(rahuStartMin)} – ${formatMin(rahuEndMin)}`;
-
-  // 3. Moon & Sun positions
-  const sunPos = Astronomy.SunPosition(dateUtc);
-  const moonVec = Astronomy.GeoVector(Astronomy.Body.Moon, dateUtc, true);
-  const moonPos = Astronomy.Ecliptic(moonVec);
-
-  const sunLon = sunPos.elon;
-  const moonLon = moonPos.elon;
-
-  // Tithi calculation
-  const tithiAngle = (moonLon - sunLon + 360) % 360;
-  const tithiIndex = Math.floor(tithiAngle / 12) % 30;
-
-  const tithiNames = [
-    'Prathama', 'Dwitiya', 'Tritiya', 'Chaturthi', 'Panchami',
-    'Shashthi', 'Saptami', 'Ashtami', 'Navami', 'Dashami',
-    'Ekadashi', 'Dwadashi', 'Trayodashi', 'Chaturdashi', 'Purnima',
-    'Prathama', 'Dwitiya', 'Tritiya', 'Chaturthi', 'Panchami',
-    'Shashthi', 'Saptami', 'Ashtami', 'Navami', 'Dashami',
-    'Ekadashi', 'Dwadashi', 'Trayodashi', 'Chaturdashi', 'Amavasya'
-  ];
-
-  const tithiName = tithiNames[tithiIndex];
-  const paksha = tithiIndex < 15 ? 'Shukla' : 'Krishna';
-  const pakshaDesc = tithiIndex < 15 ? 'Shukla — waxing' : 'Krishna — waning';
-
-  // Nakshatra
-  const ayanamsa = getAyanamsa(dateUtc);
-  const siderealMoonLon = (moonLon - ayanamsa + 360) % 360;
-  const nakshatraIndex = Math.floor(siderealMoonLon / 13.333333333333334) % 27;
-
-  const nakshatraNames = [
-    'Ashwini', 'Bharani', 'Krittika', 'Rohini', 'Mrigashira',
-    'Ardra', 'Punarvasu', 'Pushya', 'Ashlesha', 'Magha',
-    'Purva Phalguni', 'Uttara Phalguni', 'Hasta', 'Chitra', 'Swati',
-    'Vishakha', 'Anuradha', 'Jyeshtha', 'Mula', 'Purva Ashadha',
-    'Uttara Ashadha', 'Shravana', 'Dhanishta', 'Shatabhisha', 'Purva Bhadrapada',
-    'Uttara Bhadrapada', 'Revati'
-  ];
-  const nakshatra = nakshatraNames[nakshatraIndex];
-
-  // Yoga
-  const yogaAngle = (sunLon + moonLon - 2 * ayanamsa + 720) % 360;
-  const yogaIndex = Math.floor(yogaAngle / 13.333333333333334) % 27;
-  const yogaNames = [
-    'Vishkambha', 'Priti', 'Ayushman', 'Saubhagya', 'Shobhana', 'Atiganda',
-    'Sukarma', 'Dhriti', 'Shula', 'Ganda', 'Vriddhi', 'Dhruva', 'Vyaghata',
-    'Harshana', 'Vajra', 'Siddhi', 'Vyatipata', 'Variyan', 'Parigha', 'Shiva',
-    'Siddha', 'Sadhya', 'Shubha', 'Shukla', 'Brahma', 'Indra', 'Vaidhriti'
-  ];
-  const yoga = yogaNames[yogaIndex];
-
-  // Karana
-  const karanaIndex = Math.floor(tithiAngle / 6);
-  let karana = '';
-  if (karanaIndex === 0) {
-    karana = 'Kintughna';
-  } else if (karanaIndex >= 57) {
-    const fixedKaranas = ['Shakuni', 'Chatushpada', 'Naga'];
-    karana = fixedKaranas[karanaIndex - 57];
-  } else {
-    const movableKaranas = ['Bava', 'Balava', 'Kaulava', 'Taitila', 'Gara', 'Vanija', 'Vishti'];
-    karana = movableKaranas[(karanaIndex - 1) % 7];
+function formatTimeRange(
+  start: Date | null | undefined,
+  end: Date | null | undefined,
+): string {
+  if (!start || !end) {
+    return '—';
   }
 
-  // Vedic Lunar Month approximation
-  const monthNames = [
-    'Chaitra', 'Vaisakha', 'Jyeshtha', 'Ashadha', 'Shravana', 'Bhadrapada',
-    'Ashwin', 'Kartika', 'Margashirsha', 'Pausha', 'Magha', 'Phalguna'
-  ];
-  const sunMonthIdx = Math.floor(((sunLon - ayanamsa + 360) % 360) / 30);
-  const vedicMonth = monthNames[(sunMonthIdx + 5) % 12];
+  return `${formatTime(start)} – ${formatTime(end)}`;
+}
 
-  const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  const dayOfWeekName = dayNames[dayOfWeek];
+export function calculateLivePanchangData(date = new Date()) {
+  const observer = new Observer(
+    DELHI_LATITUDE,
+    DELHI_LONGITUDE,
+    0,
+  );
 
-  const monthShorts = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-  const formattedFullDate = `${dayOfWeekName}, ${day} ${monthShorts[month - 1]} ${year}`;
+  const options = {
+    timezoneOffset: IST_OFFSET_MINUTES,
+  };
+
+  const panchang = getPanchangamDetails(
+    date,
+    observer,
+    options,
+  );
+
+  // Tithi
+  const tithiValue = panchang.tithi;
+
+  const tithiName =
+    typeof tithiValue === 'number'
+      ? tithiNames[tithiValue]
+      : String(tithiValue);
+
+  // Nakshatra
+  const nakshatraValue = panchang.nakshatra;
+
+  const nakshatraName =
+    typeof nakshatraValue === 'number'
+      ? nakshatraNames[nakshatraValue]
+      : String(nakshatraValue);
+
+  // Yoga
+  const yogaValue = panchang.yoga;
+
+  const yogaName =
+    typeof yogaValue === 'number'
+      ? yogaNames[yogaValue]
+      : String(yogaValue);
+
+  // Karana
+  const karanaName = String(panchang.karana);
+
+  // Paksha
+  const pakshaName = String(panchang.paksha);
+
+  // Rahu Kalam
+  let rahuKaal = '—';
+
+  if (panchang.sunrise && panchang.sunset) {
+    const vara =
+      typeof panchang.vara === 'number'
+        ? panchang.vara
+        : date.getDay();
+
+    const rahu = calculateRahuKalam(
+      panchang.sunrise,
+      panchang.sunset,
+      vara,
+    );
+
+    if (rahu) {
+      rahuKaal = formatTimeRange(
+        rahu.start,
+        rahu.end,
+      );
+    }
+  }
 
   return {
-    tithiHeader: `${vedicMonth} ${paksha} ${tithiName}`,
-    formattedFullDate: `${formattedFullDate} · Purnimanta`,
-    pakshaDesc,
-    nakshatra,
-    sunriseSunset: `${sunrise} / ${sunset}`,
+    tithiHeader: tithiName,
+
+    formattedFullDate: formatDate(date),
+
+    pakshaDesc: pakshaName,
+
+    nakshatra: nakshatraName,
+
+    sunriseSunset: formatTimeRange(
+      panchang.sunrise,
+      panchang.sunset,
+    ),
+
     rahuKaal,
-    yogaKarana: `${yoga} · ${karana}`,
+
+    yogaKarana: `${yogaName} · ${karanaName}`,
+
+    sunrise: panchang.sunrise,
+    sunset: panchang.sunset,
+
+    raw: panchang,
   };
 }
