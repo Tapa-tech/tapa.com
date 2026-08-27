@@ -61,7 +61,7 @@ function PanchangCmsContent() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const userRole = (session?.user as { role?: string })?.role?.toUpperCase() || 'USER';
-  const isAuthorized = ['ADMIN', 'EDITOR'].includes(userRole);
+  const isAuthorized = ['ADMIN', 'EDITOR', 'SUPER_ADMIN'].includes(userRole);
   const userEmail = session?.user?.email || (session?.user as any)?.phone || 'admin@tapa.co';
 
   // Fetch Panchang entries for selected year
