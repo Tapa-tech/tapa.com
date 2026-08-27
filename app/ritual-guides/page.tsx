@@ -27,6 +27,7 @@ export default function RitualGuidesPage() {
           cache: 'no-store',
         });
 
+
         const beginnerJson = beginnerRes.ok
           ? await beginnerRes.json()
           : null;
