@@ -18,7 +18,7 @@ function AdminDashboardContent() {
   const userRole = (session?.user as { role?: string })?.role?.toUpperCase() || 'USER';
 
   // Role Access Guard: Only ADMIN role allowed for main dashboard overview
-  if (status === 'unauthenticated' || userRole !== 'ADMIN') {
+  if (status === 'unauthenticated' || !['ADMIN', 'SUPER_ADMIN'].includes(userRole)) {
     return (
       <div style={{ minHeight: '100vh', background: '#FBF9F5', color: '#111827', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", padding: '20px' }}>
         <div style={{ background: '#FFFFFF', border: '1px solid #FCA5A5', borderRadius: '20px', padding: '36px', maxWidth: '440px', textAlign: 'center', boxShadow: '0 20px 40px rgba(0,0,0,0.08)' }}>
@@ -396,8 +396,8 @@ function AdminDashboardContent() {
                   <div style={{ fontSize: '10px', color: '#9CA3AF' }}>Total Users</div>
                   <div style={{ fontSize: '20px', fontWeight: 700, color: '#111827' }}>2</div>
                 </div>
-                  <div style={{ fontSize: '10px', color: '#9CA3AF' }}>Customers</div>
-                  <div style={{ fontSize: '20px', fontWeight: 700, color: '#111827' }}>1</div>
+                <div style={{ fontSize: '10px', color: '#9CA3AF' }}>Customers</div>
+                <div style={{ fontSize: '20px', fontWeight: 700, color: '#111827' }}>1</div>
 
                 <div>
                   <div style={{ fontSize: '10px', color: '#9CA3AF' }}>Admins</div>
@@ -478,7 +478,7 @@ function AdminDashboardContent() {
               <tr>
                 <td style={{ padding: '12px', fontWeight: 700 }}>Test Subscriber Name</td>
 
-                <td style={{ padding: '12px', color: '#6B7280' }}>test.subscriber@tapa.co<br/><span style={{ fontSize: '10px', color: '#9CA3AF' }}>9876543210</span></td>
+                <td style={{ padding: '12px', color: '#6B7280' }}>test.subscriber@tapa.co<br /><span style={{ fontSize: '10px', color: '#9CA3AF' }}>9876543210</span></td>
                 <td style={{ padding: '12px' }}>
                   <span style={{ background: '#F3F4F6', color: '#374151', fontSize: '9px', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>CUSTOMER</span>
                 </td>

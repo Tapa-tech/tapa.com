@@ -35,3 +35,4 @@ yarn-error.log*
 /scratch/
 .env
 .env.*
+prisma/dev.db.backup-*
