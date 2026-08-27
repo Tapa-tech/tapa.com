@@ -1,12 +1,95 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+
+// const defaultBeginnerGuides = [
+//   { slug: 'what-is-a-vrat', title: 'What is a vrat?', subtitle: '6 min read' },
+//   { slug: 'first-puja', title: 'Your first puja at home', subtitle: '8 min · under ₹300 to start' },
+//   { slug: 'ganesh-chaturthi', title: 'Ganesh Chaturthi for beginners', subtitle: '9 min · for 14 September' },
+//   { slug: 'diwali-beginners', title: 'Diwali for beginners', subtitle: '9 min · for November' },
+//   { slug: 'seven-kandas', title: 'The seven kandas', subtitle: '6 min · no Sanskrit required' },
+// ];
 
 export default function RitualGuidesPage() {
   const [activeFilter, setActiveFilter] = useState<number>(0);
+  const [beginnerGuides, setBeginnerGuides] = useState<any[]>([]);
+  const [festivePujans, setFestivePujans] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function loadGuides() {
+      try {
+        const beginnerRes = await fetch('/api/public/beginner-guides', {
+          cache: 'no-store',
+        });
+
+        const ritualRes = await fetch('/api/public/ritual-guides', {
+          cache: 'no-store',
+        });
+
+        const beginnerJson = beginnerRes.ok
+          ? await beginnerRes.json()
+          : null;
+
+        const ritualJson = ritualRes.ok
+          ? await ritualRes.json()
+          : null;
+
+        const beginnerData =
+          beginnerJson?.success && Array.isArray(beginnerJson.data)
+            ? beginnerJson.data
+            : [];
+
+        const ritualData =
+          ritualJson?.success && Array.isArray(ritualJson.data)
+            ? ritualJson.data
+            : [];
+
+        console.log('BEGINNER GUIDES:', beginnerData);
+        console.table(beginnerData);
+
+        console.log('RITUAL GUIDES:', ritualData);
+        console.table(ritualData);
+
+        // Beginner API already returns Beginner Guides.
+        // Only PUBLISHED records should be visible publicly.
+        const publishedBeginners = beginnerData.filter(
+          (guide: any) => guide.status === 'PUBLISHED'
+        );
+
+        // Ritual Guides API contains multiple categories.
+        // Only PUBLISHED Festive Pujans should be shown here.
+        const publishedFestive = ritualData.filter(
+          (guide: any) =>
+            guide.status === 'PUBLISHED' &&
+            (
+              guide.category === 'Festive Pujans' ||
+              guide.category === 'Festive Pujan'
+            )
+        );
+
+        console.log('PUBLISHED BEGINNER GUIDES:', publishedBeginners);
+        console.table(publishedBeginners);
+
+        console.log('PUBLISHED FESTIVE PUJANS:', publishedFestive);
+        console.table(publishedFestive);
+
+        setBeginnerGuides(publishedBeginners);
+        setFestivePujans(publishedFestive);
+
+      } catch (err) {
+        console.error('Failed to load ritual guides:', err);
+
+        setBeginnerGuides([]);
+        setFestivePujans([]);
+      }
+    }
+
+    loadGuides();
+  }, []);
 
   const filters = ['Coming up', 'This month', 'Shiva', 'Vishnu', 'Devi', 'Ganesha'];
+  const firstGuideSlug = beginnerGuides[0]?.slug || 'what-is-a-vrat';
 
   return (
     <div className="plp-page">
@@ -85,8 +168,8 @@ export default function RitualGuidesPage() {
                   Plain language, no citations, no Sanskrit to look up. Read in order — it takes about half an hour.
                 </p>
               </div>
-              <Link className="sec-a" href="/ritual-guides">
-                <span>5 guides</span>View all ›
+              <Link className="sec-a" href="/ritual-guides/beginner-guides">
+                <span>{beginnerGuides.length} guides</span>View all ›
               </Link>
             </div>
 
@@ -95,64 +178,48 @@ export default function RitualGuidesPage() {
                 <span className="fc-tag">READ IN THIS ORDER</span>
                 <div className="fc-t">Nobody is born knowing the vidhi</div>
                 <p className="fc-d">
-                  Five guides that assume nothing. What to buy, what to say, how long it takes, and what genuinely does not matter as much as you have been told.
+                  {beginnerGuides.length} guides that assume nothing. What to buy, what to say, how long it takes, and what genuinely does not matter as much as you have been told.
                 </p>
-                <Link className="fc-c" href="/ritual-guides/what-is-a-vrat">
+                <Link className="fc-c" href={`/ritual-guides/${firstGuideSlug}`}>
                   Start at step 1 ›
                 </Link>
               </div>
               <div className="fc-r">
-                <Link className="fc-i" href="/ritual-guides/what-is-a-vrat">
-                  <span>
-                    <span className="fc-in">1 · What is a vrat?</span>
-                    <span className="fc-is">6 min read</span>
-                  </span>
-                  <span className="fc-ia">›</span>
-                </Link>
-                <Link className="fc-i" href="/ritual-guides/first-puja">
-                  <span>
-                    <span className="fc-in">2 · Your first puja at home</span>
-                    <span className="fc-is">8 min · under ₹300 to start</span>
-                  </span>
-                  <span className="fc-ia">›</span>
-                </Link>
-                <Link className="fc-i" href="/ritual-guides/ganesh-chaturthi">
-                  <span>
-                    <span className="fc-in">3 · Ganesh Chaturthi for beginners</span>
-                    <span className="fc-is">9 min · for 14 September</span>
-                  </span>
-                  <span className="fc-ia">›</span>
-                </Link>
-                <Link className="fc-i" href="/ritual-guides/diwali-beginners">
-                  <span>
-                    <span className="fc-in">4 · Diwali for beginners</span>
-                    <span className="fc-is">9 min · for November</span>
-                  </span>
-                  <span className="fc-ia">›</span>
-                </Link>
-                <Link className="fc-i" href="/ritual-guides/seven-kandas">
-                  <span>
-                    <span className="fc-in">5 · The seven kandas</span>
-                    <span className="fc-is">6 min · no Sanskrit required</span>
-                  </span>
-                  <span className="fc-ia">›</span>
-                </Link>
+                {beginnerGuides.map((guide, idx) => (
+                  <Link
+                    className="fc-i"
+                    href={`/ritual-guides/${guide.slug}`}
+                    key={guide.id || guide.slug || idx}
+                  >
+                    <span>
+                      <span className="fc-in">{idx + 1} · {guide.title || guide.bannerTitle}</span>
+                      <span className="fc-is">{guide.subtitle || guide.bannerEyebrow || guide.category || 'Guide'}</span>
+                    </span>
+                    <span className="fc-ia">›</span>
+                  </Link>
+                ))}
               </div>
             </div>
           </div>
 
           {/* Festive Pujans Section */}
-          <div className="sec">
+          <div className="sec" id="festive-pujans">
             <div className="sec-h">
               <div>
                 <div className="sec-ey">FIXED TO A TITHI</div>
+
                 <div className="sec-t">Festive Pujans</div>
+
                 <p className="sec-s">
                   The date moves each year because it follows the lunar calendar, not the Gregorian one. Every guide states both.
                 </p>
               </div>
-              <Link className="sec-a" href="/ritual-guides">
-                <span>18 guides</span>View all ›
+
+              <Link
+                className="sec-a"
+                href="/ritual-guides/articles?tab=rg"
+              >
+                <span>{festivePujans.length} guides</span>View all ›
               </Link>
             </div>
 
@@ -161,63 +228,118 @@ export default function RitualGuidesPage() {
                 <div className="c-top h-teej">
                   <span className="c-when now">IN 6 DAYS</span>
                 </div>
+
                 <div className="c-b">
                   <div className="c-t">Hartalika Teej</div>
                   <div className="c-d">13 September</div>
+
                   <p className="c-s">
                     The sand Shivalinga, the night vigil, and why this is a different vrat from Hariyali Teej.
                   </p>
+
                   <div className="c-f">
                     <span className="pill d">DHARMA · 4/5</span>
                     <span className="c-read">9 min</span>
                   </div>
                 </div>
+
                 <div className="myth">
                   <b>Corrects:</b> "Nirjala or the vrat doesn’t count."
                 </div>
               </Link>
 
+
               <Link className="c" href="/ritual-guides/ganesh-chaturthi">
                 <div className="c-top h-ganesh">
                   <span className="c-when now">IN 7 DAYS</span>
                 </div>
+
                 <div className="c-b">
                   <div className="c-t">Ganesh Chaturthi</div>
                   <div className="c-d">14 September</div>
+
                   <p className="c-s">
                     Prana pratishtha at the Madhyahna muhurat, and what a pandit is genuinely for.
                   </p>
+
                   <div className="c-f">
                     <span className="pill d">DHARMA · 4/5</span>
                     <span className="c-read">11 min</span>
                   </div>
                 </div>
+
                 <div className="myth">
                   <b>Corrects:</b> "Only a pandit can perform this."
                 </div>
               </Link>
-
-              <Link className="c" href="/ritual-guides/sharad-navratri">
-                <div className="c-top h-devi">
-                  <span className="c-when">IN 34 DAYS</span>
-                </div>
-                <div className="c-b">
-                  <div className="c-t">Sharad Navratri</div>
-                  <div className="c-d">11–19 October</div>
-                  <p className="c-s">
-                    Nine nights, nine forms, one Mother. Ghatasthapana to Maha Navami, day by day.
-                  </p>
-                  <div className="c-f">
-                    <span className="pill d">DHARMA · 4/5</span>
-                    <span className="c-read">18 min</span>
+              {festivePujans.map((guide: any, idx: number) => (
+                <Link
+                  className="c"
+                  href={`/ritual-guides/${guide.slug}`}
+                  key={guide.id || guide.slug || `festive-${idx}`}
+                >
+                  <div
+                    className={`c-top ${guide.imageClass ||
+                      (idx % 3 === 0
+                        ? 'h-teej'
+                        : idx % 3 === 1
+                          ? 'h-ganesh'
+                          : 'h-devi')
+                      }`}
+                    style={
+                      guide.kathaImage
+                        ? {
+                          backgroundImage: `url("${guide.kathaImage}")`,
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center',
+                          backgroundRepeat: 'no-repeat',
+                        }
+                        : undefined
+                    }
+                  >
+                    <span className="c-when">
+                      {guide.date || guide.festivalName || ''}
+                    </span>
                   </div>
-                </div>
-                <div className="myth">
-                  <b>Corrects:</b> "If the Akhand Jyoti goes out, it is wasted."
-                </div>
-              </Link>
+
+                  <div className="c-b">
+                    <div className="c-t">
+                      {guide.title || guide.bannerTitle || ''}
+                    </div>
+
+                    <div className="c-d">
+                      {guide.festivalName || guide.bannerDate || guide.date || ''}
+                    </div>
+
+                    <p className="c-s">
+                      {guide.guideSubtitle ||
+                        guide.description ||
+                        guide.bannerSubtitle ||
+                        ''}
+                    </p>
+
+                    <div className="c-f">
+                      <span className="pill d">
+                        {guide.badge || 'DHARMA · 4/5'}
+                      </span>
+
+                      <span className="c-read">
+                        {guide.readTime || '9 min'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {guide.correction && (
+                    <div className="myth">
+                      <b>Corrects:</b> "{guide.correction}"
+                    </div>
+                  )}
+                </Link>
+              ))}
+
             </div>
           </div>
+
 
           {/* All-Year Pujans Section */}
           <div className="sec">
@@ -229,7 +351,7 @@ export default function RitualGuidesPage() {
                   Recurring observances and household rituals. Kept when the household needs them, not when the calendar says so.
                 </p>
               </div>
-              <Link className="sec-a" href="/ritual-guides">
+              <Link className="sec-a" href="/ritual-guides/articles?tab=rg">
                 <span>11 guides</span>View all ›
               </Link>
             </div>
@@ -295,7 +417,7 @@ export default function RitualGuidesPage() {
                   The sixteen sacraments, from before birth to after death. Written with care, and without fear.
                 </p>
               </div>
-              <Link className="sec-a" href="/ritual-guides">
+              <Link className="sec-a" href="/ritual-guides/articles?tab=rg">
                 <span>8 guides</span>View all ›
               </Link>
             </div>

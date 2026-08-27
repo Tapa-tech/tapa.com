@@ -3,13 +3,16 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import './concepts.css';
 
 interface Concept {
+  id?: string;
   title?: string;
   slug?: string;
   category?: string;
   body?: any;
   status?: string;
+  summary?: string;
 }
 
 export default function DharmicConceptsPage() {
@@ -17,6 +20,7 @@ export default function DharmicConceptsPage() {
   const [concepts, setConcepts] = useState<Concept[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [activeFilter, setActiveFilter] = useState<string>('All');
 
   useEffect(() => {
     async function loadConcepts() {
@@ -24,7 +28,17 @@ export default function DharmicConceptsPage() {
         const res = await fetch('/api/public/dharmic-concepts');
         if (res.ok) {
           const data = await res.json();
-          setConcepts(Array.isArray(data) ? data : []);
+          const list = Array.isArray(data)
+            ? data
+            : Array.isArray(data?.data)
+              ? data.data
+              : [];
+          const publishedConcepts = list.filter(
+            (concept: Concept) => concept.status === 'PUBLISHED'
+          );
+
+
+          setConcepts(publishedConcepts);
         } else {
           setConcepts([]);
         }
@@ -43,250 +57,692 @@ export default function DharmicConceptsPage() {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const slugify = (value?: string) => {
-    return String(value || '')
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '');
+  const materialsCards = [
+    {
+      h: 'h-shiva',
+      rt: 'LIVE',
+      t: 'Why is bilva dear to Mahadev?',
+      d: 'Materials · Shiva',
+      deity: 'Shiva',
+      s: 'Three leaves on one stem. The tree did not study scripture to grow that way — the tradition recognised what it saw.',
+      pills: [
+        ['d', 'DHARMA · 4/5'],
+        ['n', 'PURANIC'],
+      ],
+      read: '12 min',
+      slug: 'why-is-bilva-dear-to-mahadev',
+      isLive: true,
+    },
+    {
+      h: 'h-vishnu',
+      rt: 'SOON',
+      t: 'Why is tulsi sacred to Vishnu?',
+      d: 'Materials · Vishnu',
+      deity: 'Vishnu',
+      s: 'Lakshmi’s form as a plant, present in every Vishnu and Krishna puja — and never offered to Shiva.',
+      pills: [['n', 'COMING SOON']],
+      read: '—',
+      slug: 'why-is-tulsi-sacred-to-vishnu',
+      isLive: false,
+    },
+    {
+      h: 'h-ganesh',
+      rt: 'SOON',
+      t: 'Why is durva offered to Ganesha?',
+      d: 'Materials · Ganesha',
+      deity: 'Ganesha',
+      s: 'The grass offered on his head, in bunches of twenty-one. Named in the Ganesha Purana.',
+      pills: [['n', 'COMING SOON']],
+      read: '—',
+      slug: 'why-is-durva-offered-to-ganesha',
+      isLive: false,
+    },
+  ];
+
+  const meaningsCards = [
+    {
+      h: 'h-thread',
+      rt: 'LIVE',
+      t: 'Three Stories, One Thread',
+      d: 'The raksha sutra',
+      deity: 'All',
+      s: 'Wife, friend, devotee — three relationships, one act of protection. Not one of them is a sister and a brother.',
+      pills: [
+        ['d', 'DHARMA · 4/5'],
+        ['n', 'PURANIC'],
+      ],
+      read: '7 min',
+      myth: '"All three stories are about siblings."',
+      slug: 'three-stories-one-thread',
+      isLive: true,
+    },
+    {
+      h: 'h-earth',
+      rt: 'SOON',
+      t: 'Sankalp — saying it out loud',
+      d: 'Meanings & Practices',
+      deity: 'All',
+      s: 'The resolve stated at the start of a vrat. Why it is said, what it must contain, and what it does not need.',
+      pills: [['n', 'COMING SOON']],
+      read: '—',
+      slug: 'sankalp-saying-it-out-loud',
+      isLive: false,
+    },
+    {
+      h: 'h-shiva',
+      rt: 'SOON',
+      t: 'Yajna, Havan or Homa?',
+      d: 'Meanings & Practices',
+      deity: 'Shiva',
+      s: 'Three words used interchangeably, for three different things. The distinction is older than the confusion.',
+      pills: [['n', 'COMING SOON']],
+      read: '—',
+      slug: 'yajna-havan-or-homa',
+      isLive: false,
+    },
+  ];
+  const dynamicMaterialsCards = concepts
+    .filter((concept: any) => concept.category === 'Materials')
+    .map((concept: any, idx: number) => {
+      let gallery: any[] = [];
+
+      try {
+        const parsed = JSON.parse(concept.threeStoriesGalleryJson || '[]');
+        gallery = Array.isArray(parsed) ? parsed : [];
+      } catch {
+        gallery = [];
+      }
+      const firstGalleryItem = gallery[0] || {};
+      return {
+        h:
+          idx % 3 === 0
+            ? 'h-shiva'
+            : idx % 3 === 1
+              ? 'h-vishnu'
+              : 'h-ganesh',
+        rt: concept.status === 'PUBLISHED' ? 'LIVE' : '',
+        t: concept.title || '',
+        d: concept.category || 'Materials',
+        deity: concept.deity || 'All',
+        s: concept.summary || '',
+        pills: [['d', 'DHARMA · 4/5']],
+        read: concept.readTime || '—',
+        slug: concept.slug || '',
+        isLive: true,
+        imageUrl:
+          firstGalleryItem.image ||
+          firstGalleryItem.imageUrl ||
+          firstGalleryItem.imageURL ||
+          firstGalleryItem.src ||
+          '',
+      };
+    });
+
+  const dynamicMeaningsCards = concepts
+    .filter(
+      (concept: Concept) =>
+        concept.category === 'Meanings & Practices'
+    )
+    .map((concept: any, idx: number) => ({
+      h:
+        idx % 3 === 0
+          ? 'h-thread'
+          : idx % 3 === 1
+            ? 'h-earth'
+            : 'h-shiva',
+      rt: 'LIVE',
+      t: concept.title || '',
+      d: concept.category || 'Meanings & Practices',
+      deity: 'All',
+      s: concept.summary || '',
+      pills: [['d', 'DHARMA · 4/5']],
+      read: concept.readTime || '—',
+      slug: concept.slug || '',
+      isLive: true,
+      myth: concept.myth || concept.correction || '',
+      imageUrl: (() => {
+        try {
+          const gallery = JSON.parse(
+            concept.threeStoriesGalleryJson || '[]'
+          );
+          const firstImage = Array.isArray(gallery)
+            ? gallery[0]?.image
+            : '';
+          return firstImage || '';
+        } catch {
+          return '';
+        }
+      })(),
+    }));
+
+  const dailyPujaRows = [
+    {
+      t: 'Puja room setup — where and how',
+      s: 'Direction, height, what belongs on the shelf and what does not',
+      slug: 'puja-room-setup',
+    },
+    {
+      t: 'Morning sandhya and panch-upachara',
+      s: 'The five-offering form, in about ten minutes',
+      slug: 'morning-sandhya-and-panch-upachara',
+    },
+    {
+      t: 'Tulsi Puja — the daily practice',
+      s: 'Watering, the evening diya, and the days it is not plucked',
+      slug: 'tulsi-puja-the-daily-practice',
+    },
+    {
+      t: 'Deepa Daan — when, why and how',
+      s: 'The lamp as offering rather than decoration',
+      slug: 'deepa-daan-when-why-and-how',
+    },
+  ];
+
+  const dharmaVsPrathaCards = [
+    {
+      h: 'h-gold',
+      rt: 'SOON',
+      t: '10 things you think are mandatory',
+      d: 'Dharma vs Pratha',
+      deity: 'All',
+      s: 'And are not. Each one traced to where it actually came from — usually a region, sometimes a shop.',
+      pills: [['n', 'COMING SOON']],
+      read: '—',
+      slug: '10-things-you-think-are-mandatory',
+      isLive: false,
+    },
+    {
+      h: 'h-gold',
+      rt: 'SOON',
+      t: 'Can women do puja during menstruation?',
+      d: 'Dharma vs Pratha',
+      deity: 'All',
+      s: 'Genuinely contested. We present the range of positions with sources, and say plainly where no scriptural restriction exists.',
+      pills: [['n', 'COMING SOON']],
+      read: '—',
+      slug: 'can-women-do-puja-during-menstruation',
+      isLive: false,
+    },
+    {
+      h: 'h-gold',
+      rt: 'SOON',
+      t: 'Regional practice myths',
+      d: 'Dharma vs Pratha',
+      deity: 'All',
+      s: 'Your way is not wrong because it differs from theirs. An ongoing series on what varies and why.',
+      pills: [['n', 'COMING SOON']],
+      read: '—',
+      slug: 'regional-practice-myths',
+      isLive: false,
+    },
+  ];
+
+  const mantrasRows = [
+    {
+      t: 'Panchakshara — Om Namah Shivaya',
+      s: 'The five syllables, and why the count matters',
+      slug: 'panchakshara-om-namah-shivaya',
+    },
+    {
+      t: 'Mahamrityunjaya — meaning and use',
+      s: 'What it asks for, and what it does not promise',
+      slug: 'mahamrityunjaya-meaning-and-use',
+    },
+    {
+      t: 'Gayatri Mantra — the full guide',
+      s: 'Who may recite it, when, and the answer to the question everyone asks',
+      slug: 'gayatri-mantra-the-full-guide',
+    },
+    {
+      t: 'Mantras for daily puja',
+      s: 'A short set, with audio, for the ten-minute morning',
+      slug: 'mantras-for-daily-puja',
+    },
+  ];
+
+  const isMatchFilter = (itemDeity?: string) => {
+    if (activeFilter === 'All') return true;
+    if (!itemDeity) return true;
+    return itemDeity.toLowerCase().includes(activeFilter.toLowerCase()) || itemDeity === 'All';
   };
 
-  const getSlug = (item: Concept) => item.slug || slugify(item.title);
-
-  const getTextFromTiptap = (value: any) => {
-    if (!value) return '';
-    if (typeof value === 'string') {
-      return value.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+  const handleCardClick = (cardItem: { isLive?: boolean; slug: string; t: string }) => {
+    if (cardItem.isLive) {
+      router.push(`/dharmic-concepts/${cardItem.slug}`);
+    } else {
+      showToast(`"${cardItem.t}" is launching soon!`);
     }
-    const output: string[] = [];
-    function walk(node: any) {
-      if (!node) return;
-      if (Array.isArray(node)) {
-        node.forEach(walk);
-        return;
-      }
-      if (typeof node === 'object') {
-        if (typeof node.text === 'string') output.push(node.text);
-        if (node.content) walk(node.content);
-      }
-    }
-    walk(value);
-    return output.join(' ').replace(/\s+/g, ' ').trim();
   };
 
-  const featured = concepts.length ? concepts[0] : null;
-  const categories = ['Materials', 'Meanings & Practices', 'Daily Puja'];
+  const handleRowClick = (rowItem: { slug: string; t: string }) => {
+    showToast(`"${rowItem.t}" is coming soon!`);
+  };
 
   return (
     <div className="concepts-page min-h-screen w-full max-w-full overflow-x-hidden">
-      {/* NAV */}
-      <header className="site-nav">
-        <div className="site-nav-brand">THE TAPA CO.</div>
-        <nav className="site-nav-links">
-
-          <Link href="/">Home</Link>
-          <Link href="/dharmic-concepts">Dharmic Concepts</Link>
-        </nav>
-      </header>
-
-      {/* BREADCRUMB */}
+      { }
       <div className="bcrumb">
         <div className="bc-in">
-          <div className="bc-l">
-            <Link href="/">Home</Link> › <b>Dharmic Concepts</b>
-          </div>
+          <Link href="/">Home</Link> › <b>Dharmic Concepts</b>
         </div>
       </div>
 
-      {/* HERO */}
-      <section className="hero">
-        <div className="hero-bg"></div>
-        <div className="hero-ov"></div>
-        <div className="hero-c">
-          <div className="hero-in">
-            <p className="hero-ey">THE TAPA CO. · DIRECTORY</p>
-            <div className="hero-tag">◆ DHARMIC CONCEPTS · MEANINGS &amp; MATERIALS</div>
-            <h1 className="hero-h1">The object in your hand has a story</h1>
-            <p className="hero-sub">
-              Why bilva and not tulsi. Why three stories and not one. These sit behind every pujan guide —
-              when a samagri list says "bilva leaves", this is where the reason lives.
-            </p>
-            <div className="hero-btns">
-              {featured && (
-                <button
-                  className="hb-p featured-btn"
-                  onClick={() => router.push(`/dharmic-concepts/${getSlug(featured)}`)}
-                >
-                  Featured Concept: {featured.title || ''} ›
-                </button>
-              )}
+      { }
+      <section className="chero dc">
+        <div className="wrap">
+          <div className="chero-in">
+            <div>
+              <p className="ch-ey">DHARMIC CONCEPTS</p>
+              <h1 className="ch-h1">The object in your hand has a story</h1>
+              <p className="ch-p">
+                Why bilva and not tulsi. Why three stories and not one. These sit behind every ritual guide —
+                when a samagri list says "bilva leaves", this is where the reason lives.
+              </p>
+              <div className="ch-meta">
+                <span className="ch-m"><b>2</b> live</span>
+                <span className="ch-m"><b>14</b> planned by March</span>
+                <span className="ch-m"><b>5</b> sub-categories</span>
+              </div>
+            </div>
+            <div className="ch-side">
+              <div className="chs-l">◗ LOOK UP ANY TERM</div>
+              <div className="chs-t">The Glossary</div>
+              <p className="chs-d">
+                142 words defined once, in plain language, with the Devanagari and how to say it out loud.
+              </p>
+              <button className="chs-c" onClick={() => router.push('/glossary')}>
+                Open the glossary ›
+              </button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* BODY */}
-      <div className="wrap" style={{ paddingBottom: '60px' }}>
-        <div className="layout">
-          <div className="main">
-            {loading ? (
-              <div className="loader"></div>
-            ) : concepts.length === 0 ? (
-              <div className="empty-state">No concepts published yet.</div>
-            ) : (
-              categories.map((cat) => {
-                const catConcepts = concepts.filter(
-                  (c) => String(c.category || '').toLowerCase() === cat.toLowerCase()
-                );
-                if (!catConcepts.length) return null;
-                const isDaily = cat === 'Daily Puja';
-                const description =
-                  cat === 'Materials'
-                    ? 'The things you hold, offer and light. Each one has a story, a source and a set of offering rules.'
-                    : cat === 'Meanings & Practices'
-                      ? 'What you do, and what it means. Sankalpa, abhishek, avahana — the acts every pujan assumes you already understand.'
-                      : 'The practice that is not attached to a festival. Room setup, the diya, the aarti, and what a daily puja actually asks of you.';
+      { }
+      <div className="filters">
+        <div className="f-in">
+          <span className="f-l">FILTER</span>
+          {['All', 'Shiva', 'Vishnu', 'Devi', 'Ganesha'].map((filterName) => (
+            <button
+              key={filterName}
+              className={`fc ${activeFilter === filterName ? 'on' : ''}`}
+              onClick={() => setActiveFilter(filterName)}
+            >
+              {filterName}
+            </button>
+          ))}
+          <span className="f-sort">
+            Sort — <b>Most read</b> ▾
+          </span>
+        </div>
+      </div>
 
-                return (
-                  <div key={cat} style={{ marginTop: '30px' }}>
-                    <div className="sec-head">
-                      <span className="sec-plus">+</span>
-                      <div>
-                        <span className="sec-title">{cat}</span>
-                        <span className="sec-guide">{description}</span>
+      { }
+      <div className="wrap">
+        <div className="pagepad">
+          { }
+          <div className="sec">
+            <div className="sec-h">
+              <div>
+                <div className="sec-ey">OBJECTS AND WHAT THEY MEAN</div>
+                <div className="sec-t">Materials</div>
+                <p className="sec-s">
+                  The things you hold, offer and light. Each one has a story, a source and a set of offering rules.
+                </p>
+              </div>
+              <a className="sec-a">
+                <span>9 planned · 1 live</span>View all ›
+              </a>
+            </div>
+            <div className="grid">
+              {materialsCards
+                .filter((item) => isMatchFilter(item.deity))
+                .map((cardItem) => (
+                  <a
+                    key={cardItem.slug}
+                    className="c"
+                    onClick={() => handleCardClick(cardItem)}
+                  >
+                    <div className={`c-top ${cardItem.h}`}>
+                      {cardItem.rt && <span className="c-when">{cardItem.rt}</span>}
+                    </div>
+                    <div className="c-b">
+                      <div className="c-t">{cardItem.t}</div>
+                      {cardItem.d && <div className="c-d">{cardItem.d}</div>}
+                      <p className="c-s">{cardItem.s}</p>
+                      <div className="c-f">
+                        {(cardItem.pills || []).map((p, idx) => (
+                          <span key={idx} className={`pill ${p[0]}`}>
+                            {p[1]}
+                          </span>
+                        ))}
+                        <span className="c-read">{cardItem.read || ''}</span>
+                      </div>
+                    </div>
+                  </a>
+                ))}
+
+              {dynamicMaterialsCards
+                .filter((item) => isMatchFilter(item.deity))
+                .map((cardItem, idx) => (
+                  <a
+                    key={cardItem.slug || `material-${idx}`}
+                    className="c"
+                    onClick={() => handleCardClick(cardItem)}
+                  >
+                    <div
+                      className={`c-top ${cardItem.h}`}
+                      style={
+                        cardItem.imageUrl
+                          ? {
+                            backgroundImage: `url("${cardItem.imageUrl}")`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                            backgroundRepeat: 'no-repeat',
+                          }
+                          : undefined
+                      }
+                    >
+                      {cardItem.rt && (
+                        <span className="c-when">{cardItem.rt}</span>
+                      )}
+                    </div>
+
+                    <div className="c-b">
+                      <div className="c-t">{cardItem.t}</div>
+                      {cardItem.d && (
+                        <div className="c-d">{cardItem.d}</div>
+                      )}
+                      <p className="c-s">{cardItem.s}</p>
+                      <div className="c-f">
+                        {(cardItem.pills || []).map((p, pillIdx) => (
+                          <span
+                            key={pillIdx}
+                            className={`pill ${p[0]}`}
+                          >
+                            {p[1]}
+                          </span>
+                        ))}
+                        <span className="c-read">
+                          {cardItem.read || ''}
+                        </span>
+                      </div>
+                    </div>
+                  </a>
+                ))}
+            </div>
+          </div>
+
+          { }
+          <div className="sec">
+            <div className="sec-h">
+              <div>
+                <div className="sec-ey">ACTS AND IDEAS</div>
+                <div className="sec-t">Meanings &amp; Practices</div>
+                <p className="sec-s">
+                  What you do, and what it means. Sankalpa, abhishek, avahana — the acts every vidhi assumes you already understand.
+                </p>
+              </div>
+              <a className="sec-a">
+                <span>12 planned · 1 live</span>View all ›
+              </a>
+            </div>
+            <div className="grid">
+              {meaningsCards
+                .filter((item) => isMatchFilter(item.deity))
+                .map((cardItem) => (
+                  <a
+                    key={cardItem.slug}
+                    className="c"
+                    onClick={() => handleCardClick(cardItem)}
+                  >
+                    <div className={`c-top ${cardItem.h}`}>
+                      {cardItem.rt && (
+                        <span className="c-when">{cardItem.rt}</span>
+                      )}
+                    </div>
+
+                    <div className="c-b">
+                      <div className="c-t">{cardItem.t}</div>
+
+                      {cardItem.d && (
+                        <div className="c-d">{cardItem.d}</div>
+                      )}
+
+                      <p className="c-s">{cardItem.s}</p>
+
+                      <div className="c-f">
+                        {(cardItem.pills || []).map((p, idx) => (
+                          <span
+                            key={idx}
+                            className={`pill ${p[0]}`}
+                          >
+                            {p[1]}
+                          </span>
+                        ))}
+
+                        <span className="c-read">
+                          {cardItem.read || ''}
+                        </span>
                       </div>
                     </div>
 
-                    {isDaily ? (
-                      <div className="daily-list">
-                        {catConcepts.map((c) => {
-                          const slug = getSlug(c);
-                          const text = getTextFromTiptap(c.body).substring(0, 120);
-                          return (
-                            <div key={slug} className="daily-row">
-                              <div>
-                                <b className="daily-row-title">{c.title || ''}</b>
-                                <span className="daily-row-desc">{text}{text ? '...' : ''}</span>
-                              </div>
-                              <span
-                                className="daily-read"
-                                onClick={() => router.push(`/dharmic-concepts/${slug}`)}
-                              >
-                                READ ›
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ) : (
-                      <div className="section-grid">
-                        {catConcepts.map((c) => {
-                          const slug = getSlug(c);
-                          const isLive = c.status === 'PUBLISHED';
-                          const summary = getTextFromTiptap(c.body).substring(0, 160) + '...';
-                          return (
-                            <div
-                              key={slug}
-                              className={`c ${isLive ? 'cursor-pointer' : 'soon'}`}
-                              onClick={() => {
-                                if (isLive) {
-                                  router.push(`/dharmic-concepts/${slug}`);
-                                } else {
-                                  showToast(`"${c.title || 'This concept'}" is launching soon!`);
-                                }
-                              }}
-                              style={{
-                                background: 'var(--card)',
-                                border: '1px solid var(--border)',
-                                borderRadius: '14px',
-                                padding: '16px 18px',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                justifyContent: 'space-between',
-                                height: '100%',
-                                textAlign: 'left',
-                              }}
-                            >
-                              <div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                                  <span style={{ fontSize: '9.5px', fontWeight: 700, color: 'var(--gold)', letterSpacing: '.6px' }}>
-                                    {String(c.category || '').toUpperCase()}
-                                  </span>
-                                  <span
-                                    className={`pill ${isLive ? 'd' : 'p'}`}
-                                    style={{
-                                      fontSize: '9px',
-                                      fontWeight: 700,
-                                      padding: '3px 8px',
-                                      borderRadius: '5px',
-                                      background: isLive ? 'var(--d-bg)' : 'var(--p-bg)',
-                                      color: isLive ? 'var(--d-tx)' : 'var(--p-tx)',
-                                    }}
-                                  >
-                                    {isLive ? 'LIVE' : 'SOON'}
-                                  </span>
-                                </div>
-                                <h3 style={{ fontSize: '16.5px', fontWeight: 700, color: 'var(--dark)', margin: '8px 0 6px' }}>
-                                  {c.title}
-                                </h3>
-                                <p style={{ fontSize: '12.5px', color: 'var(--sub-text)', lineHeight: 1.6, marginBottom: '15px' }}>
-                                  {summary}
-                                </p>
-                              </div>
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1.5px solid var(--border-light)', paddingTop: '8px' }}>
-                                <div style={{ display: 'flex', gap: '6px' }}>
-                                  <span
-                                    className="pill d"
-                                    style={{
-                                      fontSize: '9px',
-                                      padding: '3px 8px',
-                                      borderRadius: '5px',
-                                      background: 'var(--d-bg)',
-                                      color: 'var(--d-tx)',
-                                    }}
-                                  >
-                                    DHARMA · 4/5
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
+                    {cardItem.myth && (
+                      <div className="myth">
+                        <b>Corrects:</b> {cardItem.myth}
                       </div>
                     )}
-                    <div className="hr"></div>
-                  </div>
-                );
-              })
-            )}
+                  </a>
+                ))}
+
+              {dynamicMeaningsCards
+                .filter((item) => isMatchFilter(item.deity))
+                .map((cardItem, idx) => (
+                  <a
+                    key={cardItem.slug || `meaning-${idx}`}
+                    className="c"
+                    onClick={() => handleCardClick(cardItem)}
+                  >
+                    <div
+                      className={`c-top ${cardItem.h}`}
+                      style={
+                        cardItem.imageUrl
+                          ? {
+                            backgroundImage: `url("${cardItem.imageUrl}")`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                            backgroundRepeat: 'no-repeat',
+                          }
+                          : undefined
+                      }
+                    >
+                      {cardItem.rt && (
+                        <span className="c-when">
+                          {cardItem.rt}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="c-b">
+                      <div className="c-t">
+                        {cardItem.t}
+                      </div>
+
+                      {cardItem.d && (
+                        <div className="c-d">
+                          {cardItem.d}
+                        </div>
+                      )}
+
+                      <p className="c-s">
+                        {cardItem.s}
+                      </p>
+
+                      <div className="c-f">
+                        {(cardItem.pills || []).map((p, pillIdx) => (
+                          <span
+                            key={pillIdx}
+                            className={`pill ${p[0]}`}
+                          >
+                            {p[1]}
+                          </span>
+                        ))}
+
+                        <span className="c-read">
+                          {cardItem.read || ''}
+                        </span>
+                      </div>
+                    </div>
+
+                    {cardItem.myth && (
+                      <div className="myth">
+                        <b>Corrects:</b> "{cardItem.myth}"
+                      </div>
+                    )}
+                  </a>
+                ))}
+            </div>
           </div>
 
-          {/* SIDEBAR */}
-          <div className="side">
-            <div className="sbcomp">
-              <div className="sbcomp-h">
-                <span className="sbcomp-l">OUR METHOD</span>
+          { }
+          <div className="sec">
+            <div className="sec-h">
+              <div>
+                <div className="sec-ey">EVERY MORNING</div>
+                <div className="sec-t">Daily Puja</div>
+                <p className="sec-s">
+                  The practice that is not attached to a festival. Room setup, the diya, the aarti, and what a daily puja actually asks of you.
+                </p>
               </div>
-              <p className="sbcomp-t" style={{ fontSize: '12px' }}>
-                We resolve the line between <b>Dharma</b> (what the scriptures ask) and <b>Pratha</b> (what family custom dictates), giving you the freedom to choose your devotion.
-              </p>
+              <a className="sec-a">
+                <span>7 planned</span>View all ›
+              </a>
+            </div>
+            <div className="rows">
+              {dailyPujaRows.map((rowItem) => (
+                <a
+                  key={rowItem.slug}
+                  className="row"
+                  onClick={() => handleRowClick(rowItem)}
+                >
+                  <span className="row-n">
+                    <span className="row-t">{rowItem.t}</span>
+                    <span className="row-s">{rowItem.s}</span>
+                  </span>
+                  <span className="row-a">›</span>
+                </a>
+              ))}
+            </div>
+          </div>
+
+          { }
+          <div className="sec">
+            <div className="sec-h">
+              <div>
+                <div className="sec-ey">THE SIGNATURE SERIES</div>
+                <div className="sec-t">Dharma vs Pratha</div>
+                <p className="sec-s">
+                  Twenty articles by December. Each one takes a practice everyone assumes is mandatory and shows exactly where it comes from.
+                </p>
+              </div>
+              <a className="sec-a">
+                <span>20 planned</span>View all ›
+              </a>
+            </div>
+            <div className="grid">
+              {dharmaVsPrathaCards
+                .filter((item) => isMatchFilter(item.deity))
+                .map((cardItem) => (
+                  <a
+                    key={cardItem.slug}
+                    className="c"
+                    onClick={() => handleCardClick(cardItem)}
+                  >
+                    <div className={`c-top ${cardItem.h}`}>
+                      {cardItem.rt && <span className="c-when">{cardItem.rt}</span>}
+                    </div>
+                    <div className="c-b">
+                      <div className="c-t">{cardItem.t}</div>
+                      {cardItem.d && <div className="c-d">{cardItem.d}</div>}
+                      <p className="c-s">{cardItem.s}</p>
+                      <div className="c-f">
+                        {(cardItem.pills || []).map((p, idx) => (
+                          <span key={idx} className={`pill ${p[0]}`}>
+                            {p[1]}
+                          </span>
+                        ))}
+                        <span className="c-read">{cardItem.read || ''}</span>
+                      </div>
+                    </div>
+                  </a>
+                ))}
+            </div>
+          </div>
+
+          { }
+          <div className="sec">
+            <div className="sec-h">
+              <div>
+                <div className="sec-ey">SAID ALOUD</div>
+                <div className="sec-t">Mantras</div>
+                <p className="sec-s">
+                  Meaning, pronunciation and use. Every one with audio, in both English transliteration and Devanagari.
+                </p>
+              </div>
+              <a className="sec-a">
+                <span>4 planned</span>View all ›
+              </a>
+            </div>
+            <div className="rows">
+              {mantrasRows.map((rowItem) => (
+                <a
+                  key={rowItem.slug}
+                  className="row"
+                  onClick={() => handleRowClick(rowItem)}
+                >
+                  <span className="row-n">
+                    <span className="row-t">{rowItem.t}</span>
+                    <span className="row-s">{rowItem.s}</span>
+                  </span>
+                  <span className="row-a">›</span>
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      { }
+      <div className="wrap">
+        <div className="methodband">
+          <div>
+            <div className="mb-ey">HOW WE DECIDE WHAT IS TRUE</div>
+            <div className="mb-t">Every badge on this page means something specific</div>
+            <p className="mb-p">
+              Dharma, Pratha or Bhranti — with a confidence score you can check. If we cannot name the text a reader could open, we do not make the claim.
+            </p>
+            <button className="mb-c" onClick={() => router.push('/editorial-method')}>
+              Read our editorial method ›
+            </button>
+          </div>
+          <div className="mb-r">
+            <div className="mbr d">
+              <div className="mbr-k">DHARMA</div>
+              <div className="mbr-v">Named in a text you could open yourself.</div>
+            </div>
+            <div className="mbr p">
+              <div className="mbr-k">PRATHA</div>
+              <div className="mbr-v">Regional or family custom. Real — not scripture.</div>
+            </div>
+            <div className="mbr b">
+              <div className="mbr-k">BHRANTI</div>
+              <div className="mbr-v">A misconception. Corrected in every guide it appears in.</div>
             </div>
           </div>
         </div>
       </div>
 
       {toastMessage && <div className="toast">{toastMessage}</div>}
-
-      <footer
-        style={{
-          background: 'var(--darkbar)',
-          color: '#fff',
-          padding: '28px 40px',
-          textAlign: 'center',
-          fontSize: '12px',
-        }}
-      >
-        © THE TAPA CO. · Dharmic Concepts
-      </footer>
     </div>
   );
 }

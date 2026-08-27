@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { BeginnerGuide } from '@/lib/beginner-guides-data';
 
@@ -8,9 +8,73 @@ interface BeginnerGuideDetailViewProps {
   guide: BeginnerGuide;
 }
 
-export default function BeginnerGuideDetailView({ guide }: BeginnerGuideDetailViewProps) {
+export default function BeginnerGuideDetailView({ guide: initialGuide }: BeginnerGuideDetailViewProps) {
   const [lang, setLang] = useState<'EN' | 'HI'>('EN');
   const [isSaved, setIsSaved] = useState(false);
+  const [guide, setGuide] = useState<BeginnerGuide>(initialGuide);
+
+  useEffect(() => {
+    setGuide(initialGuide);
+  }, [initialGuide]);
+
+  useEffect(() => {
+    async function fetchCmsData() {
+      if (!initialGuide?.slug) return;
+      try {
+        const res = await fetch(`/api/public/beginner-guides/${initialGuide.slug}`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.data) {
+            const cms = json.data;
+            let parsedKandas = initialGuide.kandas;
+            if (cms.kandasJson) {
+              try {
+                const k = typeof cms.kandasJson === 'string' ? JSON.parse(cms.kandasJson) : cms.kandasJson;
+                if (Array.isArray(k) && k.length > 0) {
+                  parsedKandas = k.map((item: any, idx: number) => ({
+                    id: item.id || `kanda-${idx}`,
+                    number: item.number || idx + 1,
+                    title: item.title || item.kandaTitle || '',
+                    devanagari: item.devanagari || item.sanskrit || '',
+                    summary: item.summary || item.description || '',
+                    badge: item.badge || undefined,
+                    isNow: item.isNow || false,
+                  }));
+                }
+              } catch (e) {}
+            }
+            let parsedWorries = initialGuide.worries;
+            if (cms.commonWorriesJson) {
+              try {
+                const w = typeof cms.commonWorriesJson === 'string' ? JSON.parse(cms.commonWorriesJson) : cms.commonWorriesJson;
+                if (Array.isArray(w) && w.length > 0) {
+                  parsedWorries = w.map((item: any, idx: number) => ({
+                    id: item.id || `worry-${idx}`,
+                    question: item.question || item.title || '',
+                    answer: item.answer || item.description || '',
+                  }));
+                }
+              } catch (e) {}
+            }
+
+            setGuide((prev) => ({
+              ...prev,
+              title: cms.bannerTitle || cms.title || prev.title,
+              subtitle: cms.bannerDescription || cms.introDescription || prev.subtitle,
+              eyebrow: cms.bannerEyebrow || prev.eyebrow,
+              openingText: cms.introHeading || prev.openingText,
+              introParagraphs: cms.introDescription ? [cms.introDescription] : prev.introParagraphs,
+              ...(parsedKandas ? { kandas: parsedKandas } : {}),
+              ...(parsedWorries ? { worries: parsedWorries } : {}),
+            }));
+          }
+        }
+      } catch (err) {
+        console.error('Failed to fetch CMS beginner guide detail:', err);
+      }
+    }
+    fetchCmsData();
+  }, [initialGuide]);
 
   const handleShare = () => {
     if (typeof window !== 'undefined') {

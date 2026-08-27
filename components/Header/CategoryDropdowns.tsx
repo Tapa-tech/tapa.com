@@ -126,7 +126,7 @@ export const CategoryDropdowns: React.FC<CategoryDropdownsProps> = ({
           <div className="dd-in">
             <div>
               <div className="col-h">START HERE</div>
-              <Link className="dl lead" href="/dharmic-concepts/bilva">
+              <Link className="dl lead" href="/dharmic-concepts/">
                 <b>Why is bilva dear to Mahadev?</b>
                 <small>The leaf, the story, the offering rules</small>
               </Link>

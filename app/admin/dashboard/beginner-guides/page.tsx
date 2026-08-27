@@ -733,21 +733,21 @@ function BeginnerGuidesCmsContent() {
     if (guide.kandasJson) {
       try {
         parsedKandas = JSON.parse(guide.kandasJson);
-      } catch (e) {}
+      } catch (e) { }
     }
 
     let parsedWorries: WorryItem[] = DEFAULT_COMMON_WORRIES_DEMO;
     if (guide.commonWorriesJson) {
       try {
         parsedWorries = JSON.parse(guide.commonWorriesJson);
-      } catch (e) {}
+      } catch (e) { }
     }
 
     let parsedNext: RelatedContentItem[] = DEFAULT_WHAT_TO_READ_NEXT_DEMO;
     if (guide.whatToReadNextItemsJson) {
       try {
         parsedNext = JSON.parse(guide.whatToReadNextItemsJson);
-      } catch (e) {}
+      } catch (e) { }
     }
 
     setFormData({

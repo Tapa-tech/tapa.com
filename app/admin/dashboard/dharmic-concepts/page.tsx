@@ -764,49 +764,49 @@ function DharmicConceptsCmsContent() {
     if (concept.storiesItemsJson) {
       try {
         parsedStories = JSON.parse(concept.storiesItemsJson);
-      } catch (e) {}
+      } catch (e) { }
     }
 
     let parsedGallery: GalleryItem[] = DEFAULT_GALLERY_DEMO;
     if (concept.threeStoriesGalleryJson) {
       try {
         parsedGallery = JSON.parse(concept.threeStoriesGalleryJson);
-      } catch (e) {}
+      } catch (e) { }
     }
 
     let parsedMyths: MythItem[] = DEFAULT_MYTHS_DEMO;
     if (concept.mythsItemsJson) {
       try {
         parsedMyths = JSON.parse(concept.mythsItemsJson);
-      } catch (e) {}
+      } catch (e) { }
     }
 
     let parsedRitualGuides: RelatedItem[] = DEFAULT_RELATED_RITUAL_GUIDES_DEMO;
     if (concept.relatedRitualGuidesJson) {
       try {
         parsedRitualGuides = JSON.parse(concept.relatedRitualGuidesJson);
-      } catch (e) {}
+      } catch (e) { }
     }
 
     let parsedPujans: RelatedItem[] = DEFAULT_RELATED_PUJANS_DEMO;
     if (concept.relatedPujansJson) {
       try {
         parsedPujans = JSON.parse(concept.relatedPujansJson);
-      } catch (e) {}
+      } catch (e) { }
     }
 
     let parsedConcepts: RelatedItem[] = DEFAULT_RELATED_CONCEPTS_DEMO;
     if (concept.relatedConceptsJson) {
       try {
         parsedConcepts = JSON.parse(concept.relatedConceptsJson);
-      } catch (e) {}
+      } catch (e) { }
     }
 
     let parsedDates: RelatedItem[] = DEFAULT_RELATED_DATES_DEMO;
     if (concept.relatedDatesJson) {
       try {
         parsedDates = JSON.parse(concept.relatedDatesJson);
-      } catch (e) {}
+      } catch (e) { }
     }
 
     setFormData({
@@ -1513,15 +1513,11 @@ function DharmicConceptsCmsContent() {
                           onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                           style={{ width: '100%', background: '#FFFFFF', border: '1px solid #D1D5DB', color: '#374151', padding: '11px 14px', borderRadius: '10px', fontSize: '13px', boxSizing: 'border-box', outline: 'none' }}
                         >
-                          <option value="DHARMA">DHARMA</option>
-                          <option value="Festive Pujans">Festive Pujans</option>
-                          <option value="Sadhana">Sadhana</option>
-                          <option value="Veda">Veda</option>
-                          <option value="Upanishad">Upanishad</option>
-                          <option value="Itihasa">Itihasa</option>
-                          <option value="Puranas">Puranas</option>
-                          <option value="Darshana">Darshana</option>
-                          <option value="General">General</option>
+                          <option value="Materials">Materials</option>
+                          <option value="Meanings & Practices">Meanings & Practices</option>
+                          <option value="Daily Puja">Daily Puja</option>
+                          <option value="Dharma vs Pratha">Dharma vs Pratha</option>
+                          <option value="Mantras">Mantras</option>
                         </select>
                       </div>
                     </div>

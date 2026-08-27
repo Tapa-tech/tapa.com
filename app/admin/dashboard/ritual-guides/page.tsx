@@ -1030,42 +1030,42 @@ function RitualGuidesCmsContent() {
     if (guide.sankalpaDetailsJson) {
       try {
         parsedCards = JSON.parse(guide.sankalpaDetailsJson);
-      } catch (err) {}
+      } catch (err) { }
     }
 
     let parsedKathaCards: KathaCard[] = DEFAULT_KATHA_CARDS;
     if (guide.kathaCardsJson) {
       try {
         parsedKathaCards = JSON.parse(guide.kathaCardsJson);
-      } catch (err) {}
+      } catch (err) { }
     }
 
     let parsedSamagriItems: SamagriItem[] = DEFAULT_SAMAGRI_ITEMS;
     if (guide.samagriItemsJson) {
       try {
         parsedSamagriItems = JSON.parse(guide.samagriItemsJson);
-      } catch (err) {}
+      } catch (err) { }
     }
 
     let parsedFastingOptions: FastingOption[] = DEFAULT_FASTING_OPTIONS;
     if (guide.fastingOptionsJson) {
       try {
         parsedFastingOptions = JSON.parse(guide.fastingOptionsJson);
-      } catch (err) {}
+      } catch (err) { }
     }
 
     let parsedMythsItems: MythItem[] = DEFAULT_MYTHS_ITEMS;
     if (guide.mythsItemsJson) {
       try {
         parsedMythsItems = JSON.parse(guide.mythsItemsJson);
-      } catch (err) {}
+      } catch (err) { }
     }
 
     let parsedVidhiDays: VidhiDay[] = DEFAULT_VIDHI_DAYS;
     if (guide.vidhiDaysJson) {
       try {
         parsedVidhiDays = JSON.parse(guide.vidhiDaysJson);
-      } catch (err) {}
+      } catch (err) { }
     }
 
     setFormData({
@@ -1655,7 +1655,7 @@ function RitualGuidesCmsContent() {
       {isModalOpen && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: '20px', overflowY: 'auto' }}>
           <div style={{ background: '#FFFFFF', borderRadius: '24px', width: '100%', maxWidth: '980px', maxHeight: '92vh', overflowY: 'auto', padding: '32px', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', border: '1px solid #EFEAE4' }}>
-            
+
             {/* MODAL TOP HEADER */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', paddingBottom: '16px', borderBottom: '1px solid #F3F4F6' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -1781,12 +1781,28 @@ function RitualGuidesCmsContent() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px', marginBottom: '16px' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Category *</label>
-                    <input
-                      type="text"
+                    <select
                       value={formData.category}
-                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      style={{ width: '100%', border: '1px solid #D1D5DB', padding: '10px 14px', borderRadius: '10px', fontSize: '13px' }}
-                    />
+                      onChange={(e) =>
+                        setFormData({ ...formData, category: e.target.value })
+                      }
+                      style={{
+                        width: '100%',
+                        background: '#FFFFFF',
+                        border: '1px solid #D1D5DB',
+                        color: '#374151',
+                        padding: '11px 14px',
+                        borderRadius: '10px',
+                        fontSize: '13px',
+                        boxSizing: 'border-box',
+                        outline: 'none'
+                      }}
+                    >
+                      <option value="Beginner's Guides">Beginner's Guides</option>
+                      <option value="Festive Pujans">Festive Pujans</option>
+                      <option value="All-Year Pujans">All-Year Pujans</option>
+                      <option value="Sanskar & Life Events">Sanskar & Life Events</option>
+                    </select>
                   </div>
                   <div>
                     <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Rating *</label>

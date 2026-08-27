@@ -1,0 +1,670 @@
+:root {
+  --bg: #F2EDE4;
+  --card: #FFFFFF;
+  --dark: #1C1712;
+  --darkbar: #1A1208;
+  --pink: #FD066D;
+  --amber: #E8A020;
+  --gold: #A07800;
+  --yellow: #EDAB3A;
+  --body-text: #2C2010;
+  --mid-text: #5C4B12;
+  --sub-text: #8A7A68;
+  --border: #E8E0D0;
+  --border-light: #F0E8D8;
+  --hero-text: #FFFDF5;
+  --dim: #7A6A55;
+  --dimmer: #5C4E36;
+  --d-bg: #E6F1E6;
+  --d-tx: #27500A;
+  --d-bd: #C9DFC9;
+  --p-bg: #FFF8E6;
+  --p-tx: #A07800;
+  --p-bd: #EFE0B8;
+  --b-bg: #F0E9E1;
+  --b-tx: #4A3525;
+  --b-bd: #D9CBB8;
+  --data-bg: #EEF3F7;
+  --data-tx: #1F4460;
+  --data-bd: #C3D6E4;
+}
+
+.beginner-listing-page {
+  background: var(--bg);
+  color: var(--body-text);
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.beginner-listing-page .wrap {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 40px;
+}
+
+/* BREADCRUMB */
+.beginner-listing-page .bcrumb {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  padding: 0 40px;
+}
+
+.beginner-listing-page .bc-in {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 10px 0;
+  font-size: 13px;
+  color: var(--sub-text);
+}
+
+.beginner-listing-page .bc-in b {
+  color: var(--body-text);
+  font-weight: 500;
+}
+
+/* SIBLING RAIL */
+.beginner-listing-page .subrail {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  padding: 0 40px;
+}
+
+.beginner-listing-page .sr-in {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 0;
+  overflow-x: auto;
+}
+
+.beginner-listing-page .sr-l {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: .6px;
+  white-space: nowrap;
+  margin-right: 4px;
+}
+
+.beginner-listing-page .sr-i {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--sub-text);
+  white-space: nowrap;
+  padding: 6px 13px;
+  border-radius: 8px;
+  text-decoration: none;
+}
+
+.beginner-listing-page .sr-i.on {
+  background: #FFF0F5;
+  color: var(--pink);
+  font-weight: 700;
+}
+
+.beginner-listing-page .sr-up {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--pink);
+  white-space: nowrap;
+  padding-left: 14px;
+  text-decoration: none;
+}
+
+/* HERO */
+.beginner-listing-page .chero {
+  padding: 42px 0 40px;
+  position: relative;
+  overflow: hidden;
+}
+
+.beginner-listing-page .chero.rg {
+  background: linear-gradient(150deg, #3A0C1B 0%, #7A1838 42%, #2A0810 100%);
+}
+
+.beginner-listing-page .chero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 60% 80% at 80% 40%, rgba(255, 255, 255, .05) 0%, transparent 62%);
+}
+
+.beginner-listing-page .chero-in {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.25fr .75fr;
+  gap: 44px;
+  align-items: center;
+}
+
+.beginner-listing-page .ch-ey {
+  font-size: 10px;
+  color: #E3B567;
+  letter-spacing: 1px;
+  margin-bottom: 11px;
+}
+
+.beginner-listing-page .ch-h1 {
+  font-size: 40px;
+  font-weight: 700;
+  color: var(--hero-text);
+  line-height: 1.12;
+  letter-spacing: -.8px;
+  margin-bottom: 13px;
+}
+
+.beginner-listing-page .shero {
+  padding: 34px 0 32px;
+}
+
+.beginner-listing-page .sh-h1 {
+  font-size: 34px;
+}
+
+.beginner-listing-page .sh-crumbline {
+  font-size: 10px;
+  color: #E3B567;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+}
+
+.beginner-listing-page .sh-crumbline b {
+  color: rgba(255, 253, 245, .55);
+  font-weight: 400;
+}
+
+.beginner-listing-page .ch-p {
+  font-size: 15.5px;
+  color: rgba(255, 253, 245, .7);
+  line-height: 1.8;
+  max-width: 520px;
+  margin-bottom: 18px;
+}
+
+.beginner-listing-page .ch-meta {
+  display: flex;
+  gap: 22px;
+  flex-wrap: wrap;
+}
+
+.beginner-listing-page .ch-m {
+  font-size: 12px;
+  color: rgba(255, 253, 245, .55);
+}
+
+.beginner-listing-page .ch-m b {
+  color: #E3B567;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.beginner-listing-page .ch-side {
+  background: rgba(255, 255, 255, .07);
+  border: 1px solid rgba(255, 255, 255, .14);
+  border-radius: 16px;
+  padding: 20px 22px;
+}
+
+.beginner-listing-page .chs-l {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #E3B567;
+  letter-spacing: .7px;
+  margin-bottom: 11px;
+}
+
+.beginner-listing-page .chs-t {
+  font-size: 17px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.35;
+  margin-bottom: 6px;
+}
+
+.beginner-listing-page .chs-d {
+  font-size: 12.5px;
+  color: rgba(255, 253, 245, .6);
+  margin-bottom: 13px;
+  line-height: 1.65;
+}
+
+.beginner-listing-page .chs-c {
+  background: var(--pink);
+  border: none;
+  border-radius: 10px;
+  padding: 10px 18px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+}
+
+/* FILTERS BAR */
+.beginner-listing-page .filters {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  padding: 13px 40px;
+  position: sticky;
+  top: 72px;
+  z-index: 50;
+}
+
+.beginner-listing-page .f-in {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+
+.beginner-listing-page .f-l {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: .6px;
+  margin-right: 3px;
+}
+
+.beginner-listing-page .fc {
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 9px;
+  padding: 7px 14px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--body-text);
+  white-space: nowrap;
+}
+
+.beginner-listing-page .fc.on {
+  border-color: var(--pink);
+  background: #FFF0F5;
+  color: var(--pink);
+  font-weight: 700;
+}
+
+.beginner-listing-page .f-sort {
+  margin-left: auto;
+  font-size: 12.5px;
+  color: var(--sub-text);
+}
+
+.beginner-listing-page .f-sort b {
+  color: var(--body-text);
+  font-weight: 600;
+}
+
+/* SHELL & STAGE */
+.beginner-listing-page .shell {
+  display: grid;
+  grid-template-columns: 236px 1fr;
+  gap: 30px;
+  align-items: start;
+  margin-top: 26px;
+}
+
+.beginner-listing-page .shell.solo {
+  grid-template-columns: 1fr;
+}
+
+.beginner-listing-page .rhead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 4px;
+}
+
+.beginner-listing-page .rh-c {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--dark);
+  letter-spacing: -.3px;
+}
+
+.beginner-listing-page .rh-c span {
+  color: var(--sub-text);
+  font-weight: 500;
+  font-size: 13.5px;
+  margin-left: 8px;
+}
+
+.beginner-listing-page .rh-r {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.beginner-listing-page .grp {
+  margin-top: 26px;
+}
+
+.beginner-listing-page .grp:first-of-type {
+  margin-top: 16px;
+}
+
+.beginner-listing-page .grp-h {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 13px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.beginner-listing-page .grp-t {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--dark);
+  letter-spacing: -.2px;
+}
+
+.beginner-listing-page .grp-n {
+  font-size: 12px;
+  color: var(--sub-text);
+}
+
+.beginner-listing-page .grp-a {
+  margin-left: auto;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--pink);
+}
+
+/* SEQUENCE ROWS */
+.beginner-listing-page .seq {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.beginner-listing-page .sq {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  padding: 20px 24px;
+  display: grid;
+  grid-template-columns: 52px 1fr auto;
+  gap: 20px;
+  align-items: center;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.beginner-listing-page .sq:hover {
+  border-color: var(--pink);
+}
+
+.beginner-listing-page .sq-n {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.beginner-listing-page .sq.done .sq-n {
+  background: #FFF0F5;
+  border-color: #F7C0D6;
+  color: var(--pink);
+}
+
+.beginner-listing-page .sq-t {
+  font-size: 17.5px;
+  font-weight: 700;
+  color: var(--dark);
+  line-height: 1.3;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.beginner-listing-page .sq-s {
+  font-size: 13px;
+  color: var(--sub-text);
+  line-height: 1.72;
+  margin-bottom: 9px;
+  display: block;
+}
+
+.beginner-listing-page .sq-m {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.beginner-listing-page .sq-tag {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 5px;
+  background: var(--bg);
+  color: var(--sub-text);
+  border: 1px solid var(--border);
+}
+
+.beginner-listing-page .sq-read {
+  font-size: 11.5px;
+  color: var(--sub-text);
+}
+
+.beginner-listing-page .sq-a {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--pink);
+  white-space: nowrap;
+}
+
+/* EDITORIAL METHOD BAND */
+.beginner-listing-page .methodband {
+  background: var(--darkbar);
+  border-radius: 18px;
+  padding: 30px 34px;
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 34px;
+  align-items: center;
+  margin: 44px 0 0;
+}
+
+.beginner-listing-page .mb-ey {
+  font-size: 10px;
+  font-weight: 700;
+  color: #E3B567;
+  letter-spacing: .8px;
+  margin-bottom: 10px;
+}
+
+.beginner-listing-page .mb-t {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--hero-text);
+  line-height: 1.3;
+  letter-spacing: -.4px;
+  margin-bottom: 11px;
+}
+
+.beginner-listing-page .mb-p {
+  font-size: 14px;
+  color: #C4A882;
+  line-height: 1.82;
+  margin-bottom: 16px;
+}
+
+.beginner-listing-page .mb-c {
+  background: var(--pink);
+  border: none;
+  border-radius: 11px;
+  padding: 11px 22px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #fff;
+  display: inline-block;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.beginner-listing-page .mb-r {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.beginner-listing-page .mbr {
+  background: rgba(255, 255, 255, .05);
+  border-radius: 11px;
+  padding: 11px 15px;
+  border-left: 3px solid;
+}
+
+.beginner-listing-page .mbr.d {
+  border-color: #7BD69B;
+}
+
+.beginner-listing-page .mbr.p {
+  border-color: var(--amber);
+}
+
+.beginner-listing-page .mbr.b {
+  border-color: #B8A184;
+}
+
+.beginner-listing-page .mbr-k {
+  font-size: 11.5px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.beginner-listing-page .mbr.d .mbr-k {
+  color: #7BD69B;
+}
+
+.beginner-listing-page .mbr.p .mbr-k {
+  color: var(--amber);
+}
+
+.beginner-listing-page .mbr.b .mbr-k {
+  color: #D4B58A;
+}
+
+.beginner-listing-page .mbr-v {
+  font-size: 11.5px;
+  color: #A99070;
+  line-height: 1.6;
+}
+
+@media (max-width: 900px) {
+  .beginner-listing-page .wrap {
+    padding: 0 16px;
+  }
+
+  .beginner-listing-page .bcrumb {
+    padding: 0 16px;
+  }
+
+  .beginner-listing-page .subrail {
+    padding: 0 16px;
+  }
+
+  .beginner-listing-page .sr-in {
+    padding: 10px 0;
+  }
+
+  .beginner-listing-page .sr-up {
+    display: none;
+  }
+
+  .beginner-listing-page .chero {
+    padding: 26px 0 28px;
+  }
+
+  .beginner-listing-page .chero-in {
+    grid-template-columns: 1fr;
+    gap: 22px;
+  }
+
+  .beginner-listing-page .ch-h1 {
+    font-size: 29px;
+  }
+
+  .beginner-listing-page .shero {
+    padding: 24px 0 26px;
+  }
+
+  .beginner-listing-page .sh-h1 {
+    font-size: 26px;
+  }
+
+  .beginner-listing-page .ch-p {
+    font-size: 14px;
+  }
+
+  .beginner-listing-page .filters {
+    padding: 11px 16px;
+    top: 70px;
+    overflow-x: auto;
+  }
+
+  .beginner-listing-page .f-in {
+    flex-wrap: nowrap;
+  }
+
+  .beginner-listing-page .f-sort {
+    display: none;
+  }
+
+  .beginner-listing-page .shell {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .beginner-listing-page .rhead {
+    gap: 10px;
+  }
+
+  .beginner-listing-page .rh-c {
+    font-size: 17px;
+  }
+
+  .beginner-listing-page .sq {
+    grid-template-columns: 42px 1fr;
+    gap: 14px;
+    padding: 16px 18px;
+  }
+
+  .beginner-listing-page .sq-n {
+    width: 42px;
+    height: 42px;
+    font-size: 16px;
+  }
+
+  .beginner-listing-page .sq-a {
+    display: none;
+  }
+
+  .beginner-listing-page .methodband {
+    grid-template-columns: 1fr;
+    gap: 22px;
+    padding: 24px 20px;
+  }
+
+  .beginner-listing-page .mb-t {
+    font-size: 19px;
+  }
+}

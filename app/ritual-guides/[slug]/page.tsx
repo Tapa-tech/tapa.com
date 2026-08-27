@@ -23,15 +23,38 @@ const BEGINNER_SLUGS = new Set([
   'beginner-guide',
   'beginner-s-guide',
   'beginners-guides',
+  'ramcharitmanas-seven-kandas-explained',
 ]);
 
 export default function RitualGuideDetailPage({ params }: PageProps) {
   const { slug } = params;
 
-  const isBeginnerGuide =
-    BEGINNER_SLUGS.has(slug) ||
-    slug.includes('beginner') ||
-    slug === 'seven-kandas';
+  const [isBeginnerGuide, setIsBeginnerGuide] = useState<boolean>(() => {
+    return (
+      BEGINNER_SLUGS.has(slug) ||
+      slug.includes('beginner') ||
+      slug.includes('kanda') ||
+      slug.includes('ramcharitmanas')
+    );
+  });
+
+  useEffect(() => {
+    async function checkBeginnerGuide() {
+      if (isBeginnerGuide) return;
+      try {
+        const res = await fetch(`/api/public/beginner-guides/${slug}`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.data) {
+            setIsBeginnerGuide(true);
+          }
+        }
+      } catch (err) { }
+    }
+    if (slug) {
+      checkBeginnerGuide();
+    }
+  }, [slug, isBeginnerGuide]);
 
   if (isBeginnerGuide) {
     const guide = getBeginnerGuideBySlug(slug);
