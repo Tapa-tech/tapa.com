@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import './concepts.css';
 
 interface Concept {
+
   id?: string;
   title?: string;
   slug?: string;

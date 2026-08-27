@@ -3,13 +3,13 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 
-// const defaultBeginnerGuides = [
-//   { slug: 'what-is-a-vrat', title: 'What is a vrat?', subtitle: '6 min read' },
-//   { slug: 'first-puja', title: 'Your first puja at home', subtitle: '8 min · under ₹300 to start' },
-//   { slug: 'ganesh-chaturthi', title: 'Ganesh Chaturthi for beginners', subtitle: '9 min · for 14 September' },
-//   { slug: 'diwali-beginners', title: 'Diwali for beginners', subtitle: '9 min · for November' },
-//   { slug: 'seven-kandas', title: 'The seven kandas', subtitle: '6 min · no Sanskrit required' },
-// ];
+const defaultBeginnerGuides = [
+  { slug: 'what-is-a-vrat', title: 'What is a vrat?', subtitle: '6 min read' },
+  { slug: 'first-puja', title: 'Your first puja at home', subtitle: '8 min · under ₹300 to start' },
+  { slug: 'ganesh-chaturthi', title: 'Ganesh Chaturthi for beginners', subtitle: '9 min · for 14 September' },
+  { slug: 'diwali-beginners', title: 'Diwali for beginners', subtitle: '9 min · for November' },
+  { slug: 'seven-kandas', title: 'The seven kandas', subtitle: '6 min · no Sanskrit required' },
+];
 
 export default function RitualGuidesPage() {
   const [activeFilter, setActiveFilter] = useState<number>(0);

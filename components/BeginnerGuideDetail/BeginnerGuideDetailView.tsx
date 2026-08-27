@@ -41,7 +41,7 @@ export default function BeginnerGuideDetailView({ guide: initialGuide }: Beginne
                     isNow: item.isNow || false,
                   }));
                 }
-              } catch (e) {}
+              } catch (e) { }
             }
             let parsedWorries = initialGuide.worries;
             if (cms.commonWorriesJson) {
@@ -54,7 +54,7 @@ export default function BeginnerGuideDetailView({ guide: initialGuide }: Beginne
                     answer: item.answer || item.description || '',
                   }));
                 }
-              } catch (e) {}
+              } catch (e) { }
             }
 
             setGuide((prev) => ({
