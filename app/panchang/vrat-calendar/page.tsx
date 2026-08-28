@@ -7,7 +7,7 @@ export default function PanchangVratCalendar() {
     <div className="pvc-root">
 
       <section className="hero">
-        <div className="wrap">
+        <div className="wrap max-w-[1280px] mx-auto px-4 md:px-10 w-full overflow-x-hidden">
           <div className="hero-in">
             <div>
               <p className="h-ey">PANCHANG · VRAT DATE</p>
@@ -74,8 +74,8 @@ export default function PanchangVratCalendar() {
         </div>
       </div>
 
-      <div className="wrap">
-        <div className="layout">
+      <div className="wrap max-w-[1280px] mx-auto px-4 md:px-10 w-full overflow-x-hidden">
+        <div className="layout flex flex-col md:flex-row gap-6 md:gap-10">
           <div className="main">
             <div className="sh">
               <div className="sh-ey">THE FAST, END TO END</div>

@@ -5,7 +5,7 @@ import { MOCK_KITS } from '@/lib/mock-data';
 
 export default function RitualKitsPage() {
   return (
-    <div className="wrap stage" style={{ padding: '40px 0 80px' }}>
+    <div className="wrap stage max-w-[1280px] mx-auto px-4 md:px-10 w-full overflow-x-hidden" style={{ padding: '40px 0 80px' }}>
       <div className="sec-ey">PRE-BOOKING OPEN</div>
       <h1 className="sec-t" style={{ fontSize: '32px', marginBottom: '12px' }}>
         Ritual Kits
@@ -14,7 +14,7 @@ export default function RitualKitsPage() {
         Authentic, scripture-verified puja kits with free delivery and prepaid pre-booking. Every item included has a named text citation.
       </p>
 
-      <div className="kshelf">
+      <div className="kshelf grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         {MOCK_KITS.map((kit) => (
           <div key={kit.id} className={`kcard ${kit.isLead ? 'lead' : ''}`}>
             <div className={`k-top ${kit.themeClass}`}>

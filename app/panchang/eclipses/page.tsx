@@ -3,7 +3,7 @@ import Link from 'next/link';
 
 export default function EclipsesPage() {
   return (
-    <div className="wrap stage" style={{ padding: '40px 0 80px' }}>
+    <div className="wrap stage max-w-[1280px] mx-auto px-4 md:px-10 w-full overflow-x-hidden" style={{ padding: '40px 0 80px' }}>
       <div style={{ marginBottom: '16px' }}>
         <Link href="/panchang" style={{ color: 'var(--pink)', fontWeight: 600, fontSize: '13px' }}>
           ← Back to Panchang

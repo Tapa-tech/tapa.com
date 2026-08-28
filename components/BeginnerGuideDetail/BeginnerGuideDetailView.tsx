@@ -186,8 +186,8 @@ export default function BeginnerGuideDetailView({ guide: initialGuide }: Beginne
       </div>
 
       {/* Main Grid Layout */}
-      <div className="wrap">
-        <div className="layout">
+      <div className="wrap max-w-[1280px] mx-auto px-4 md:px-10 w-full overflow-x-hidden">
+        <div className="layout flex flex-col md:flex-row gap-6 md:gap-10">
           {/* Main Reading Column */}
           <div className="main">
             {/* Opening Headline & Paragraphs */}
@@ -328,7 +328,7 @@ export default function BeginnerGuideDetailView({ guide: initialGuide }: Beginne
             {/* Revenue Row Cards */}
             {guide.revenueCards && guide.revenueCards.length > 0 && (
               <>
-                <div className="rev">
+                <div className="rev grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {guide.revenueCards.map((card) => (
                     <div className={`rev-c ${card.type}`} key={card.id}>
                       <div className="rev-i">{card.icon}</div>

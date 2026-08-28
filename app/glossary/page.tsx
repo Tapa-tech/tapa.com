@@ -90,7 +90,7 @@ export default function GlossaryPage() {
 
       {/* HERO */}
       <section className="ghero">
-        <div className="wrap">
+        <div className="wrap max-w-[1280px] mx-auto px-4 md:px-10 w-full overflow-x-hidden">
           <div className="gh-in">
             <p className="gh-ey">GLOSSARY</p>
             <h1 className="gh-h1">Every word we use, explained once</h1>
@@ -204,8 +204,8 @@ export default function GlossaryPage() {
       </div>
 
       {/* MAIN CONTENT */}
-      <div className="wrap">
-        <div className="layout">
+      <div className="wrap max-w-[1280px] mx-auto px-4 md:px-10 w-full overflow-x-hidden">
+        <div className="layout flex flex-col md:flex-row gap-6 md:gap-10">
           <div className="main">
             {filteredTerms.length === 0 ? (
               <div className="en">

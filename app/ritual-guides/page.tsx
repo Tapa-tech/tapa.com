@@ -132,7 +132,7 @@ export default function RitualGuidesPage() {
 
       {/* Hero Section */}
       <section className="chero rg">
-        <div className="wrap">
+        <div className="wrap max-w-[1280px] mx-auto px-4 md:px-10 w-full overflow-x-hidden">
           <div className="chero-in">
             <div>
               <p className="ch-ey">RITUAL GUIDES</p>

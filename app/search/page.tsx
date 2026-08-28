@@ -64,7 +64,7 @@ export default function SearchPage() {
     groupedResults.festivals.length > 0;
 
   return (
-    <div className="wrap stage" style={{ padding: '40px 0 80px' }}>
+    <div className="wrap stage max-w-[1280px] mx-auto px-4 md:px-10 w-full overflow-x-hidden" style={{ padding: '40px 0 80px' }}>
       <div className="sec-ey">SEARCH RESULTS</div>
       <h1 className="sec-t" style={{ fontSize: '32px', marginBottom: '12px' }}>
         Search The Tapa Co.
@@ -87,7 +87,7 @@ export default function SearchPage() {
         )}
       </div>
 
-      <div className="so-g">
+      <div className="so-g grid grid-cols-1 md:grid-cols-2 gap-6">
         {groupedResults.guides.length > 0 && (
           <div>
             <div className="so-h">RITUAL GUIDES</div>

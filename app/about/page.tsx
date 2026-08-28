@@ -160,8 +160,8 @@ export default function AboutPage() {
           <img className="film-logo" src={LOGO_BASE64} alt="तप् · the tapa company" />
           <div className="film-spec">MONTAGE FILM · 1920 × 820 · SILENT LOOP</div>
         </div>
-        <div className="wrap">
-          <div className="ahero-in">
+        <div className="wrap max-w-[1280px] mx-auto px-4 md:px-10 w-full overflow-x-hidden">
+          <div className="ahero-in px-4 md:px-0">
             <p className="ah-ey">ABOUT</p>
             <h1 className="ah-h1">About The Tapa Co.</h1>
             <p className="ah-stand">We are a knowledge company that happens to sell ritual kits. In that order, always.</p>
@@ -172,7 +172,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <div className="wrap">
+      <div className="wrap max-w-[1280px] mx-auto px-4 md:px-10 w-full overflow-x-hidden">
         {/* ══ 01 · WHY तप् ══ */}
         <section className="sec">
           <div className="sec-h">
@@ -284,7 +284,8 @@ export default function AboutPage() {
             <div className="pane">
               <p className="stand">Every ritual guide and claim undergoes a 4-point authenticity score before publication.</p>
 
-              <table className="stab">
+              <div className="overflow-x-auto w-full max-w-full">
+                <table className="stab min-w-[500px] md:min-w-full">
                 <thead>
                   <tr>
                     <th>CRITERIA</th>
@@ -315,6 +316,7 @@ export default function AboutPage() {
                   </tr>
                 </tbody>
               </table>
+              </div>
 
               <div className="pts">
                 <div className="pt">

@@ -375,7 +375,7 @@ export default function DharmicConceptsPage() {
 
       { }
       <section className="chero dc">
-        <div className="wrap">
+        <div className="wrap max-w-[1280px] mx-auto px-4 md:px-10 w-full overflow-x-hidden">
           <div className="chero-in">
             <div>
               <p className="ch-ey">DHARMIC CONCEPTS</p>
@@ -424,7 +424,7 @@ export default function DharmicConceptsPage() {
       </div>
 
       { }
-      <div className="wrap">
+      <div className="wrap max-w-[1280px] mx-auto px-4 md:px-10 w-full overflow-x-hidden">
         <div className="pagepad">
           { }
           <div className="sec">
@@ -826,7 +826,7 @@ export default function DharmicConceptsPage() {
       </div>
 
       { }
-      <div className="wrap">
+      <div className="wrap max-w-[1280px] mx-auto px-4 md:px-10 w-full overflow-x-hidden">
         <div className="methodband">
           <div>
             <div className="mb-ey">HOW WE DECIDE WHAT IS TRUE</div>

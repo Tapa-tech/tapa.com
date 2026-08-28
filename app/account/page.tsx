@@ -2,7 +2,7 @@ import React from 'react';
 
 export default function AccountPage() {
   return (
-    <div className="wrap stage" style={{ padding: '40px 0 80px' }}>
+    <div className="wrap stage max-w-[1280px] mx-auto px-4 md:px-10 w-full overflow-x-hidden" style={{ padding: '40px 0 80px' }}>
       <div className="sec-ey">MY ACCOUNT</div>
       <h1 className="sec-t" style={{ fontSize: '32px', marginBottom: '12px' }}>
         Account Settings

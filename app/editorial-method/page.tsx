@@ -8,7 +8,7 @@ export default function EditorialMethodPage() {
     <div className="w-full max-w-full overflow-x-hidden min-h-screen" style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--body-text)' }}>
       {/* HERO */}
       <section className="hero">
-        <div className="wrap">
+        <div className="wrap max-w-[1280px] mx-auto px-4 md:px-10 w-full overflow-x-hidden">
           <div className="hero-in">
             <p className="hero-ey">OUR EDITORIAL METHOD</p>
             <h1 className="hero-h1">How we decide what is true</h1>
@@ -41,7 +41,7 @@ export default function EditorialMethodPage() {
 
       {/* INTRO SECTION */}
       <section className="sec">
-        <div className="wrap">
+        <div className="wrap max-w-[1280px] mx-auto px-4 md:px-10 w-full overflow-x-hidden">
           <div className="s-n">THE PROBLEM THIS SOLVES</div>
           <div className="s-t">Most ritual advice does not tell you where it came from</div>
           <p className="p">
@@ -57,7 +57,7 @@ export default function EditorialMethodPage() {
 
       {/* SECTION 01: THE NAMING RULE */}
       <section className="sec" id="naming">
-        <div className="wrap">
+        <div className="wrap max-w-[1280px] mx-auto px-4 md:px-10 w-full overflow-x-hidden">
           <div className="s-n">SECTION 01</div>
           <div className="s-t">The naming rule</div>
           <p className="s-s">One rule decides more classifications than any other, and it is the rule that is easiest to bend without noticing.</p>
@@ -99,7 +99,7 @@ export default function EditorialMethodPage() {
 
       {/* SECTION 02: THE THREE TAGS */}
       <section className="sec" id="three">
-        <div className="wrap">
+        <div className="wrap max-w-[1280px] mx-auto px-4 md:px-10 w-full overflow-x-hidden">
           <div className="s-n">SECTION 02</div>
           <div className="s-t">The three tags</div>
           <p className="s-s">These are not degrees of truth. They are different kinds of authority — and knowing which one you are looking at is the entire point. A 2/5 Pratha is not lesser than a 5/5 Dharma. It is a different kind of claim.</p>
@@ -168,7 +168,7 @@ export default function EditorialMethodPage() {
 
       {/* SECTION 03: THE SCORE AND ITS BADGE */}
       <section className="sec" id="score">
-        <div className="wrap">
+        <div className="wrap max-w-[1280px] mx-auto px-4 md:px-10 w-full overflow-x-hidden">
           <div className="s-n">SECTION 03</div>
           <div className="s-t">The score, and the badge beside it</div>
           <p className="s-s">The number describes <strong>which class of source the claim comes from</strong>. The badge names that class in a word. Together they tell you how close the claim sits to Shruti — the oldest and most universally accepted layer of the tradition.</p>
@@ -254,7 +254,7 @@ export default function EditorialMethodPage() {
 
       {/* SECTION 04: READING A CREDIBILITY CARD */}
       <section className="sec" id="anatomy">
-        <div className="wrap">
+        <div className="wrap max-w-[1280px] mx-auto px-4 md:px-10 w-full overflow-x-hidden">
           <div className="s-n">SECTION 04</div>
           <div className="s-t">Reading a credibility card</div>
           <p className="s-s">The card at the top of every Ritual Guide and Dharmic Concept. Four things, and each one is doing a specific job.</p>
@@ -304,7 +304,7 @@ export default function EditorialMethodPage() {
 
       {/* SECTION 05: WHY PANCHANG IS DIFFERENT */}
       <section className="sec" id="panchang">
-        <div className="wrap">
+        <div className="wrap max-w-[1280px] mx-auto px-4 md:px-10 w-full overflow-x-hidden">
           <div className="s-n">SECTION 05</div>
           <div className="s-t">Why Panchang carries no tag and no score</div>
           <p className="p">Panchang content — today's tithi, a festival date, sunrise, Rahu Kaal timing — carries <strong>no classification tag and no score.</strong> Not because it is less reliable, but because it is a different kind of claim.</p>
@@ -318,7 +318,7 @@ export default function EditorialMethodPage() {
 
       {/* SECTION 06: WHERE OUR SOURCES COME FROM */}
       <section className="sec" id="sources">
-        <div className="wrap">
+        <div className="wrap max-w-[1280px] mx-auto px-4 md:px-10 w-full overflow-x-hidden">
           <div className="s-n">SECTION 06</div>
           <div className="s-t">Where our sources come from</div>
           <p className="s-s">Primary texts and established editions, not aggregator websites. A verse quoted in a digest is not a verified verse — verification means the original.</p>
@@ -352,7 +352,7 @@ export default function EditorialMethodPage() {
 
       {/* SECTION 07: HOW AN ARTICLE GETS MADE */}
       <section className="sec" id="process">
-        <div className="wrap">
+        <div className="wrap max-w-[1280px] mx-auto px-4 md:px-10 w-full overflow-x-hidden">
           <div className="s-n">SECTION 07</div>
           <div className="s-t">How an article gets made</div>
           <p className="s-s">Six stages. Nothing goes live from a first draft.</p>
@@ -412,7 +412,7 @@ export default function EditorialMethodPage() {
 
       {/* SECTION 08: THREE TESTS EVERY LINE HAS TO PASS */}
       <section className="sec">
-        <div className="wrap">
+        <div className="wrap max-w-[1280px] mx-auto px-4 md:px-10 w-full overflow-x-hidden">
           <div className="s-n">SECTION 08</div>
           <div className="s-t">Three tests every line has to pass</div>
           <p className="s-s">Applied to every sentence on this platform, including this one.</p>
@@ -440,7 +440,7 @@ export default function EditorialMethodPage() {
 
       {/* SECTION 09: WHAT WE WILL NEVER DO */}
       <section className="sec" id="never">
-        <div className="wrap">
+        <div className="wrap max-w-[1280px] mx-auto px-4 md:px-10 w-full overflow-x-hidden">
           <div className="s-n">SECTION 09</div>
           <div className="s-t">What we will never do</div>
           <p className="s-s">Not preferences. These are the conditions under which this platform is worth having.</p>
@@ -477,7 +477,7 @@ export default function EditorialMethodPage() {
 
       {/* SECTION 10: TELL US WE ARE WRONG */}
       <section className="sec" id="challenge" style={{ paddingBottom: '60px' }}>
-        <div className="wrap">
+        <div className="wrap max-w-[1280px] mx-auto px-4 md:px-10 w-full overflow-x-hidden">
           <div className="s-n">SECTION 10</div>
           <div className="s-t">Tell us we are wrong</div>
           <div className="chal">

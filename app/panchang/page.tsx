@@ -124,7 +124,7 @@ export default function PanchangPage() {
       </div>
 
       <section className="chero">
-        <div className="wrap">
+        <div className="wrap max-w-[1280px] mx-auto px-4 md:px-10 w-full overflow-x-hidden">
           <div className="chero-in">
             {activeTab === 'pl' && (
               <div>
@@ -269,7 +269,7 @@ export default function PanchangPage() {
                 <a className="sh-a" onClick={() => { setActiveTab('vc'); scrollToTop(); }}>Full vrat calendar ›</a>
               </div>
 
-              <div className="dtable">
+              <div className="dtable overflow-x-auto w-full max-w-full">
                 <div className="dt-head">
                   <span>DATE</span>
                   <span>OBSERVANCE</span>
@@ -385,7 +385,7 @@ export default function PanchangPage() {
                   })}
                 </div>
 
-                <div className="dtable">
+                <div className="dtable overflow-x-auto w-full max-w-full">
                   <div className="dt-mh">
                     <span className="dt-mt">{currentMonthInfo.full}</span>
                     <span className="dt-mc">
