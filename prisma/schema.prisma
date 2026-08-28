@@ -5,15 +5,26 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
+enum UserRole {
+  CUSTOMER
+  EDITOR
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum ContentStatus {
+  DRAFT
+  PUBLISHED
+}
 model RitualGuide {
   id                    String   @id @default(cuid())
   title                 String
   slug                  String   @unique
-  status                String   @default("DRAFT")
+  status ContentStatus @default(DRAFT)
 
   // Banner Content fields
   sectionLabel          String?
@@ -156,7 +167,7 @@ model DharmicConcept {
   category  String   @default("General")
   summary   String?
   body      String
-  status    String   @default("DRAFT") // DRAFT, PUBLISHED, ARCHIVED
+  status ContentStatus @default(DRAFT) // DRAFT, PUBLISHED, ARCHIVED
 
   // Banner Section Fields
   bannerEyebrow          String?
@@ -220,7 +231,7 @@ model User {
   phone         String?   @unique
   phoneVerified DateTime?
   password      String?
-  role          String    @default("USER") // Roles: USER, EDITOR, ADMIN
+  role          UserRole  @default(CUSTOMER)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -297,7 +308,7 @@ model BeginnerGuide {
   title                  String
   slug                   String   @unique
   category               String   @default("General")
-  status                 String   @default("DRAFT") // DRAFT, PUBLISHED, ARCHIVED
+  status ContentStatus @default(DRAFT) // DRAFT, PUBLISHED, ARCHIVED
 
   // Banner Section Fields
   bannerEyebrow          String?

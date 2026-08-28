@@ -37,7 +37,7 @@ export function withAuth(handler: AuthenticatedRouteHandler, allowedRoles?: Role
  * Reusable guard requiring USER, EDITOR, or ADMIN role
  */
 export function withUserAuth(handler: AuthenticatedRouteHandler) {
-  return withAuth(handler, ['USER', 'EDITOR', 'ADMIN']);
+  return withAuth(handler, ['CUSTOMER', 'EDITOR', 'ADMIN', 'SUPER_ADMIN']);
 }
 
 /**

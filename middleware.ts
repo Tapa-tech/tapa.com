@@ -45,7 +45,7 @@ export async function middleware(req: NextRequest) {
     const userRole = (token.role as string)?.toUpperCase() || 'USER';
 
     if (path.startsWith('/admin/dashboard/dharmic-concepts')) {
-      if (!['EDITOR', 'ADMIN'].includes(userRole)) {
+      if (!['EDITOR', 'ADMIN', 'SUPER_ADMIN'].includes(userRole)) {
         logSecurityEvent({
           event: 'FORBIDDEN_ROLE_ATTEMPT',
           userId: token.id as string,
@@ -56,7 +56,7 @@ export async function middleware(req: NextRequest) {
         loginUrl.searchParams.set('error', 'forbidden');
         return NextResponse.redirect(loginUrl);
       }
-    } else if (userRole !== 'ADMIN') {
+    } else if (['ADMIN', 'SUPER_ADMIN'].includes(userRole) === false) {
       logSecurityEvent({
         event: 'FORBIDDEN_ROLE_ATTEMPT',
         userId: token.id as string,
@@ -94,7 +94,7 @@ export async function middleware(req: NextRequest) {
 
     // Admin Route Protection (403 for non-ADMINs)
     if (path.startsWith('/api/admin')) {
-      if (userRole !== 'ADMIN') {
+      if (['ADMIN', 'SUPER_ADMIN'].includes(userRole) === false) {
         logSecurityEvent({
           event: 'FORBIDDEN_ROLE_ATTEMPT',
           userId: token.id as string,
@@ -113,7 +113,7 @@ export async function middleware(req: NextRequest) {
 
     // Editor Route Protection (403 for non-EDITOR and non-ADMIN)
     if (path.startsWith('/api/editor')) {
-      if (!['EDITOR', 'ADMIN'].includes(userRole)) {
+      if (!['EDITOR', 'ADMIN', 'SUPER_ADMIN'].includes(userRole)) {
         logSecurityEvent({
           event: 'FORBIDDEN_ROLE_ATTEMPT',
           userId: token.id as string,
@@ -153,5 +153,5 @@ function applySecurityHeaders(response: NextResponse): NextResponse {
 }
 
 export const config = {
-  matcher: ['/admin/dashboard/:path*', '/api/auth/:path*', '/api/admin/:path*', '/api/editor/:path*', '/api/user/:path*'],
+  matcher: ['/admin/dashboard/:path*', '/api/admin/:path*', '/api/editor/:path*', '/api/user/:path*'],
 };

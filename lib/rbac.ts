@@ -1,21 +1,23 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
-export type RoleName = 'USER' | 'EDITOR' | 'ADMIN';
+export type RoleName = 'CUSTOMER' | 'EDITOR' | 'ADMIN' | 'SUPER_ADMIN';
 
 export const ROLES: Record<RoleName, RoleName> = {
-  USER: 'USER',
+  CUSTOMER: 'CUSTOMER',
   EDITOR: 'EDITOR',
   ADMIN: 'ADMIN',
+  SUPER_ADMIN: 'SUPER_ADMIN',
 };
 
-export const DEFAULT_ROLE: RoleName = 'USER';
+export const DEFAULT_ROLE: RoleName = 'CUSTOMER';
 
 // Hierarchical role rank values for inherited authorization checks
 const ROLE_RANKS: Record<RoleName, number> = {
-  USER: 1,
+  CUSTOMER: 1,
   EDITOR: 2,
   ADMIN: 3,
+  SUPER_ADMIN: 4,
 };
 
 /**
