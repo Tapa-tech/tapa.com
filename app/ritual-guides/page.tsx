@@ -254,7 +254,7 @@ export default function RitualGuidesPage() {
             </div>
 
             <div className="grid">
-              <Link className="c" href="/ritual-guides/hartalika-teej">
+              {/* <Link className="c" href="/ritual-guides/hartalika-teej">
                 <div className="c-top h-teej">
                   <span className="c-when now">IN 6 DAYS</span>
                 </div>
@@ -301,7 +301,7 @@ export default function RitualGuidesPage() {
                 <div className="myth">
                   <b>Corrects:</b> "Only a pandit can perform this."
                 </div>
-              </Link>
+              </Link> */}
               {festivePujans.map((guide: any, idx: number) => (
                 <Link
                   className="c"
