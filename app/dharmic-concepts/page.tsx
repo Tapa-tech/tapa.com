@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import './concepts.css';
 
 interface Concept {
-
   id?: string;
   title?: string;
   slug?: string;
@@ -14,6 +13,53 @@ interface Concept {
   body?: any;
   status?: string;
   summary?: string;
+  deity?: string;
+  readTime?: string;
+  myth?: string;
+  correction?: string;
+  threeStoriesGalleryJson?: string;
+}
+
+// Category naam backend se jis bhi spelling/spacing me aaye, sab yahan match ho jayega.
+const CATEGORY_MATCHERS: Record<string, string[]> = {
+  materials: ['materials'],
+  meanings: ['meanings & practices', 'meanings and practices', 'meanings & practice'],
+  dailyPuja: ['daily puja', 'daily-puja'],
+  dharmaVsPratha: ['dharma vs pratha', 'dharma-vs-pratha', 'dharma versus pratha'],
+  mantras: ['mantras', 'mantra'],
+};
+
+function matchesCategory(concept: any, key: keyof typeof CATEGORY_MATCHERS) {
+  const cat = (concept.category || '').toString().trim().toLowerCase();
+  return CATEGORY_MATCHERS[key].includes(cat);
+}
+
+function parseGalleryImage(concept: any): string {
+  try {
+    const gallery = JSON.parse(concept.threeStoriesGalleryJson || '[]');
+    const first = Array.isArray(gallery) ? gallery[0] : null;
+    return first?.image || first?.imageUrl || first?.imageURL || first?.src || '';
+  } catch {
+    return '';
+  }
+}
+
+// DHARMA rating pill + Classification pill (PURANIC, SHASTRA, etc.) — dono
+// backend field se dynamically banaye jaate hain, jaisa static cards me hai.
+function buildPills(concept: any): [string, string][] {
+  const pills: [string, string][] = [];
+
+  const rating = concept.bannerRating || concept.rating || '4/5';
+  const category = (concept.category || '').toString().toUpperCase() || 'DHARMA';
+  pills.push(['d', `${category} · ${rating}`]);
+
+  const classification =
+    concept.bannerClassification || concept.classification || '';
+  if (classification) {
+    pills.push(['n', classification.toString().toUpperCase()]);
+  }
+
+  return pills;
 }
 
 export default function DharmicConceptsPage() {
@@ -26,7 +72,9 @@ export default function DharmicConceptsPage() {
   useEffect(() => {
     async function loadConcepts() {
       try {
-        const res = await fetch('/api/public/dharmic-concepts');
+        const res = await fetch('/api/public/dharmic-concepts', {
+          cache: 'no-store',
+        });
         if (res.ok) {
           const data = await res.json();
           const list = Array.isArray(data)
@@ -37,7 +85,6 @@ export default function DharmicConceptsPage() {
           const publishedConcepts = list.filter(
             (concept: Concept) => concept.status === 'PUBLISHED'
           );
-
 
           setConcepts(publishedConcepts);
         } else {
@@ -142,79 +189,6 @@ export default function DharmicConceptsPage() {
       isLive: false,
     },
   ];
-  const dynamicMaterialsCards = concepts
-    .filter((concept: any) => concept.category === 'Materials')
-    .map((concept: any, idx: number) => {
-      let gallery: any[] = [];
-
-      try {
-        const parsed = JSON.parse(concept.threeStoriesGalleryJson || '[]');
-        gallery = Array.isArray(parsed) ? parsed : [];
-      } catch {
-        gallery = [];
-      }
-      const firstGalleryItem = gallery[0] || {};
-      return {
-        h:
-          idx % 3 === 0
-            ? 'h-shiva'
-            : idx % 3 === 1
-              ? 'h-vishnu'
-              : 'h-ganesh',
-        rt: concept.status === 'PUBLISHED' ? 'LIVE' : '',
-        t: concept.title || '',
-        d: concept.category || 'Materials',
-        deity: concept.deity || 'All',
-        s: concept.summary || '',
-        pills: [['d', 'DHARMA · 4/5']],
-        read: concept.readTime || '—',
-        slug: concept.slug || '',
-        isLive: true,
-        imageUrl:
-          firstGalleryItem.image ||
-          firstGalleryItem.imageUrl ||
-          firstGalleryItem.imageURL ||
-          firstGalleryItem.src ||
-          '',
-      };
-    });
-
-  const dynamicMeaningsCards = concepts
-    .filter(
-      (concept: Concept) =>
-        concept.category === 'Meanings & Practices'
-    )
-    .map((concept: any, idx: number) => ({
-      h:
-        idx % 3 === 0
-          ? 'h-thread'
-          : idx % 3 === 1
-            ? 'h-earth'
-            : 'h-shiva',
-      rt: 'LIVE',
-      t: concept.title || '',
-      d: concept.category || 'Meanings & Practices',
-      deity: 'All',
-      s: concept.summary || '',
-      pills: [['d', 'DHARMA · 4/5']],
-      read: concept.readTime || '—',
-      slug: concept.slug || '',
-      isLive: true,
-      myth: concept.myth || concept.correction || '',
-      imageUrl: (() => {
-        try {
-          const gallery = JSON.parse(
-            concept.threeStoriesGalleryJson || '[]'
-          );
-          const firstImage = Array.isArray(gallery)
-            ? gallery[0]?.image
-            : '';
-          return firstImage || '';
-        } catch {
-          return '';
-        }
-      })(),
-    }));
 
   const dailyPujaRows = [
     {
@@ -301,6 +275,73 @@ export default function DharmicConceptsPage() {
     },
   ];
 
+  // ===== DYNAMIC — backend se aane wale concepts, category ke hisaab se split =====
+
+  const dynamicMaterialsCards = concepts
+    .filter((concept: any) => matchesCategory(concept, 'materials'))
+    .map((concept: any, idx: number) => ({
+      h: idx % 3 === 0 ? 'h-shiva' : idx % 3 === 1 ? 'h-vishnu' : 'h-ganesh',
+      rt: concept.status === 'PUBLISHED' ? 'LIVE' : '',
+      t: concept.title || '',
+      d: concept.category || 'Materials',
+      deity: concept.deity || 'All',
+      s: concept.summary || '',
+      pills: buildPills(concept),
+      read: concept.readTime || '—',
+      slug: concept.slug || '',
+      isLive: true,
+      imageUrl: parseGalleryImage(concept),
+    }));
+
+  const dynamicMeaningsCards = concepts
+    .filter((concept: any) => matchesCategory(concept, 'meanings'))
+    .map((concept: any, idx: number) => ({
+      h: idx % 3 === 0 ? 'h-thread' : idx % 3 === 1 ? 'h-earth' : 'h-shiva',
+      rt: 'LIVE',
+      t: concept.title || '',
+      d: concept.category || 'Meanings & Practices',
+      deity: 'All',
+      s: concept.summary || '',
+      pills: buildPills(concept),
+      read: concept.readTime || '—',
+      slug: concept.slug || '',
+      isLive: true,
+      myth: concept.myth || concept.correction || '',
+      imageUrl: parseGalleryImage(concept),
+    }));
+
+  const dynamicDailyPujaRows = concepts
+    .filter((concept: any) => matchesCategory(concept, 'dailyPuja'))
+    .map((concept: any) => ({
+      t: concept.title || '',
+      s: concept.summary || '',
+      slug: concept.slug || '',
+    }));
+
+  const dynamicDharmaVsPrathaCards = concepts
+    .filter((concept: any) => matchesCategory(concept, 'dharmaVsPratha'))
+    .map((concept: any) => ({
+      h: 'h-gold',
+      rt: 'LIVE',
+      t: concept.title || '',
+      d: concept.category || 'Dharma vs Pratha',
+      deity: concept.deity || 'All',
+      s: concept.summary || '',
+      pills: buildPills(concept),
+      read: concept.readTime || '—',
+      slug: concept.slug || '',
+      isLive: true,
+      imageUrl: parseGalleryImage(concept),
+    }));
+
+  const dynamicMantrasRows = concepts
+    .filter((concept: any) => matchesCategory(concept, 'mantras'))
+    .map((concept: any) => ({
+      t: concept.title || '',
+      s: concept.summary || '',
+      slug: concept.slug || '',
+    }));
+
   const isMatchFilter = (itemDeity?: string) => {
     if (activeFilter === 'All') return true;
     if (!itemDeity) return true;
@@ -315,8 +356,12 @@ export default function DharmicConceptsPage() {
     }
   };
 
-  const handleRowClick = (rowItem: { slug: string; t: string }) => {
-    showToast(`"${rowItem.t}" is coming soon!`);
+  const handleRowClick = (rowItem: { slug: string; t: string }, isLive: boolean = false) => {
+    if (isLive) {
+      router.push(`/dharmic-concepts/${rowItem.slug}`);
+    } else {
+      showToast(`"${rowItem.t}" is coming soon!`);
+    }
   };
 
   return (
@@ -392,7 +437,7 @@ export default function DharmicConceptsPage() {
                 </p>
               </div>
               <a className="sec-a">
-                <span>9 planned · 1 live</span>View all ›
+                <span>{materialsCards.length + dynamicMaterialsCards.length} guides</span>View all ›
               </a>
             </div>
             <div className="grid">
@@ -485,7 +530,7 @@ export default function DharmicConceptsPage() {
                 </p>
               </div>
               <a className="sec-a">
-                <span>12 planned · 1 live</span>View all ›
+                <span>{meaningsCards.length + dynamicMeaningsCards.length} guides</span>View all ›
               </a>
             </div>
             <div className="grid">
@@ -616,7 +661,7 @@ export default function DharmicConceptsPage() {
                 </p>
               </div>
               <a className="sec-a">
-                <span>7 planned</span>View all ›
+                <span>{dailyPujaRows.length + dynamicDailyPujaRows.length} guides</span>View all ›
               </a>
             </div>
             <div className="rows">
@@ -625,6 +670,20 @@ export default function DharmicConceptsPage() {
                   key={rowItem.slug}
                   className="row"
                   onClick={() => handleRowClick(rowItem)}
+                >
+                  <span className="row-n">
+                    <span className="row-t">{rowItem.t}</span>
+                    <span className="row-s">{rowItem.s}</span>
+                  </span>
+                  <span className="row-a">›</span>
+                </a>
+              ))}
+
+              {dynamicDailyPujaRows.map((rowItem, idx) => (
+                <a
+                  key={rowItem.slug || `daily-puja-${idx}`}
+                  className="row"
+                  onClick={() => handleRowClick(rowItem, true)}
                 >
                   <span className="row-n">
                     <span className="row-t">{rowItem.t}</span>
@@ -647,7 +706,7 @@ export default function DharmicConceptsPage() {
                 </p>
               </div>
               <a className="sec-a">
-                <span>20 planned</span>View all ›
+                <span>{dharmaVsPrathaCards.length + dynamicDharmaVsPrathaCards.length} guides</span>View all ›
               </a>
             </div>
             <div className="grid">
@@ -677,6 +736,45 @@ export default function DharmicConceptsPage() {
                     </div>
                   </a>
                 ))}
+
+              {dynamicDharmaVsPrathaCards
+                .filter((item) => isMatchFilter(item.deity))
+                .map((cardItem, idx) => (
+                  <a
+                    key={cardItem.slug || `dharma-vs-pratha-${idx}`}
+                    className="c"
+                    onClick={() => handleCardClick(cardItem)}
+                  >
+                    <div
+                      className={`c-top ${cardItem.h}`}
+                      style={
+                        cardItem.imageUrl
+                          ? {
+                            backgroundImage: `url("${cardItem.imageUrl}")`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                            backgroundRepeat: 'no-repeat',
+                          }
+                          : undefined
+                      }
+                    >
+                      {cardItem.rt && <span className="c-when">{cardItem.rt}</span>}
+                    </div>
+                    <div className="c-b">
+                      <div className="c-t">{cardItem.t}</div>
+                      {cardItem.d && <div className="c-d">{cardItem.d}</div>}
+                      <p className="c-s">{cardItem.s}</p>
+                      <div className="c-f">
+                        {(cardItem.pills || []).map((p, pillIdx) => (
+                          <span key={pillIdx} className={`pill ${p[0]}`}>
+                            {p[1]}
+                          </span>
+                        ))}
+                        <span className="c-read">{cardItem.read || ''}</span>
+                      </div>
+                    </div>
+                  </a>
+                ))}
             </div>
           </div>
 
@@ -691,7 +789,7 @@ export default function DharmicConceptsPage() {
                 </p>
               </div>
               <a className="sec-a">
-                <span>4 planned</span>View all ›
+                <span>{mantrasRows.length + dynamicMantrasRows.length} guides</span>View all ›
               </a>
             </div>
             <div className="rows">
@@ -700,6 +798,20 @@ export default function DharmicConceptsPage() {
                   key={rowItem.slug}
                   className="row"
                   onClick={() => handleRowClick(rowItem)}
+                >
+                  <span className="row-n">
+                    <span className="row-t">{rowItem.t}</span>
+                    <span className="row-s">{rowItem.s}</span>
+                  </span>
+                  <span className="row-a">›</span>
+                </a>
+              ))}
+
+              {dynamicMantrasRows.map((rowItem, idx) => (
+                <a
+                  key={rowItem.slug || `mantra-${idx}`}
+                  className="row"
+                  onClick={() => handleRowClick(rowItem, true)}
                 >
                   <span className="row-n">
                     <span className="row-t">{rowItem.t}</span>

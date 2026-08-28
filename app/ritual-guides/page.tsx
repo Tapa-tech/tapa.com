@@ -11,10 +11,35 @@ const defaultBeginnerGuides = [
   { slug: 'seven-kandas', title: 'The seven kandas', subtitle: '6 min · no Sanskrit required' },
 ];
 
+
+const CATEGORY_MATCHERS: Record<string, string[]> = {
+  beginner: [
+    "beginner's guides",
+    'beginners guides',
+    'beginner guides',
+    "beginner's guide",
+  ],
+  festive: ['festive pujans', 'festive pujan'],
+  allYear: ['all-year pujans', 'all year pujans', 'all-year pujan', 'all year pujan'],
+  sanskar: [
+    'sanskar & life events',
+    'sanskar and life events',
+    'sanskar life events',
+    'sanskar & life event',
+  ],
+};
+
+function matchesCategory(guide: any, key: keyof typeof CATEGORY_MATCHERS) {
+  const cat = (guide.category || '').toString().trim().toLowerCase();
+  return CATEGORY_MATCHERS[key].includes(cat);
+}
+
 export default function RitualGuidesPage() {
   const [activeFilter, setActiveFilter] = useState<number>(0);
   const [beginnerGuides, setBeginnerGuides] = useState<any[]>([]);
   const [festivePujans, setFestivePujans] = useState<any[]>([]);
+  const [allYearPujans, setAllYearPujans] = useState<any[]>([]);
+  const [sanskarEvents, setSanskarEvents] = useState<any[]>([]);
 
   useEffect(() => {
     async function loadGuides() {
@@ -45,39 +70,48 @@ export default function RitualGuidesPage() {
             ? ritualJson.data
             : [];
 
-        // console.log('BEGINNER GUIDES:', beginnerData);
-        // console.table(beginnerData);
-
-        // console.log('RITUAL GUIDES:', ritualData);
-        // console.table(ritualData);
-
         const publishedBeginners = beginnerData.filter(
           (guide: any) => guide.status === 'PUBLISHED'
         );
 
-        const publishedFestive = ritualData.filter(
-          (guide: any) =>
-            guide.status === 'PUBLISHED' &&
-            (
-              guide.category === 'Festive Pujans' ||
-              guide.category === 'Festive Pujan'
-            )
+        const publishedRitualGuides = ritualData.filter(
+          (guide: any) => guide.status === 'PUBLISHED'
         );
 
-        // console.log('PUBLISHED BEGINNER GUIDES:', publishedBeginners);
-        // console.table(publishedBeginners);
+        // Ritual Guides table me bhi jo entries category = "Beginner's Guides"
+        // rakhi gayi hon, unhe bhi beginner guides list me merge kar do
+        const publishedBeginnersFromRitual = publishedRitualGuides.filter(
+          (guide: any) => matchesCategory(guide, 'beginner')
+        );
 
-        // console.log('PUBLISHED FESTIVE PUJANS:', publishedFestive);
-        // console.table(publishedFestive);
+        const mergedBeginnerGuides = [
+          ...publishedBeginners,
+          ...publishedBeginnersFromRitual,
+        ];
 
-        setBeginnerGuides(publishedBeginners);
+        const publishedFestive = publishedRitualGuides.filter((guide: any) =>
+          matchesCategory(guide, 'festive')
+        );
+
+        const publishedAllYear = publishedRitualGuides.filter((guide: any) =>
+          matchesCategory(guide, 'allYear')
+        );
+
+        const publishedSanskar = publishedRitualGuides.filter((guide: any) =>
+          matchesCategory(guide, 'sanskar')
+        );
+
+        setBeginnerGuides(mergedBeginnerGuides);
         setFestivePujans(publishedFestive);
-
+        setAllYearPujans(publishedAllYear);
+        setSanskarEvents(publishedSanskar);
       } catch (err) {
         console.error('Failed to load ritual guides:', err);
 
         setBeginnerGuides([]);
         setFestivePujans([]);
+        setAllYearPujans([]);
+        setSanskarEvents([]);
       }
     }
 
@@ -188,8 +222,8 @@ export default function RitualGuidesPage() {
                     key={guide.id || guide.slug || idx}
                   >
                     <span>
-                      <span className="fc-in">{idx + 1} · {guide.title || guide.bannerTitle}</span>
-                      <span className="fc-is">{guide.subtitle || guide.bannerEyebrow || guide.category || 'Guide'}</span>
+                      <span className="fc-in">{idx + 1} · {guide.title || guide.guideTitle || guide.bannerTitle}</span>
+                      <span className="fc-is">{guide.subtitle || guide.guideSubtitle || guide.bannerEyebrow || guide.category || 'Guide'}</span>
                     </span>
                     <span className="fc-ia">›</span>
                   </Link>
@@ -338,7 +372,7 @@ export default function RitualGuidesPage() {
 
 
           {/* All-Year Pujans Section */}
-          <div className="sec">
+          <div className="sec" id="all-year-pujans">
             <div className="sec-h">
               <div>
                 <div className="sec-ey">NOT TIED TO ONE DATE</div>
@@ -348,7 +382,7 @@ export default function RitualGuidesPage() {
                 </p>
               </div>
               <Link className="sec-a" href="/ritual-guides/articles?tab=rg">
-                <span>11 guides</span>View all ›
+                <span>{allYearPujans.length} guides</span>View all ›
               </Link>
             </div>
 
@@ -400,11 +434,76 @@ export default function RitualGuidesPage() {
                   </div>
                 </div>
               </Link>
+
+              {allYearPujans.map((guide: any, idx: number) => (
+                <Link
+                  className="c"
+                  href={`/ritual-guides/${guide.slug}`}
+                  key={guide.id || guide.slug || `allyear-${idx}`}
+                >
+                  <div
+                    className={`c-top ${guide.imageClass ||
+                      (idx % 3 === 0
+                        ? 'h-shiva'
+                        : idx % 3 === 1
+                          ? 'h-earth'
+                          : 'h-vishnu')
+                      }`}
+                    style={
+                      guide.kathaImage
+                        ? {
+                          backgroundImage: `url("${guide.kathaImage}")`,
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center',
+                          backgroundRepeat: 'no-repeat',
+                        }
+                        : undefined
+                    }
+                  >
+                    <span className="c-when">
+                      {guide.date || guide.festivalName || ''}
+                    </span>
+                  </div>
+
+                  <div className="c-b">
+                    <div className="c-t">
+                      {guide.title || guide.bannerTitle || ''}
+                    </div>
+
+                    <div className="c-d">
+                      {guide.festivalName || guide.bannerDate || guide.date || ''}
+                    </div>
+
+                    <p className="c-s">
+                      {guide.guideSubtitle ||
+                        guide.description ||
+                        guide.bannerSubtitle ||
+                        ''}
+                    </p>
+
+                    <div className="c-f">
+                      <span className="pill d">
+                        {guide.badge || 'DHARMA · 4/5'}
+                      </span>
+
+                      <span className="c-read">
+                        {guide.readTime || '9 min'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {guide.correction && (
+                    <div className="myth">
+                      <b>Corrects:</b> "{guide.correction}"
+                    </div>
+                  )}
+                </Link>
+              ))}
             </div>
           </div>
 
           {/* Sanskar & Life Events Section */}
-          <div className="sec">
+          <div className="sec" id="sanskar-life-events">
             <div className="sec-h">
               <div>
                 <div className="sec-ey">ONCE IN A LIFE</div>
@@ -414,7 +513,7 @@ export default function RitualGuidesPage() {
                 </p>
               </div>
               <Link className="sec-a" href="/ritual-guides/articles?tab=rg">
-                <span>8 guides</span>View all ›
+                <span>{sanskarEvents.length} guides</span>View all ›
               </Link>
             </div>
 
@@ -466,6 +565,65 @@ export default function RitualGuidesPage() {
                   <b>Corrects:</b> "Skipping shraddha harms the departed."
                 </div>
               </Link>
+
+              {sanskarEvents.map((guide: any, idx: number) => (
+                <Link
+                  className="c"
+                  href={`/ritual-guides/${guide.slug}`}
+                  key={guide.id || guide.slug || `sanskar-${idx}`}
+                >
+                  <div
+                    className={`c-top ${guide.imageClass || 'h-sanskar'}`}
+                    style={
+                      guide.kathaImage
+                        ? {
+                          backgroundImage: `url("${guide.kathaImage}")`,
+                          backgroundSize: 'cover',
+                          backgroundPosition: 'center',
+                          backgroundRepeat: 'no-repeat',
+                        }
+                        : undefined
+                    }
+                  >
+                    <span className="c-when">
+                      {guide.date || guide.festivalName || ''}
+                    </span>
+                  </div>
+
+                  <div className="c-b">
+                    <div className="c-t">
+                      {guide.title || guide.bannerTitle || ''}
+                    </div>
+
+                    <div className="c-d">
+                      {guide.festivalName || guide.bannerDate || guide.date || ''}
+                    </div>
+
+                    <p className="c-s">
+                      {guide.guideSubtitle ||
+                        guide.description ||
+                        guide.bannerSubtitle ||
+                        ''}
+                    </p>
+
+                    <div className="c-f">
+                      <span className="pill d">
+                        {guide.badge || 'DHARMA · 4/5'}
+                      </span>
+
+                      <span className="c-read">
+                        {guide.readTime || '9 min'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {guide.correction && (
+                    <div className="myth">
+                      <b>Corrects:</b> "{guide.correction}"
+                    </div>
+                  )}
+                </Link>
+              ))}
             </div>
           </div>
 
