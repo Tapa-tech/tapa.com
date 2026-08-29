@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { withAdminAuth } from '@/lib/api-auth';
 import { prisma } from '@/lib/db';
+import { UserRole } from '@prisma/client';
 import { canDeleteUser, canModifyRole, normalizeRole } from '@/lib/rbac';
 import { logSecurityEvent } from '@/lib/audit-logger';
 
@@ -75,10 +76,18 @@ export const PATCH = withAdminAuth(async (req, { user }) => {
 
     const normalizedTargetRole = normalizeRole(requestedRole);
 
+    if (!Object.values(UserRole).includes(normalizedTargetRole as UserRole)) {
+      return NextResponse.json(
+        { success: false, error: `Invalid role: ${normalizedTargetRole}` },
+        { status: 400 }
+      );
+    }
+    const prismaRole: UserRole = normalizedTargetRole as UserRole;
+
     if (process.env.DATABASE_URL?.startsWith('postgres')) {
       const updatedUser = await prisma.user.update({
         where: { id: targetUserId },
-        data: { role: normalizedTargetRole },
+        data: { role: prismaRole },
         select: { id: true, name: true, email: true, role: true },
       });
       return NextResponse.json({ success: true, user: updatedUser });
@@ -87,7 +96,7 @@ export const PATCH = withAdminAuth(async (req, { user }) => {
     return NextResponse.json({
       success: true,
       message: 'Role updated successfully',
-      user: { id: targetUserId, role: normalizedTargetRole },
+      user: { id: targetUserId, role: prismaRole },
     });
   } catch (err: any) {
     return NextResponse.json({ success: false, error: err.message || 'Role update failed' }, { status: 500 });
@@ -102,7 +111,6 @@ export const DELETE = withAdminAuth(async (req, { user }) => {
     return NextResponse.json({ success: false, error: 'Target User ID is required.' }, { status: 400 });
   }
 
-  // Server-side Guard: ONLY SUPER_USER CAN DELETE USERS
   if (!canDeleteUser(user.role)) {
     logSecurityEvent({
       event: 'FORBIDDEN_ROLE_ATTEMPT',
