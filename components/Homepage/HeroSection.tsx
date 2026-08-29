@@ -247,10 +247,8 @@ export const HeroSection: React.FC = () => {
                   Open guide ›
                 </button>
               </div>
-
             </div>
           </div>
-
         </div>
       </div>
     </section>

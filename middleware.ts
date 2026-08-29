@@ -27,7 +27,6 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-
   // 2. Protect Admin Dashboard Frontend Routes (/admin/dashboard)
   if (path.startsWith('/admin/dashboard')) {
     const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
@@ -42,33 +41,21 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
-    const userRole = (token.role as string)?.toUpperCase() || 'USER';
+    const rawRole = (token.role as string)?.toUpperCase();
+    const isAllowedAdmin = ['ADMIN', 'SUPER_USER', 'SUPER_ADMIN', 'EDITOR'].includes(rawRole || '');
 
-    if (path.startsWith('/admin/dashboard/dharmic-concepts')) {
-      if (!['EDITOR', 'ADMIN', 'SUPER_ADMIN'].includes(userRole)) {
-        logSecurityEvent({
-          event: 'FORBIDDEN_ROLE_ATTEMPT',
-          userId: token.id as string,
-          ip,
-          details: `Role ${userRole} attempted access to Dharmic Concepts CMS ${path}`,
-        });
-        const loginUrl = new URL('/admin/login', req.url);
-        loginUrl.searchParams.set('error', 'forbidden');
-        return NextResponse.redirect(loginUrl);
-      }
-    } else if (['ADMIN', 'SUPER_ADMIN'].includes(userRole) === false) {
+    if (!isAllowedAdmin) {
       logSecurityEvent({
         event: 'FORBIDDEN_ROLE_ATTEMPT',
         userId: token.id as string,
         ip,
-        details: `Role ${userRole} attempted access to ADMIN dashboard ${path}`,
+        details: `Role ${rawRole} attempted access to ADMIN dashboard ${path}`,
       });
       const loginUrl = new URL('/admin/login', req.url);
       loginUrl.searchParams.set('error', 'forbidden');
       return NextResponse.redirect(loginUrl);
     }
   }
-
 
   // 3. Protect Backend API Routes & Role Authorization
   if (path.startsWith('/api/admin') || path.startsWith('/api/editor') || path.startsWith('/api/user')) {
@@ -90,40 +77,22 @@ export async function middleware(req: NextRequest) {
       );
     }
 
-    const userRole = (token.role as string)?.toUpperCase() || 'USER';
+    const tokenRole = (token.role as string)?.toUpperCase() || 'CUSTOMER';
+    const isAuthorizedAdminApi = ['ADMIN', 'SUPER_USER', 'SUPER_ADMIN', 'EDITOR'].includes(tokenRole);
 
     // Admin Route Protection (403 for non-ADMINs)
-    if (path.startsWith('/api/admin')) {
-      if (['ADMIN', 'SUPER_ADMIN'].includes(userRole) === false) {
+    if (path.startsWith('/api/admin') || path.startsWith('/api/editor')) {
+      if (!isAuthorizedAdminApi) {
         logSecurityEvent({
           event: 'FORBIDDEN_ROLE_ATTEMPT',
           userId: token.id as string,
           ip,
-          details: `Role ${userRole} attempted access to ADMIN route ${path}`,
+          details: `Role ${tokenRole} attempted access to ADMIN route ${path}`,
         });
 
         return applySecurityHeaders(
           NextResponse.json(
-            { success: false, error: 'Forbidden: Access requires ADMIN role.' },
-            { status: 403 }
-          )
-        );
-      }
-    }
-
-    // Editor Route Protection (403 for non-EDITOR and non-ADMIN)
-    if (path.startsWith('/api/editor')) {
-      if (!['EDITOR', 'ADMIN', 'SUPER_ADMIN'].includes(userRole)) {
-        logSecurityEvent({
-          event: 'FORBIDDEN_ROLE_ATTEMPT',
-          userId: token.id as string,
-          ip,
-          details: `Role ${userRole} attempted access to EDITOR route ${path}`,
-        });
-
-        return applySecurityHeaders(
-          NextResponse.json(
-            { success: false, error: 'Forbidden: Access requires EDITOR or ADMIN role.' },
+            { success: false, error: 'Forbidden: Access requires ADMIN or SUPER_USER role.' },
             { status: 403 }
           )
         );

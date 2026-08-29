@@ -6,7 +6,8 @@ export type AuditEventType =
   | 'OTP_VERIFICATION_FAILURE'
   | 'UNAUTHORIZED_ACCESS_ATTEMPT'
   | 'FORBIDDEN_ROLE_ATTEMPT'
-  | 'RATE_LIMIT_EXCEEDED';
+  | 'RATE_LIMIT_EXCEEDED'
+  | 'CONCURRENT_SUPER_USER_SESSION_REJECTED';
 
 export interface AuditLogPayload {
   event: AuditEventType;

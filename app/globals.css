@@ -6002,21 +6002,30 @@ figure.art img {
   max-width: 1280px;
   margin: 0 auto;
   padding: 10px 0;
-  display: flex !important;
-  align-items: center !important;
-  justify-content: space-between !important;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 12px;
+  font-size: 13px;
+  color: var(--sub-text);
 }
 
 .bc-l {
   font-size: 13px;
   color: var(--sub-text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.6;
 }
 
-.bc-l b {
+.bc-l a, .bc-in a {
+  color: var(--sub-text);
+  text-decoration: none;
+}
+
+.bc-l a:hover, .bc-in a:hover {
+  color: var(--pink);
+}
+
+.bc-l b, .bc-in b {
   color: var(--body-text);
   font-weight: 500;
 }

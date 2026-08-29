@@ -8,6 +8,25 @@ interface BeginnerGuideDetailViewProps {
   guide: BeginnerGuide;
 }
 
+const renderHtmlOrText = (content?: string | null, className?: string, key?: any) => {
+  if (!content) return null;
+  const hasHtml = /<[a-z][\s\S]*>/i.test(content);
+  if (hasHtml) {
+    return (
+      <div
+        key={key}
+        className={className}
+        dangerouslySetInnerHTML={{ __html: content }}
+      />
+    );
+  }
+  return (
+    <p key={key} className={className}>
+      {content}
+    </p>
+  );
+};
+
 export default function BeginnerGuideDetailView({ guide: initialGuide }: BeginnerGuideDetailViewProps) {
   const [lang, setLang] = useState<'EN' | 'HI'>('EN');
   const [isSaved, setIsSaved] = useState(false);
@@ -64,6 +83,14 @@ export default function BeginnerGuideDetailView({ guide: initialGuide }: Beginne
               eyebrow: cms.bannerEyebrow || prev.eyebrow,
               openingText: cms.introHeading || prev.openingText,
               introParagraphs: cms.introDescription ? [cms.introDescription] : prev.introParagraphs,
+              ...(cms.introImage
+                ? {
+                  heroArtImage: {
+                    src: cms.introImage,
+                    alt: cms.introImageAltText || cms.bannerTitle || cms.title || prev.title,
+                  },
+                }
+                : {}),
               ...(parsedKandas ? { kandas: parsedKandas } : {}),
               ...(parsedWorries ? { worries: parsedWorries } : {}),
             }));
@@ -108,7 +135,7 @@ export default function BeginnerGuideDetailView({ guide: initialGuide }: Beginne
             <Link href="/">Home</Link> › <Link href="/ritual-guides">Ritual Guides</Link> ›{' '}
             {guide.breadcrumbCategory} › <b>{guide.title}</b>
           </div>
-          <div className="bc-r">
+          {/* <div className="bc-r">
             <div className="lang">
               <button
                 className={lang === 'EN' ? 'on' : ''}
@@ -129,7 +156,7 @@ export default function BeginnerGuideDetailView({ guide: initialGuide }: Beginne
             <button className="bcb" onClick={handleShare}>
               ↗ Share
             </button>
-          </div>
+          </div> */}
         </div>
       </div>
 
@@ -145,7 +172,7 @@ export default function BeginnerGuideDetailView({ guide: initialGuide }: Beginne
             <p className="hero-ey">{guide.eyebrow}</p>
             <div className="hero-tag">{guide.heroTag}</div>
             <h1 className="hero-h1">{guide.title}</h1>
-            <p className="hero-sub">{guide.subtitle}</p>
+            {renderHtmlOrText(guide.subtitle, 'hero-sub')}
             <div className="hero-btns">
               <button
                 className="hb-p"
@@ -191,12 +218,10 @@ export default function BeginnerGuideDetailView({ guide: initialGuide }: Beginne
           {/* Main Reading Column */}
           <div className="main">
             {/* Opening Headline & Paragraphs */}
-            <p className="open">{guide.openingText}</p>
-            {guide.introParagraphs.map((para, idx) => (
-              <p className="p" key={idx}>
-                {para}
-              </p>
-            ))}
+            {renderHtmlOrText(guide.openingText, 'open')}
+            {guide.introParagraphs.map((para, idx) =>
+              renderHtmlOrText(para, 'p', idx)
+            )}
 
             {/* Optional Art / Hero Image */}
             {guide.heroArtImage && (
@@ -233,7 +258,7 @@ export default function BeginnerGuideDetailView({ guide: initialGuide }: Beginne
                               <span className="kd-badge">{kanda.badge}</span>
                             )}
                           </div>
-                          <p className="kd-s">{kanda.summary}</p>
+                          {renderHtmlOrText(kanda.summary, 'kd-s')}
                         </div>
                       </div>
                     );
@@ -251,11 +276,9 @@ export default function BeginnerGuideDetailView({ guide: initialGuide }: Beginne
                   <span className="sh-p">{guide.section2Title.num}</span>
                   <h2 className="sh-t">{guide.section2Title.title}</h2>
                 </div>
-                {guide.section2Paragraphs.map((para, idx) => (
-                  <p className="p" key={idx}>
-                    {para}
-                  </p>
-                ))}
+                {guide.section2Paragraphs.map((para, idx) =>
+                  renderHtmlOrText(para, 'p', idx)
+                )}
                 {guide.quoteTurn && <div className="turn">{guide.quoteTurn}</div>}
               </>
             )}
@@ -307,7 +330,7 @@ export default function BeginnerGuideDetailView({ guide: initialGuide }: Beginne
                     </div>
                     <div className="w-a">
                       <span>✓</span>
-                      {worry.answer}
+                      {renderHtmlOrText(worry.answer, 'w-a-text')}
                     </div>
                   </div>
                 ))}
@@ -317,9 +340,9 @@ export default function BeginnerGuideDetailView({ guide: initialGuide }: Beginne
             {/* Closing Card */}
             {guide.closingParagraphs && guide.closingParagraphs.length > 0 && (
               <div className="closing">
-                {guide.closingParagraphs.map((para, idx) => (
-                  <p key={idx}>{para}</p>
-                ))}
+                {guide.closingParagraphs.map((para, idx) =>
+                  renderHtmlOrText(para, '', idx)
+                )}
               </div>
             )}
 

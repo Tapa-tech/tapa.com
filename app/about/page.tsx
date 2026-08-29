@@ -1,4 +1,5 @@
 import React from 'react';
+import WorkWithUsForms from '@/components/WorkWithUs/WorkWithUsForms';
 
 const komalImg = 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=80';
 const whyImg = 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=1200&q=80';
@@ -155,18 +156,20 @@ export default function AboutPage() {
   return (
     <>
       <style dangerouslySetInnerHTML={{ __html: ABOUT_STYLES }} />
+      
+      {/* ══ HERO ══ */}
       <section className="ahero">
         <div className="film">
-          <img className="film-logo" src={LOGO_BASE64} alt="तप् · the tapa company" />
+          <img className="film-logo" src={LOGO_BASE64} alt="तप्" />
           <div className="film-spec">MONTAGE FILM · 1920 × 820 · SILENT LOOP</div>
         </div>
         <div className="wrap max-w-[1280px] mx-auto px-4 md:px-10 w-full overflow-x-hidden">
           <div className="ahero-in px-4 md:px-0">
             <p className="ah-ey">ABOUT</p>
-            <h1 className="ah-h1">About The Tapa Co.</h1>
+            <h1 className="ah-h1">About — The Tapa Co.</h1>
             <p className="ah-stand">We are a knowledge company that happens to sell ritual kits. In that order, always.</p>
             <p className="ah-p">Rituals are not hard to find. Guidance you can trust is. Someone who wants to keep a vrat properly, or set up a puja in a new home, or perform shraddh for a parent, is usually piecing it together at eleven at night from search results, reels and forwarded messages. Some of that is wisdom. Most of it is noise. Almost none of it tells you which is which.</p>
-            <p className="ah-p">So we tell you what scripture actually says, what is regional or family custom, and what is only fear wearing tradition's clothes. All three deserve respect. They are not the same thing, and nobody should have to guess.</p>
+            <p className="ah-p">So we tell you what scripture actually says, what is regional or family custom, and what is only fear wearing tradition&apos;s clothes. All three deserve respect. They are not the same thing, and nobody should have to guess.</p>
             <p className="ah-pull">Dharma does not demand fear. It demands devotion.</p>
           </div>
         </div>
@@ -176,7 +179,7 @@ export default function AboutPage() {
         {/* ══ 01 · WHY तप् ══ */}
         <section className="sec">
           <div className="sec-h">
-            <span className="sec-n">1</span>
+            <span className="sec-n">3</span>
             <h2 className="sec-t">Why <span className="dev">तप्</span></h2>
             <span className="sec-r"></span>
           </div>
@@ -189,11 +192,8 @@ export default function AboutPage() {
 
               <details className="tray">
                 <summary>
-                  <img className="tr-av" src={komalImg} alt="Komal Gupta, founder of The Tapa Co." />
-                  <div>
-                    <b>Why Tapa Exists — A Note from the Founder</b>
-                    <span className="tr-sub">Komal Gupta · Founder, The Tapa Co.</span>
-                  </div>
+                  <img className="tr-av" src={komalImg} alt="Komal Gupta" />
+                  <span>Why I started this — a letter from our founder</span>
                   <span className="tr-x">▼</span>
                 </summary>
                 <div className="tr-body">
@@ -208,13 +208,13 @@ export default function AboutPage() {
                     <div className="lt">
                       <h3>Why Tapa Exists</h3>
                       <p>I did not start The Tapa Co. to sell puja kits or ritual subscriptions.</p>
-                      <p>I started it because I grew up inside something I didn't fully appreciate until I left it.</p>
+                      <p>I started it because I grew up inside something I didn&apos;t fully appreciate until I left it.</p>
                       <p>My earliest memories are of devotion that needed no explanation, held by people who could have explained it in any terms they chose. Mine was a highly educated family. Degrees, arguments at the dining table, books in more than one language. And within all of that, my parents at their morning puja before anything else in the day — reciting the shrutis and the smritis themselves, not as inherited habit but as something they had thought about and decided to keep.</p>
                       <p>That is the part I did not understand until much later. Nobody in my house practised because they did not know better. They practised because they had examined it and found it worth practising. Doordarshan played Ramayan and Mahabharat on weekends and the whole family sat together — asking questions, getting answers, and being allowed to ask the next one.</p>
                       <p>Everything I was trained on came from there. The way I think, the way I test a claim, the way I refuse to accept something because everybody says so. My thesis came out of that house. So did this company.</p>
 
                       <figure>
-                        <img src={whyImg} alt="Why Tapa Exists" />
+                        <img src={whyImg} alt="Komal Gupta with family" />
                         <figcaption>Komal Gupta with family</figcaption>
                       </figure>
 
@@ -233,6 +233,26 @@ export default function AboutPage() {
                         <span>Founder &amp; Chief Editor</span>
                         <i>The Tapa Co.</i>
                       </div>
+
+                      <div className="lt-pull" style={{ margin: '24px 0 18px' }}>
+                        Dharma does not demand fear. It demands devotion.
+                      </div>
+
+                      <p>The Tapa Co. exists to restore clarity, authenticity, and trust to ritual practice — to help people understand not just what to do, but why it matters. To separate Dharma from custom, wisdom from hearsay, and devotion from performance.</p>
+                      <p>Our ambition is larger than products. We are building trusted infrastructure for Hindu ritual life — the kind that helps a person practise with confidence and conviction, whether or not there&apos;s someone in the next room to ask. Because every generation deserves access to its own roots, on its own terms.</p>
+
+                      <div className="vals">
+                        <div className="vals-h">OUR CORE VALUES</div>
+                        <div className="vals-sub">What must never change</div>
+                        <p className="vals-p">As The Tapa Co. grows, products will evolve, categories will expand, technology will change. But these principles are not features. They are the foundation, and they stay fixed.</p>
+                        <div className="vrow"><span className="vn">01</span><div><b>Dharma before business.</b><p>Revenue can never come at the cost of truth.</p></div></div>
+                        <div className="vrow"><span className="vn">02</span><div><b>Fear will never be our marketing strategy.</b><p>We will never manipulate people with guilt, superstition, or anxiety. Devotion should arise from love and understanding, not fear.</p></div></div>
+                        <div className="vrow"><span className="vn">03</span><div><b>Knowledge comes before products.</b><p>Understanding is our first offering. Commerce is only ever a consequence of it.</p></div></div>
+                        <div className="vrow"><span className="vn">04</span><div><b>Authenticity over convenience.</b><p>When faced with a choice, we choose what is faithful over what is fashionable.</p></div></div>
+                        <div className="vrow"><span className="vn">05</span><div><b>We serve seekers, not customers.</b><p>Every interaction should leave people feeling more informed, more confident, and more connected to their faith.</p></div></div>
+                        <div className="vrow"><span className="vn">06</span><div><b>Humility is non-negotiable.</b><p>No individual, no institution, and no company owns Dharma. We are students before we are builders.</p></div></div>
+                        <div className="vrow"><span className="vn">07</span><div><b>Trust is sacred.</b><p>It takes years to build and moments to lose. We will protect it fiercely.</p></div></div>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -241,234 +261,281 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* ══ 02 · OUR THREE-LAYER AUTHORITY MODEL ══ */}
+        {/* ══ 02 · EDITORIAL METHOD ══ */}
         <section className="sec">
           <div className="sec-h">
-            <span className="sec-n">2</span>
-            <h2 className="sec-t">Our Three-Layer Authority Model</h2>
+            <span className="sec-n">4</span>
+            <h2 className="sec-t">Our Editorial Method</h2>
             <span className="sec-r"></span>
           </div>
           <div className="col">
             <div className="pane">
-              <p className="stand">We classify every ritual element into three distinct layers of authority so you always know <i>why</i> you are doing what you are doing.</p>
+              <p className="stand">Every claim we publish is sorted into one of three categories before it is written.</p>
 
               <div className="dpb">
                 <div className="d">
-                  <i>LAYER 1 · SCRIPTURAL</i>
-                  <b>Dharma <span className="dev">धर्म</span></b>
-                  <p>Directly sourced from Vedas, Upanishads, Puranas, or Agamas. Non-negotiable core principles verified by scholars.</p>
+                  <b>Dharma</b>
+                  <i>SCRIPTURES</i>
+                  <p>A scriptural mandate. Stated in a named text you could go and check yourself. Not &quot;the scriptures say.&quot; Not &quot;it is well known.&quot; A named text.</p>
                 </div>
                 <div className="p">
-                  <i>LAYER 2 · INHERITED</i>
-                  <b>Parampara <span className="dev">परंपरा</span></b>
-                  <p>Lineage, kul-pratha, or regional traditions passed down through generations. Respected and preserved.</p>
+                  <b>Pratha</b>
+                  <i>CUSTOMS</i>
+                  <p>Regional, community or family custom. Widely practised, genuinely meaningful, not scripturally mandated. It is not lesser for that.</p>
                 </div>
                 <div className="b">
-                  <i>LAYER 3 · INDIVIDUAL</i>
-                  <b>Bhakti <span className="dev">भक्ति</span></b>
-                  <p>Personal devotion, bhav, and adaptation suited to modern life and capability. Encouraged with sincerity.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ══ 03 · HOW WE RATE A PRACTICE ══ */}
-        <section className="sec">
-          <div className="sec-h">
-            <span className="sec-n">3</span>
-            <h2 className="sec-t">How We Rate a Practice</h2>
-            <span className="sec-r"></span>
-          </div>
-          <div className="col">
-            <div className="pane">
-              <p className="stand">Every ritual guide and claim undergoes a 4-point authenticity score before publication.</p>
-
-              <div className="overflow-x-auto w-full max-w-full">
-                <table className="stab min-w-[500px] md:min-w-full">
-                <thead>
-                  <tr>
-                    <th>CRITERIA</th>
-                    <th>DESCRIPTION</th>
-                    <th>RATING SCORE</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td><b>Textual Evidence</b></td>
-                    <td>Found in classical Puranic literature, Samhitas, or Sutras</td>
-                    <td><span className="sc">Primary</span></td>
-                  </tr>
-                  <tr>
-                    <td><b>Scholarly Consensus</b></td>
-                    <td>Verified across multiple regional traditions &amp; acharyas</td>
-                    <td><span className="sc">Strong</span></td>
-                  </tr>
-                  <tr>
-                    <td><b>Lineage Custom</b></td>
-                    <td>Valid kul-pratha supported by oral transmission</td>
-                    <td><span className="sc">Secondary</span></td>
-                  </tr>
-                  <tr>
-                    <td><b>Modern Adaptation</b></td>
-                    <td>Practical adjustment for city living without breaking vidhi</td>
-                    <td><span className="sc">Permissible</span></td>
-                  </tr>
-                </tbody>
-              </table>
-              </div>
-
-              <div className="pts">
-                <div className="pt">
-                  <span className="pt-k"></span>
-                  <div>
-                    <b>1. Authentic (Shastriya)</b>
-                    <p>Directly prescribed in recognized scriptures with complete samagri and mantra specifications.</p>
-                  </div>
-                </div>
-                <div className="pt">
-                  <span className="pt-k"></span>
-                  <div>
-                    <b>2. Customary (Laukik / Pratha)</b>
-                    <p>Evolved through regional or family tradition; valid and meaningful when performed with devotion.</p>
-                  </div>
-                </div>
-                <div className="pt">
-                  <span className="pt-k"></span>
-                  <div>
-                    <b>3. Modern Adaptation</b>
-                    <p>Modified practice designed for modern apartments or time constraints while preserving core intent.</p>
-                  </div>
-                </div>
-                <div className="pt">
-                  <span className="pt-k"></span>
-                  <div>
-                    <b>4. Misconception (Bramah / Bhay)</b>
-                    <p>Practices born of fear, commercial exploitation, or superstition. Explicitly identified and explained.</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="steps">
-                <div className="st">
-                  <div>
-                    <b>Identify the Source Text</b>
-                    <p>We trace every ritual step back to its original Sanskrit or Prakrit source.</p>
-                  </div>
-                </div>
-                <div className="st">
-                  <div>
-                    <b>Verify Regional Variations</b>
-                    <p>We cross-check how North, South, East, and West India practice the same vrat or festival.</p>
-                  </div>
-                </div>
-                <div className="st">
-                  <div>
-                    <b>Translate Without Loss of Meaning</b>
-                    <p>We write in accessible English and Hindi while preserving the exact sacred terminology.</p>
-                  </div>
+                  <b>Bhranti</b>
+                  <i>CORRECTIONS</i>
+                  <p>A misconception that needs correcting. Usually fear-based, usually forwarded, usually presented as compulsory. Corrected calmly, never mocked.</p>
                 </div>
               </div>
 
               <div className="rulebox">
-                <p><b>Core Editorial Principle:</b> We never urge fear. If a step cannot be performed due to circumstance, sincere <b>Bhakti (devotion)</b> and <b>Manas Puja (mental worship)</b> fulfill the ritual.</p>
-                <span>— The Tapa Co. Editorial Board</span>
+                <p>One rule holds the whole system up: <b>if we cannot name a text you could go and check, it is not Dharma — however universal the practice feels.</b></p>
+                <span>Consensus is not a citation.</span>
               </div>
+
+              <p>Dharma and Pratha are always visibly separated on the page. Every article carries a Myths &amp; Facts section.</p>
+
+              <h3>Which texts, and how we weigh them</h3>
+              <p>Naming a source is not enough on its own — sources differ in authority, and pretending otherwise is its own kind of dishonesty. So every guidance claim carries a score alongside the named text.</p>
+
+              <div className="overflow-x-auto w-full max-w-full">
+                <table className="stab min-w-[400px] md:min-w-full">
+                  <thead>
+                    <tr>
+                      <th>SOURCE</th>
+                      <th>SCORE</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>Shruti — Vedas, Upanishads</td>
+                      <td className="sc">5 / 5</td>
+                    </tr>
+                    <tr>
+                      <td>Mahapurana, Itihasa, Dharmashastra, Kalpa, Agama</td>
+                      <td className="sc">4 / 5</td>
+                    </tr>
+                    <tr>
+                      <td>Nibandha, bhashya, commentarial literature</td>
+                      <td className="sc">3 / 5</td>
+                    </tr>
+                    <tr>
+                      <td>Bhakti-period compositions — Ramcharitmanas, the stotras</td>
+                      <td className="sc">3 / 5</td>
+                    </tr>
+                    <tr>
+                      <td>Regional, oral and family custom</td>
+                      <td className="sc">1–2 / 5</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <p>That last placement is a description, not a demotion. A stotra recited in millions of homes every morning loses nothing by being correctly identified as a composed work rather than a revealed one. Where the same claim also appears in a Purana, we cite the Purana and name the stotra separately as the text you actually recite.</p>
+              <a href="/editorial-method" className="btn">Read the full method ›</a>
             </div>
           </div>
         </section>
 
-        {/* ══ 04 · OUR VALUES ══ */}
-        <section className="sec">
-          <div className="sec-h">
-            <span className="sec-n">4</span>
-            <h2 className="sec-t">Our Values</h2>
-            <span className="sec-r"></span>
-          </div>
-          <div className="col">
-            <div className="vals">
-              <div className="vals-h">OUR CORE COMMITMENTS</div>
-
-              <div className="vrow">
-                <span className="vn">01</span>
-                <div>
-                  <b>Scripture First</b>
-                  <p>Every claim is cited. If something is a belief or folk tradition rather than text, we state it clearly.</p>
-                </div>
-              </div>
-
-              <div className="vrow">
-                <span className="vn">02</span>
-                <div>
-                  <b>Clear Language, Zero Jargon</b>
-                  <p>We explain complex Vedic and Puranic concepts in simple, elegant language for modern readers.</p>
-                </div>
-              </div>
-
-              <div className="vrow">
-                <span className="vn">03</span>
-                <div>
-                  <b>Respect for Family Pratha</b>
-                  <p>We honor the rituals your grandmother taught you. Tradition is lived experience, not just books.</p>
-                </div>
-              </div>
-
-              <div className="vrow">
-                <span className="vn">04</span>
-                <div>
-                  <b>No Fear-Mongering</b>
-                  <p>Dharma is about connection and consciousness. We never use guilt or fear of bad luck to sell products.</p>
-                </div>
-              </div>
-
-              <div className="vrow">
-                <span className="vn">05</span>
-                <div>
-                  <b>Intellectual Rigour</b>
-                  <p>Our team works with traditional scholars, Sanskritists, and historians to ensure absolute accuracy.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* ══ 05 · WHAT WE DO — AND DON'T DO ══ */}
+        {/* ══ 03 · GLOSSARY ══ */}
         <section className="sec">
           <div className="sec-h">
             <span className="sec-n">5</span>
-            <h2 className="sec-t">What We Do — And Don't Do</h2>
+            <h2 className="sec-t">Glossary</h2>
             <span className="sec-r"></span>
           </div>
           <div className="col">
-            <div className="work">
-              <div className="wc">
-                <b>Ritual Guides</b>
-                <p>Step-by-step guides with precise samagri lists, mantras, and timings for vrats and pujas.</p>
-                <a href="/ritual-guides" className="btn">Explore Guides ›</a>
-              </div>
-              <div className="wc">
-                <b>City-Precise Panchang</b>
-                <p>Calculated using high-precision astronomical algorithms for sunrise, tithi, and muhurat in your location.</p>
-                <a href="/panchang" className="btn gh">View Panchang ›</a>
-              </div>
-              <div className="wc">
-                <b>Authentic Samagri Kits</b>
-                <p>Pure, scripture-compliant ritual items sourced responsibly for your home worship.</p>
-                <a href="/ritual-kits" className="btn wa">Shop Kits ›</a>
-              </div>
+            <div className="pane">
+              <p className="stand">Sankalp. Upavasa. Abhishek. Shodashopachara. Tithi and paksha.</p>
+              <p>Every Sanskrit term we use in a guide is defined here in ordinary language, with the Devanagari, a simple transliteration, and where the word comes from.</p>
+              <p>If you have ever nodded along at a term rather than asking what it meant, this page is for you.</p>
+              <a href="/glossary" className="btn gh">Open the glossary ›</a>
             </div>
           </div>
         </section>
 
-        {/* ══ 06 · CLOSE ══ */}
-        <section className="close">
-          <div className="close-in">
-            <p className="close-l">OUR PHILOSOPHY</p>
-            <div className="close-pre">Dharma is not a mystery to be guarded. It is a path to be walked.</div>
-            <h2 className="close-t">We build for those who want to <b>understand</b> what they practice, not just follow blindly.</h2>
-            <img className="close-logo" src={LOGO_BASE64} alt="तप्" />
+        {/* ══ 04 · RITUAL KITS ══ */}
+        <section className="sec">
+          <div className="sec-h">
+            <span className="sec-n">7</span>
+            <h2 className="sec-t">Our Ritual Kits Store</h2>
+            <span className="sec-r"></span>
+          </div>
+          <div className="col">
+            <div className="pane">
+              <p className="stand" style={{ color: 'var(--pink)' }}>Assembled to the ritual, not to a price point.</p>
+              <p>A ritual kit exists to solve one problem: the samagri list. You know what you are observing and roughly how it goes, and then you are in a shop at eight in the morning trying to remember whether it was five bilva leaves or seven, and whether the panchamrit needs curd or just milk.</p>
+              <p>Every Tapa kit is built backwards from a published guide. We write the vidhi first, from a named source. Then we list every item that vidhi actually requires. Then we assemble the kit to that list. Nothing is added to raise the price, and nothing is dropped to lower it.</p>
+
+              <h3>How each kit is built</h3>
+              <div className="pts">
+                <div className="pt">
+                  <span className="pt-k"></span>
+                  <div>
+                    <b>Sourced from the guide.</b>
+                    <p>If an item is in the kit, it appears in a step of the vidhi on our site. If it does not appear in the vidhi, it is not in the box.</p>
+                  </div>
+                </div>
+                <div className="pt">
+                  <span className="pt-k"></span>
+                  <div>
+                    <b>Tagged.</b>
+                    <p>The printed vidhi card inside marks which steps are Dharma and which are Pratha. Where we have included something customary — an item your region uses and another does not — it is labelled as custom, so you can use it or set it aside without wondering.</p>
+                  </div>
+                </div>
+                <div className="pt">
+                  <span className="pt-k"></span>
+                  <div>
+                    <b>Complete for the ritual, not for the shelf.</b>
+                    <p>Quantities match one observance of that puja. We would rather you buy the right kit once than a general samagri box four times.</p>
+                  </div>
+                </div>
+                <div className="pt">
+                  <span className="pt-k"></span>
+                  <div>
+                    <b>Fresh items are named, not included.</b>
+                    <p>Flowers, milk, curd, fruit and bhog cannot travel well and should not. Every kit lists exactly what to pick up and how much of it.</p>
+                  </div>
+                </div>
+                <div className="pt">
+                  <span className="pt-k"></span>
+                  <div>
+                    <b>One price. One version.</b>
+                    <p>No premium tier, no economy tier, no deluxe box with the same contents in better packaging. A ritual does not have a budget version.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="note">Pre-booking opens 1 month before the occasions</div>
+              <a href="/ritual-kits" className="btn">See the Ritual Kits ›</a>
+            </div>
           </div>
         </section>
+
+        {/* ══ 05 · PUJA WITH PUROHIT ══ */}
+        <section className="sec">
+          <div className="sec-h">
+            <span className="sec-n">8</span>
+            <h2 className="sec-t">Puja with Purohit <span className="chip soon">COMING SOON · NOVEMBER 2026</span></h2>
+            <span className="sec-r"></span>
+          </div>
+          <div className="col">
+            <div className="pane">
+              <p>Some anushthans are better performed with someone who has done them a hundred times. Not because you cannot — you can, and every vidhi on this site is written so that you can, but because on the day, hosting twenty people and leading the mantras at the same time is a lot to hold.</p>
+
+              <h3>What the booking includes</h3>
+              <div className="pts">
+                <div className="pt">
+                  <span className="pt-k"></span>
+                  <div>
+                    <b>A verified purohit for your chosen anushthan, performed in full.</b>
+                    <p>There is no shortened version and no extended version. One puja, one price.</p>
+                  </div>
+                </div>
+                <div className="pt">
+                  <span className="pt-k"></span>
+                  <div>
+                    <b>The complete puja samagri comes with the purohit.</b>
+                    <p>It is part of your package, carried to your home on the day. You do not shop for it, and you are not asked for it at the door.</p>
+                  </div>
+                </div>
+              </div>
+
+              <h3>What you will need to arrange</h3>
+              <div className="pts">
+                <div className="pt">
+                  <span className="pt-k"></span>
+                  <div>
+                    <b>Fresh items are not included,</b>
+                    <p>because they should not be sitting in a box overnight. Flowers, milk, curd, and the bhog prasad you intend to offer are yours to arrange.</p>
+                  </div>
+                </div>
+                <div className="pt">
+                  <span className="pt-k"></span>
+                  <div>
+                    <b>You will receive the full list one day before the puja</b>
+                    <p>— every item, with quantities. Not a vague reminder on the morning of. A specific list, the day before, so you can pick it up on your way home.</p>
+                  </div>
+                </div>
+              </div>
+
+              <h3>What will not happen</h3>
+              <p>Our purohits do not upsell at the altar. They will not tell you that something is missing, that something extra is required, or that anything will go wrong. If a purohit associated with Tapa ever does, we want to hear about it, and they will not remain on our network.</p>
+              <button type="button" className="btn gh">Notify me when bookings open ›</button>
+            </div>
+          </div>
+        </section>
+
+        {/* ══ 06 · THE TAPA CIRCLE ══ */}
+        <section className="sec">
+          <div className="sec-h">
+            <span className="sec-n">9</span>
+            <h2 className="sec-t">The Tapa Circle <span className="chip">₹499/year</span></h2>
+            <span className="sec-r"></span>
+          </div>
+          <div className="col">
+            <div>
+              <div className="pane">
+                <p className="stand">The panchang and the guide, on WhatsApp, on the day you need them.</p>
+                <p>Most people do not want another app. They want to know that Ekadashi is on Thursday, and to have the right guide open when they sit down to do it.</p>
+                <p>The Circle sends the tithi, the vrat and festival dates, and the relevant ritual guide on the day it applies — on WhatsApp, where you already are. No forwards. No predictions. No messages about what happens if you miss something, because nothing happens if you miss something.</p>
+              </div>
+
+              <details className="tray">
+                <summary>
+                  <span>How to subscribe</span>
+                  <span className="tr-x">▼</span>
+                </summary>
+                <div className="tr-body">
+                  <div className="steps" style={{ paddingTop: '14px' }}>
+                    <div className="st">
+                      <div>
+                        <b>Enter your WhatsApp number</b>
+                        <p>The number you actually use. This is the only detail we ask for.</p>
+                      </div>
+                    </div>
+                    <div className="st">
+                      <div>
+                        <b>Pay ₹499</b>
+                        <p>UPI, card or netbanking. One payment, covering twelve months from the day you join. It does not auto-renew — we will tell you when the year is ending and you can decide then.</p>
+                      </div>
+                    </div>
+                    <div className="st">
+                      <div>
+                        <b>Confirm on WhatsApp</b>
+                        <p>You will receive one message asking you to confirm. Reply to it and you are in. If you do not reply, nothing is sent and we refund you.</p>
+                      </div>
+                    </div>
+                    <div className="st">
+                      <div>
+                        <b>The first message arrives on the next relevant date</b>
+                        <p>Not immediately, and not daily. The welcome note tells you exactly what the next date is and when to expect it.</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="note"><b>Leaving:</b> reply STOP at any time and it ends with that message. No confirmation call, no retention offer.</div>
+                </div>
+              </details>
+
+              <button type="button" className="btn wa" style={{ marginTop: '14px' }}>Join the Circle ›</button>
+            </div>
+          </div>
+        </section>
+
+        {/* ══ 07 · WORK WITH US ══ */}
+        <WorkWithUsForms />
+
+        {/* ══ CLOSE ══ */}
+        <div className="close">
+          <div className="close-in">
+            <div className="close-l">THE ONE SENTENCE</div>
+            <p className="close-pre">Everything on this site follows from one sentence:</p>
+            <p className="close-t">Tapa exists so that every Hindu who wants to practise their faith correctly can do so <b>with confidence, without fear,</b> and without being exploited by the systems that were supposed to help them.</p>
+            <img className="close-logo" src={LOGO_BASE64} alt="तप्" />
+          </div>
+        </div>
       </div>
     </>
   );

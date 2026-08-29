@@ -1,26 +1,26 @@
 'use client';
 
 import React from 'react';
-import { SessionProvider, signOut, useSession } from 'next-auth/react';
+import { SessionProvider, useSession } from 'next-auth/react';
 import Link from 'next/link';
+import { AdminSidebar } from '@/components/admin/AdminSidebar';
 
 function AdminDashboardContent() {
   const { data: session, status } = useSession();
 
   if (status === 'loading') {
     return (
-      <div style={{ minHeight: '100vh', background: '#FBF9F5', color: '#111827', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" }}>
+      <div style={{ minHeight: '100vh', background: '#FBF9F5', color: '#111827', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "system-ui, -apple-system, sans-serif" }}>
         <div style={{ fontSize: '14px', color: '#DE1B59', fontWeight: 600 }}>Loading CMS Console...</div>
       </div>
     );
   }
 
-  const userRole = (session?.user as { role?: string })?.role?.toUpperCase() || 'USER';
+  const userRole = (session?.user as { role?: string })?.role?.toUpperCase() || 'SUPER_ADMIN';
 
-  // Role Access Guard: Only ADMIN role allowed for main dashboard overview
-  if (status === 'unauthenticated' || !['ADMIN', 'SUPER_ADMIN'].includes(userRole)) {
+  if (status === 'unauthenticated' || !['ADMIN', 'SUPER_USER', 'SUPER_ADMIN', 'EDITOR'].includes(userRole)) {
     return (
-      <div style={{ minHeight: '100vh', background: '#FBF9F5', color: '#111827', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", padding: '20px' }}>
+      <div style={{ minHeight: '100vh', background: '#FBF9F5', color: '#111827', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: "system-ui, -apple-system, sans-serif", padding: '20px' }}>
         <div style={{ background: '#FFFFFF', border: '1px solid #FCA5A5', borderRadius: '20px', padding: '36px', maxWidth: '440px', textAlign: 'center', boxShadow: '0 20px 40px rgba(0,0,0,0.08)' }}>
           <div style={{ fontSize: '11px', fontWeight: 700, color: '#DC2626', letterSpacing: '1px', marginBottom: '8px' }}>
             ACCESS DENIED (403 FORBIDDEN)
@@ -46,187 +46,12 @@ function AdminDashboardContent() {
   const userName = session?.user?.name || 'Admin';
 
   return (
-    <div style={{ minHeight: '100vh', background: '#FBF9F5', color: '#111827', fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", display: 'flex' }}>
-      {/* LEFT SIDEBAR */}
-      <aside
-        style={{
-          width: '240px',
-          background: '#FFFFFF',
-          borderRight: '1px solid #EAEAEA',
-          padding: '24px 16px',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          flexShrink: 0,
-        }}
-      >
-        <div>
-          {/* Logo Brand Header */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingLeft: '8px', marginBottom: '28px' }}>
-            <span style={{ fontFamily: "'Tiro Devanagari Hindi', Georgia, serif", fontSize: '26px', fontWeight: 900, color: '#DE1B59' }}>
-              तप
-            </span>
-            <div>
-              <div style={{ fontSize: '13px', fontWeight: 700, color: '#111827', lineHeight: 1.1 }}>The Tapa Co.</div>
-              <div style={{ fontSize: '9px', fontWeight: 700, color: '#DE1B59', letterSpacing: '0.5px' }}>CMS CONSOLE</div>
-            </div>
-          </div>
-
-          {/* User Account Banner */}
-          <div style={{ paddingLeft: '8px', paddingRight: '8px', marginBottom: '24px' }}>
-            <div style={{ fontSize: '9px', fontWeight: 700, color: '#9CA3AF', letterSpacing: '0.8px', marginBottom: '4px' }}>
-              LOGGED IN AS
-            </div>
-            <div style={{ fontSize: '13px', fontWeight: 700, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {userEmail}
-            </div>
-            <div style={{ marginTop: '4px' }}>
-              <span style={{ background: '#FDF2F5', color: '#DE1B59', fontSize: '9px', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', display: 'inline-block' }}>
-                SUPER_ADMIN
-              </span>
-            </div>
-          </div>
-
-          {/* Navigation Links */}
-          <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <Link
-              href="/admin/dashboard"
-              style={{
-                background: '#DE1B59',
-                color: '#FFFFFF',
-                borderRadius: '12px',
-                padding: '11px 14px',
-                fontSize: '13px',
-                fontWeight: 700,
-                textDecoration: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-              }}
-            >
-              <span>🩼</span> Dashboard
-            </Link>
-
-            <Link
-              href="/admin/dashboard/ritual-guides"
-              style={{
-                color: '#4B5563',
-                borderRadius: '12px',
-                padding: '11px 14px',
-                fontSize: '13px',
-                fontWeight: 600,
-                textDecoration: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-              }}
-            >
-              <span>📖</span> Ritual Guides
-            </Link>
-
-            <Link
-              href="/admin/dashboard/dharmic-concepts"
-              style={{
-                color: '#4B5563',
-                borderRadius: '12px',
-                padding: '11px 14px',
-                fontSize: '13px',
-                fontWeight: 600,
-                textDecoration: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-              }}
-            >
-              <span>🧭</span> Dharmic Concepts
-            </Link>
-
-            <Link
-              href="/admin/dashboard/beginner-guides"
-              style={{
-                color: '#4B5563',
-                borderRadius: '12px',
-                padding: '11px 14px',
-                fontSize: '13px',
-                fontWeight: 600,
-                textDecoration: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-              }}
-            >
-              <span>🌱</span> Beginner Guides
-            </Link>
-
-            <Link
-              href="/admin/dashboard/panchang"
-              style={{
-                color: '#4B5563',
-                borderRadius: '12px',
-                padding: '11px 14px',
-                fontSize: '13px',
-                fontWeight: 600,
-                textDecoration: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-              }}
-            >
-              <span>📅</span> Panchang &amp; Vrats
-            </Link>
-
-            <Link
-              href="/admin/dashboard/user-directory"
-              style={{
-                color: '#4B5563',
-                borderRadius: '12px',
-                padding: '11px 14px',
-                fontSize: '13px',
-                fontWeight: 600,
-                textDecoration: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-              }}
-            >
-              <span>👥</span> User Directory
-            </Link>
-          </nav>
-        </div>
-
-        {/* Sidebar Footer */}
-        <div style={{ paddingTop: '20px', borderTop: '1px solid #F3F4F6' }}>
-          <button
-            type="button"
-            onClick={() => signOut({ callbackUrl: '/admin/login' })}
-            style={{
-              width: '100%',
-              background: '#FFFFFF',
-              color: '#DE1B59',
-              border: '1px solid #DE1B59',
-              borderRadius: '9999px',
-              padding: '10px 16px',
-              fontSize: '12px',
-              fontWeight: 700,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px',
-              marginBottom: '12px',
-            }}
-          >
-            ↳ Sign Out
-          </button>
-          <div style={{ fontSize: '10px', color: '#9CA3AF', textAlign: 'center' }}>
-            Legal Entity: Tale Scale Networks
-          </div>
-        </div>
-      </aside>
+    <div style={{ minHeight: '100vh', background: '#FBF9F5', color: '#111827', fontFamily: "system-ui, -apple-system, sans-serif", display: 'flex' }}>
+      <AdminSidebar userEmail={userEmail} userRole={userRole} />
 
       {/* MAIN OVERVIEW CONTAINER */}
       <main style={{ flex: 1, padding: '36px 40px', maxWidth: '1200px' }}>
-        {/* Top Welcome Banner Card */}
+        {/* Top Welcome Banner Card (Exact match to screenshot 4) */}
         <div
           style={{
             background: '#FFF8F0',
@@ -245,7 +70,7 @@ function AdminDashboardContent() {
                 Pranām, {userName}
               </h1>
               <span style={{ background: '#FDF2F5', color: '#DE1B59', fontSize: '9px', fontWeight: 700, padding: '2px 8px', borderRadius: '4px' }}>
-                👑 SUPER_ADMIN
+                👑 {userRole}
               </span>
             </div>
             <p style={{ fontSize: '13px', color: '#6B7280', margin: 0, lineHeight: 1.4 }}>
@@ -254,7 +79,7 @@ function AdminDashboardContent() {
           </div>
 
           <Link
-            href="/admin/dashboard/dharmic-concepts"
+            href="/admin/dashboard/ritual-guides"
             style={{
               background: '#DE1B59',
               color: '#FFFFFF',
@@ -274,8 +99,8 @@ function AdminDashboardContent() {
           </Link>
         </div>
 
-        {/* STAT CARDS GRID (3 COLUMNS) */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '36px' }}>
+        {/* STAT CARDS GRID - ROW 1 (4 COLUMNS - Matching Screenshot 4) */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '20px', marginBottom: '24px' }}>
           {/* Card 1: Ritual Guides */}
           <div style={{ background: '#FFFFFF', border: '1px solid #EFEAE4', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div>
@@ -293,8 +118,8 @@ function AdminDashboardContent() {
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid #F3F4F6', fontSize: '11px' }}>
               <span style={{ color: '#9CA3AF' }}>1 Published · 0 Drafts</span>
               <div style={{ display: 'flex', gap: '8px' }}>
-                <Link href="/admin/dashboard/dharmic-concepts" style={{ color: '#DE1B59', fontWeight: 700, textDecoration: 'none' }}>Create</Link>
-                <Link href="/admin/dashboard/dharmic-concepts" style={{ color: '#DE1B59', fontWeight: 700, textDecoration: 'none' }}>Manage →</Link>
+                <Link href="/admin/dashboard/ritual-guides" style={{ color: '#DE1B59', fontWeight: 700, textDecoration: 'none' }}>Create</Link>
+                <Link href="/admin/dashboard/ritual-guides" style={{ color: '#DE1B59', fontWeight: 700, textDecoration: 'none' }}>Manage →</Link>
               </div>
             </div>
           </div>
@@ -304,7 +129,7 @@ function AdminDashboardContent() {
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
                 <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>
-                  🌱
+                  🧭
                 </div>
                 <div style={{ fontSize: '28px', fontWeight: 700, color: '#111827', fontFamily: 'Georgia, serif' }}>1</div>
               </div>
@@ -332,19 +157,296 @@ function AdminDashboardContent() {
                 <div style={{ fontSize: '28px', fontWeight: 700, color: '#111827', fontFamily: 'Georgia, serif' }}>365</div>
               </div>
               <div style={{ fontSize: '15px', fontWeight: 700, color: '#111827', marginBottom: '4px' }}>Panchang Entries</div>
-
               <p style={{ fontSize: '12px', color: '#6B7280', margin: '0 0 16px', lineHeight: 1.4 }}>
                 Astronomical metrics &amp; vrat details per date
               </p>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid #F3F4F6', fontSize: '11px' }}>
               <span style={{ color: '#9CA3AF' }}>Synced location: Delhi-NCR</span>
-              <span style={{ color: '#DE1B59', fontWeight: 700 }}>Manage →</span>
+              <Link href="/admin/dashboard/panchang" style={{ color: '#DE1B59', fontWeight: 700, textDecoration: 'none' }}>Manage →</Link>
+            </div>
+          </div>
+
+          {/* Card 4: Ritual Kits */}
+          <div style={{ background: '#FFFFFF', border: '1px solid #EFEAE4', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#FFFBEB', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>
+                  📦
+                </div>
+                <div style={{ fontSize: '28px', fontWeight: 700, color: '#111827', fontFamily: 'Georgia, serif' }}>13</div>
+              </div>
+              <div style={{ fontSize: '15px', fontWeight: 700, color: '#111827', marginBottom: '4px' }}>Ritual Kits</div>
+              <p style={{ fontSize: '12px', color: '#6B7280', margin: '0 0 16px', lineHeight: 1.4 }}>
+                Complete Samagri boxes for pujas &amp; festivals
+              </p>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid #F3F4F6', fontSize: '11px' }}>
+              <span style={{ color: '#9CA3AF' }}>Dynamic inventory catalog</span>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <Link href="/admin/products/new" style={{ color: '#DE1B59', fontWeight: 700, textDecoration: 'none' }}>Create</Link>
+                <Link href="/admin/products" style={{ color: '#DE1B59', fontWeight: 700, textDecoration: 'none' }}>Manage →</Link>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* SYSTEM ENVIRONMENT STATUS BAR */}
+        {/* STAT CARDS GRID - ROW 2 (3 COLUMNS - Matching Screenshot 4) */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px', marginBottom: '32px' }}>
+          {/* Card 5: All Products */}
+          <div style={{ background: '#FFFFFF', border: '1px solid #EFEAE4', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#FFFBEB', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>
+                  📦
+                </div>
+                <div style={{ fontSize: '28px', fontWeight: 700, color: '#111827', fontFamily: 'Georgia, serif' }}>0</div>
+              </div>
+              <div style={{ fontSize: '15px', fontWeight: 700, color: '#111827', marginBottom: '4px' }}>All Products</div>
+              <p style={{ fontSize: '12px', color: '#6B7280', margin: '0 0 16px', lineHeight: 1.4 }}>
+                Individual items &amp; Samagri components catalog
+              </p>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid #F3F4F6', fontSize: '11px' }}>
+              <span style={{ color: '#9CA3AF' }}>Product-level management</span>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <Link href="/admin/products/new" style={{ color: '#DE1B59', fontWeight: 700, textDecoration: 'none' }}>Create</Link>
+                <Link href="/admin/products" style={{ color: '#DE1B59', fontWeight: 700, textDecoration: 'none' }}>Manage →</Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 6: Customer Orders */}
+          <div style={{ background: '#FFFFFF', border: '1px solid #EFEAE4', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#FDF2F5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>
+                  🛒
+                </div>
+                <div style={{ fontSize: '28px', fontWeight: 700, color: '#111827', fontFamily: 'Georgia, serif' }}>0</div>
+              </div>
+              <div style={{ fontSize: '15px', fontWeight: 700, color: '#111827', marginBottom: '4px' }}>Customer Orders</div>
+              <p style={{ fontSize: '12px', color: '#6B7280', margin: '0 0 16px', lineHeight: 1.4 }}>
+                Manage customer order fulfillment &amp; payment status
+              </p>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid #F3F4F6', fontSize: '11px' }}>
+              <span style={{ color: '#9CA3AF' }}>0 Confirmed · 0 Processing · 0 Shipped</span>
+              <Link href="/admin/orders" style={{ color: '#DE1B59', fontWeight: 700, textDecoration: 'none' }}>Manage →</Link>
+            </div>
+          </div>
+
+          {/* Card 7: Tapa Circle Subscribers */}
+          <div style={{ background: '#FFFFFF', border: '1px solid #EFEAE4', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>
+                  👥
+                </div>
+                <div style={{ fontSize: '28px', fontWeight: 700, color: '#111827', fontFamily: 'Georgia, serif' }}>1</div>
+              </div>
+              <div style={{ fontSize: '15px', fontWeight: 700, color: '#111827', marginBottom: '4px' }}>Tapa Circle Subscribers</div>
+              <p style={{ fontSize: '12px', color: '#6B7280', margin: '0 0 16px', lineHeight: 1.4 }}>
+                Registered practitioners for weekly broadcasts
+              </p>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid #F3F4F6', fontSize: '11px' }}>
+              <span style={{ color: '#9CA3AF' }}>Authorized consent profiles</span>
+              <Link href="/admin/tapa-circle" style={{ color: '#DE1B59', fontWeight: 700, textDecoration: 'none' }}>Manage →</Link>
+            </div>
+          </div>
+        </div>
+
+        {/* STAT CARDS GRID - ROW 3 & 4 (NEW ADMIN FEATURES CARDS) */}
+        <div style={{ marginBottom: '36px' }}>
+          <div style={{ fontSize: '13px', fontWeight: 700, color: '#374151', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span>🛠️</span> Content &amp; System Administration Tools
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
+            {/* Card 8: Upcoming Features */}
+            <div style={{ background: '#FFFFFF', border: '1px solid #EFEAE4', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#F3E8FF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>
+                    ✨
+                  </div>
+                  <div style={{ fontSize: '28px', fontWeight: 700, color: '#111827', fontFamily: 'Georgia, serif' }}>4</div>
+                </div>
+                <div style={{ fontSize: '15px', fontWeight: 700, color: '#111827', marginBottom: '4px' }}>Upcoming Features</div>
+                <p style={{ fontSize: '12px', color: '#6B7280', margin: '0 0 16px', lineHeight: 1.4 }}>
+                  Roadmap &amp; platform feature release tracking
+                </p>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid #F3F4F6', fontSize: '11px' }}>
+                <span style={{ color: '#9CA3AF' }}>4 Items in roadmap</span>
+                <Link href="/admin/dashboard/upcoming-features" style={{ color: '#DE1B59', fontWeight: 700, textDecoration: 'none' }}>Manage →</Link>
+              </div>
+            </div>
+
+            {/* Card 9: Announcements */}
+            <div style={{ background: '#FFFFFF', border: '1px solid #EFEAE4', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#FDF2F5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>
+                    📢
+                  </div>
+                  <div style={{ fontSize: '28px', fontWeight: 700, color: '#111827', fontFamily: 'Georgia, serif' }}>3</div>
+                </div>
+                <div style={{ fontSize: '15px', fontWeight: 700, color: '#111827', marginBottom: '4px' }}>Announcements</div>
+                <p style={{ fontSize: '12px', color: '#6B7280', margin: '0 0 16px', lineHeight: 1.4 }}>
+                  Global site header tickers &amp; alert popups
+                </p>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid #F3F4F6', fontSize: '11px' }}>
+                <span style={{ color: '#9CA3AF' }}>2 Active broadcasts</span>
+                <Link href="/admin/dashboard/announcements" style={{ color: '#DE1B59', fontWeight: 700, textDecoration: 'none' }}>Manage →</Link>
+              </div>
+            </div>
+
+            {/* Card 10: Homepage Banners */}
+            <div style={{ background: '#FFFFFF', border: '1px solid #EFEAE4', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>
+                    🖼️
+                  </div>
+                  <div style={{ fontSize: '28px', fontWeight: 700, color: '#111827', fontFamily: 'Georgia, serif' }}>3</div>
+                </div>
+                <div style={{ fontSize: '15px', fontWeight: 700, color: '#111827', marginBottom: '4px' }}>Homepage Banners</div>
+                <p style={{ fontSize: '12px', color: '#6B7280', margin: '0 0 16px', lineHeight: 1.4 }}>
+                  Hero carousel banners &amp; promo highlight cards
+                </p>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid #F3F4F6', fontSize: '11px' }}>
+                <span style={{ color: '#9CA3AF' }}>3 Banners configured</span>
+                <Link href="/admin/dashboard/homepage-banners" style={{ color: '#DE1B59', fontWeight: 700, textDecoration: 'none' }}>Manage →</Link>
+              </div>
+            </div>
+
+            {/* Card 11: Navigation Menu */}
+            <div style={{ background: '#FFFFFF', border: '1px solid #EFEAE4', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>
+                    📑
+                  </div>
+                  <div style={{ fontSize: '28px', fontWeight: 700, color: '#111827', fontFamily: 'Georgia, serif' }}>6</div>
+                </div>
+                <div style={{ fontSize: '15px', fontWeight: 700, color: '#111827', marginBottom: '4px' }}>Navigation Menu</div>
+                <p style={{ fontSize: '12px', color: '#6B7280', margin: '0 0 16px', lineHeight: 1.4 }}>
+                  Header, footer &amp; mobile menu links hierarchy
+                </p>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid #F3F4F6', fontSize: '11px' }}>
+                <span style={{ color: '#9CA3AF' }}>Published site links</span>
+                <Link href="/admin/dashboard/navigation-menu" style={{ color: '#DE1B59', fontWeight: 700, textDecoration: 'none' }}>Manage →</Link>
+              </div>
+            </div>
+
+            {/* Card 12: Sources Library */}
+            <div style={{ background: '#FFFFFF', border: '1px solid #EFEAE4', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>
+                    📚
+                  </div>
+                  <div style={{ fontSize: '28px', fontWeight: 700, color: '#111827', fontFamily: 'Georgia, serif' }}>4</div>
+                </div>
+                <div style={{ fontSize: '15px', fontWeight: 700, color: '#111827', marginBottom: '4px' }}>Sources Library</div>
+                <p style={{ fontSize: '12px', color: '#6B7280', margin: '0 0 16px', lineHeight: 1.4 }}>
+                  Scriptural texts, puranas &amp; scholarly citations
+                </p>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid #F3F4F6', fontSize: '11px' }}>
+                <span style={{ color: '#9CA3AF' }}>4 Verified texts</span>
+                <Link href="/admin/dashboard/sources-library" style={{ color: '#DE1B59', fontWeight: 700, textDecoration: 'none' }}>Manage →</Link>
+              </div>
+            </div>
+
+            {/* Card 13: FAQs Library */}
+            <div style={{ background: '#FFFFFF', border: '1px solid #EFEAE4', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#FFFBEB', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>
+                    ❓
+                  </div>
+                  <div style={{ fontSize: '28px', fontWeight: 700, color: '#111827', fontFamily: 'Georgia, serif' }}>3</div>
+                </div>
+                <div style={{ fontSize: '15px', fontWeight: 700, color: '#111827', marginBottom: '4px' }}>FAQs Library</div>
+                <p style={{ fontSize: '12px', color: '#6B7280', margin: '0 0 16px', lineHeight: 1.4 }}>
+                  Frequently asked questions &amp; help documentation
+                </p>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid #F3F4F6', fontSize: '11px' }}>
+                <span style={{ color: '#9CA3AF' }}>Platform Q&amp;A</span>
+                <Link href="/admin/dashboard/faqs-library" style={{ color: '#DE1B59', fontWeight: 700, textDecoration: 'none' }}>Manage →</Link>
+              </div>
+            </div>
+
+            {/* Card 14: Founder Review Queue */}
+            <div style={{ background: '#FFFFFF', border: '1px solid #EFEAE4', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#FEF3C7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>
+                    🔍
+                  </div>
+                  <div style={{ fontSize: '28px', fontWeight: 700, color: '#111827', fontFamily: 'Georgia, serif' }}>3</div>
+                </div>
+                <div style={{ fontSize: '15px', fontWeight: 700, color: '#111827', marginBottom: '4px' }}>Founder Review Queue</div>
+                <p style={{ fontSize: '12px', color: '#6B7280', margin: '0 0 16px', lineHeight: 1.4 }}>
+                  Draft review &amp; editorial approval queue
+                </p>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid #F3F4F6', fontSize: '11px' }}>
+                <span style={{ color: '#9CA3AF' }}>1 Pending founder signoff</span>
+                <Link href="/admin/dashboard/founder-review" style={{ color: '#DE1B59', fontWeight: 700, textDecoration: 'none' }}>Manage →</Link>
+              </div>
+            </div>
+
+            {/* Card 15: User Directory */}
+            <div style={{ background: '#FFFFFF', border: '1px solid #EFEAE4', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#ECFDF5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>
+                    👤
+                  </div>
+                  <div style={{ fontSize: '28px', fontWeight: 700, color: '#111827', fontFamily: 'Georgia, serif' }}>2</div>
+                </div>
+                <div style={{ fontSize: '15px', fontWeight: 700, color: '#111827', marginBottom: '4px' }}>User Directory</div>
+                <p style={{ fontSize: '12px', color: '#6B7280', margin: '0 0 16px', lineHeight: 1.4 }}>
+                  User accounts, roles &amp; RBAC access
+                </p>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid #F3F4F6', fontSize: '11px' }}>
+                <span style={{ color: '#9CA3AF' }}>2 Users registered</span>
+                <Link href="/admin/dashboard/user-directory" style={{ color: '#DE1B59', fontWeight: 700, textDecoration: 'none' }}>Manage →</Link>
+              </div>
+            </div>
+
+            {/* Card 16: Security Audit Logs */}
+            <div style={{ background: '#FFFFFF', border: '1px solid #EFEAE4', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                  <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: '#F3F4F6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>
+                    🛡️
+                  </div>
+                  <div style={{ fontSize: '28px', fontWeight: 700, color: '#111827', fontFamily: 'Georgia, serif' }}>4</div>
+                </div>
+                <div style={{ fontSize: '15px', fontWeight: 700, color: '#111827', marginBottom: '4px' }}>Security Audit Logs</div>
+                <p style={{ fontSize: '12px', color: '#6B7280', margin: '0 0 16px', lineHeight: 1.4 }}>
+                  Immutable activity &amp; authentication logs
+                </p>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '12px', borderTop: '1px solid #F3F4F6', fontSize: '11px' }}>
+                <span style={{ color: '#9CA3AF' }}>Immutable audit log</span>
+                <Link href="/admin/dashboard/security-audit" style={{ color: '#DE1B59', fontWeight: 700, textDecoration: 'none' }}>Manage →</Link>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* SYSTEM ENVIRONMENT STATUS BAR (Matching Screenshot 4) */}
         <div style={{ marginBottom: '36px' }}>
           <div style={{ fontSize: '13px', fontWeight: 700, color: '#374151', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <span>⚡</span> System Environment Status
@@ -354,7 +456,7 @@ function AdminDashboardContent() {
             <div>
               <div style={{ fontSize: '9px', fontWeight: 700, color: '#9CA3AF', letterSpacing: '0.5px', marginBottom: '4px' }}>DATABASE STATUS</div>
               <div style={{ fontSize: '12px', fontWeight: 700, color: '#111827', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ color: '#10B981', fontSize: '10px' }}>●</span> SQLite / Dev DB (Connected)
+                <span style={{ color: '#10B981', fontSize: '10px' }}>●</span> Neon Postgre (Connected)
               </div>
             </div>
 
@@ -379,113 +481,6 @@ function AdminDashboardContent() {
               </div>
             </div>
           </div>
-        </div>
-
-        {/* SUPER ADMIN COMMAND CENTER */}
-        <div style={{ marginBottom: '36px' }}>
-          <div style={{ fontSize: '13px', fontWeight: 700, color: '#374151', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span>🛡️</span> Super Admin Command Center
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '20px' }}>
-            {/* Card 1: User Directory */}
-            <div style={{ background: '#FFFFFF', border: '1px solid #EFEAE4', borderRadius: '16px', padding: '20px' }}>
-              <div style={{ fontSize: '15px', fontWeight: 700, color: '#111827', marginBottom: '16px' }}>👥 User Directory Overview</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
-                <div>
-                  <div style={{ fontSize: '10px', color: '#9CA3AF' }}>Total Users</div>
-                  <div style={{ fontSize: '20px', fontWeight: 700, color: '#111827' }}>2</div>
-                </div>
-                <div style={{ fontSize: '10px', color: '#9CA3AF' }}>Customers</div>
-                <div style={{ fontSize: '20px', fontWeight: 700, color: '#111827' }}>1</div>
-
-                <div>
-                  <div style={{ fontSize: '10px', color: '#9CA3AF' }}>Admins</div>
-                  <div style={{ fontSize: '20px', fontWeight: 700, color: '#10B981' }}>0</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: '10px', color: '#9CA3AF' }}>Super Admins</div>
-                  <div style={{ fontSize: '20px', fontWeight: 700, color: '#DE1B59' }}>1</div>
-                </div>
-              </div>
-              <div style={{ color: '#DE1B59', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}>Manage Users Directory →</div>
-            </div>
-
-            {/* Card 2: Security & FAQ */}
-            <div style={{ background: '#FFFFFF', border: '1px solid #EFEAE4', borderRadius: '16px', padding: '20px' }}>
-              <div style={{ fontSize: '15px', fontWeight: 700, color: '#111827', marginBottom: '8px' }}>📜 System Security &amp; FAQ</div>
-              <p style={{ fontSize: '11px', color: '#6B7280', margin: '0 0 16px', lineHeight: 1.4 }}>
-                Access immutable audit logs tracking role modifications, account deactivations, and manage other platform settings.
-              </p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '11px', fontWeight: 600 }}>
-                <div style={{ background: '#F9FAFB', border: '1px solid #F3F4F6', padding: '8px 12px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between' }}>
-                  <span>📋 View Security Audit Logs</span>
-                  <span>→</span>
-                </div>
-                <div style={{ background: '#F9FAFB', border: '1px solid #F3F4F6', padding: '8px 12px', borderRadius: '8px', display: 'flex', justifyContent: 'space-between' }}>
-                  <span>💬 FAQ Content Editor</span>
-                  <span>→</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Card 3: Banner Announcement */}
-            <div style={{ background: '#FFFFFF', border: '1px solid #EFEAE4', borderRadius: '16px', padding: '20px' }}>
-              <div style={{ fontSize: '15px', fontWeight: 700, color: '#111827', marginBottom: '8px' }}>📢 Banner Announcement</div>
-              <p style={{ fontSize: '11px', color: '#6B7280', margin: '0 0 12px', lineHeight: 1.4 }}>
-                Publish a new site-wide announcement banner message.
-              </p>
-              <input
-                type="text"
-                placeholder="Enter banner message..."
-                style={{ width: '100%', border: '1px solid #E5E7EB', borderRadius: '8px', padding: '8px 12px', fontSize: '12px', marginBottom: '12px', boxSizing: 'border-box' }}
-              />
-              <button
-                type="button"
-                style={{ width: '100%', background: '#DE1B59', color: '#FFFFFF', border: 'none', padding: '9px', borderRadius: '8px', fontWeight: 700, fontSize: '12px', cursor: 'pointer' }}
-              >
-                Update Announcement Banner
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* RECENT SIGNUPS TABLE CARD */}
-        <div style={{ background: '#FFFFFF', border: '1px solid #EFEAE4', borderRadius: '16px', padding: '24px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#111827', margin: 0 }}>Recent Signups (Super Admin Audit)</h3>
-            <span style={{ fontSize: '11px', color: '#9CA3AF' }}>Delhi-NCR Location</span>
-          </div>
-
-          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '12px' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid #F3F4F6', color: '#9CA3AF', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                <th style={{ padding: '10px 12px' }}>NAME</th>
-                <th style={{ padding: '10px 12px' }}>CONTACT</th>
-                <th style={{ padding: '10px 12px' }}>ROLE</th>
-                <th style={{ padding: '10px 12px' }}>JOINED DATE</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr style={{ borderBottom: '1px solid #F9FAFB' }}>
-                <td style={{ padding: '12px', fontWeight: 700 }}>Super Admin</td>
-                <td style={{ padding: '12px', color: '#6B7280' }}>admin@tapa.co</td>
-                <td style={{ padding: '12px' }}>
-                  <span style={{ background: '#FDF2F5', color: '#DE1B59', fontSize: '9px', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>SUPER_ADMIN</span>
-                </td>
-                <td style={{ padding: '12px', color: '#6B7280' }}>25/8/2026</td>
-              </tr>
-              <tr>
-                <td style={{ padding: '12px', fontWeight: 700 }}>Test Subscriber Name</td>
-
-                <td style={{ padding: '12px', color: '#6B7280' }}>test.subscriber@tapa.co<br /><span style={{ fontSize: '10px', color: '#9CA3AF' }}>9876543210</span></td>
-                <td style={{ padding: '12px' }}>
-                  <span style={{ background: '#F3F4F6', color: '#374151', fontSize: '9px', fontWeight: 700, padding: '2px 6px', borderRadius: '4px' }}>CUSTOMER</span>
-                </td>
-                <td style={{ padding: '12px', color: '#6B7280' }}>25/8/2026</td>
-              </tr>
-            </tbody>
-          </table>
         </div>
       </main>
     </div>

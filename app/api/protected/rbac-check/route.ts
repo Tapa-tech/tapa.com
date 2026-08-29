@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import { authorizeRequest } from '@/lib/rbac';
 
 export async function GET(req: Request) {
-  // Guard API endpoint requiring EDITOR or ADMIN role
-  const auth = await authorizeRequest(['EDITOR', 'ADMIN']);
+  // Guard API endpoint requiring ADMIN or SUPER_USER role
+  const auth = await authorizeRequest(['ADMIN', 'SUPER_USER']);
 
   if (!auth.authorized) {
     return NextResponse.json({ success: false, error: auth.error }, { status: auth.statusCode });

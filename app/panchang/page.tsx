@@ -117,9 +117,11 @@ export default function PanchangPage() {
     <div className="w-full max-w-full overflow-x-hidden min-h-screen">
       <div className="bcrumb">
         <div className="bc-in">
-          {activeTab === 'pl' && <>Home › <b>Panchang</b></>}
-          {activeTab === 'vc' && <>Home › Panchang › <b>2026 Vrat Calendar</b></>}
-          {activeTab === 'fc' && <>Home › Panchang › <b>Festival Calendar</b></>}
+          <div className="bc-l">
+            {activeTab === 'pl' && <><Link href="/">Home</Link> › <b>Panchang</b></>}
+            {activeTab === 'vc' && <><Link href="/">Home</Link> › <Link href="/panchang">Panchang</Link> › <b>2026 Vrat Calendar</b></>}
+            {activeTab === 'fc' && <><Link href="/">Home</Link> › <Link href="/panchang">Panchang</Link> › <b>Festival Calendar</b></>}
+          </div>
         </div>
       </div>
 

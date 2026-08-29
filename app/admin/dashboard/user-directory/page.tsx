@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { SessionProvider, signOut, useSession } from 'next-auth/react';
 import Link from 'next/link';
+import { AdminSidebar } from '@/components/admin/AdminSidebar';
 
 interface UserRecord {
   id: string;
@@ -21,11 +22,17 @@ function UserDirectoryContent() {
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('ALL');
 
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  // Action States
+  const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
+  const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+  const [actionMessage, setActionMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-  const userRole = (session?.user as { role?: string })?.role?.toUpperCase() || 'USER';
-  const isAuthorized = ['ADMIN', 'EDITOR'].includes(userRole);
+  const rawUserRole = (session?.user as { role?: string })?.role?.toUpperCase() || 'CUSTOMER';
+  const currentRole = rawUserRole === 'SUPER_ADMIN' ? 'SUPER_USER' : rawUserRole;
+  const currentUserId = (session?.user as any)?.id || '';
+  const isAuthorized = ['SUPER_USER', 'ADMIN', 'SUPER_ADMIN', 'EDITOR'].includes(currentRole);
   const userEmail = session?.user?.email || (session?.user as any)?.phone || 'admin@tapa.co';
+  const isSuperUser = currentRole === 'SUPER_USER' || currentRole === 'SUPER_ADMIN';
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -48,19 +55,70 @@ function UserDirectoryContent() {
     }
   }, [status, isAuthorized, fetchUsers]);
 
+  const handleRoleChange = async (userId: string, newRole: string) => {
+    setActionMessage(null);
+    setUpdatingUserId(userId);
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, role: newRole }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setActionMessage({ type: 'success', text: `Role updated to ${newRole} successfully!` });
+        fetchUsers();
+      } else {
+        setActionMessage({ type: 'error', text: data.error || 'Failed to update role.' });
+      }
+    } catch (err: any) {
+      setActionMessage({ type: 'error', text: err.message || 'Error updating role.' });
+    } finally {
+      setUpdatingUserId(null);
+    }
+  };
+
+  const handleDeleteUser = async (userId: string, userName: string) => {
+    if (!isSuperUser) {
+      setActionMessage({ type: 'error', text: 'Forbidden: Only SUPER_USER can delete users.' });
+      return;
+    }
+    if (!confirm(`Are you sure you want to permanently delete user "${userName || userId}"?`)) return;
+
+    setActionMessage(null);
+    setDeletingUserId(userId);
+    try {
+      const res = await fetch(`/api/admin/users?userId=${userId}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setActionMessage({ type: 'success', text: 'User account deleted successfully.' });
+        fetchUsers();
+      } else {
+        setActionMessage({ type: 'error', text: data.error || 'Failed to delete user.' });
+      }
+    } catch (err: any) {
+      setActionMessage({ type: 'error', text: err.message || 'Error deleting user.' });
+    } finally {
+      setDeletingUserId(null);
+    }
+  };
+
   const filteredUsers = users.filter((u) => {
     const query = search.toLowerCase();
     const matchesSearch =
       (u.name && u.name.toLowerCase().includes(query)) ||
       (u.email && u.email.toLowerCase().includes(query)) ||
       (u.phone && u.phone.toLowerCase().includes(query));
-    const matchesRole = roleFilter === 'ALL' || u.role.toUpperCase() === roleFilter;
+    const normalizedRole = u.role.toUpperCase() === 'SUPER_ADMIN' ? 'SUPER_USER' : u.role.toUpperCase() === 'USER' ? 'CUSTOMER' : u.role.toUpperCase();
+    const matchesRole = roleFilter === 'ALL' || normalizedRole === roleFilter;
     return matchesSearch && matchesRole;
   });
 
   const totalCount = users.length;
-  const adminCount = users.filter((u) => u.role.toUpperCase() === 'ADMIN' || u.role.toUpperCase() === 'SUPER_ADMIN').length;
-  const customerCount = users.filter((u) => u.role.toUpperCase() === 'USER').length;
+  const adminCount = users.filter((u) => ['ADMIN', 'SUPER_USER', 'SUPER_ADMIN'].includes(u.role.toUpperCase())).length;
+  const customerCount = users.filter((u) => ['CUSTOMER', 'USER'].includes(u.role.toUpperCase())).length;
 
   if (status === 'loading') {
     return (
@@ -81,7 +139,7 @@ function UserDirectoryContent() {
             CMS Authorization Required
           </h2>
           <p style={{ fontSize: '13px', color: '#6B7280', margin: '0 0 24px', lineHeight: 1.5 }}>
-            Only users with <strong>EDITOR</strong> or <strong>ADMIN</strong> roles can access the User Directory. Your current role is <strong>{userRole}</strong>.
+            Only users with <strong>ADMIN</strong> or <strong>SUPER_USER</strong> roles can access the User Management Directory. Your current role is <strong>{currentRole}</strong>.
           </p>
           <Link
             href="/admin/login"
@@ -96,182 +154,7 @@ function UserDirectoryContent() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#FBF9F5', color: '#111827', fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", display: 'flex' }}>
-      {/* LEFT SIDEBAR */}
-      <aside
-        style={{
-          width: '240px',
-          background: '#FFFFFF',
-          borderRight: '1px solid #EAEAEA',
-          padding: '24px 16px',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          flexShrink: 0,
-        }}
-      >
-        <div>
-          {/* Logo Brand Header */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingLeft: '8px', marginBottom: '28px' }}>
-            <span style={{ fontFamily: "'Tiro Devanagari Hindi', Georgia, serif", fontSize: '26px', fontWeight: 900, color: '#DE1B59' }}>
-              तप
-            </span>
-            <div>
-              <div style={{ fontSize: '13px', fontWeight: 700, color: '#111827', lineHeight: 1.1 }}>The Tapa Co.</div>
-              <div style={{ fontSize: '9px', fontWeight: 700, color: '#DE1B59', letterSpacing: '0.5px' }}>CMS CONSOLE</div>
-            </div>
-          </div>
-
-          {/* User Account Banner */}
-          <div style={{ paddingLeft: '8px', paddingRight: '8px', marginBottom: '24px' }}>
-            <div style={{ fontSize: '9px', fontWeight: 700, color: '#9CA3AF', letterSpacing: '0.8px', marginBottom: '4px' }}>
-              LOGGED IN AS
-            </div>
-            <div style={{ fontSize: '13px', fontWeight: 700, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {userEmail}
-            </div>
-            <div style={{ marginTop: '4px' }}>
-              <span style={{ background: '#FDF2F5', color: '#DE1B59', fontSize: '9px', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', display: 'inline-block' }}>
-                SUPER_ADMIN
-              </span>
-            </div>
-          </div>
-
-          {/* Navigation Links */}
-          <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <Link
-              href="/admin/dashboard"
-              style={{
-                color: '#4B5563',
-                borderRadius: '12px',
-                padding: '11px 14px',
-                fontSize: '13px',
-                fontWeight: 600,
-                textDecoration: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-              }}
-            >
-              <span>🩼</span> Dashboard
-            </Link>
-
-            <Link
-              href="/admin/dashboard/ritual-guides"
-              style={{
-                color: '#4B5563',
-                borderRadius: '12px',
-                padding: '11px 14px',
-                fontSize: '13px',
-                fontWeight: 600,
-                textDecoration: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-              }}
-            >
-              <span>📖</span> Ritual Guides
-            </Link>
-
-            <Link
-              href="/admin/dashboard/dharmic-concepts"
-              style={{
-                color: '#4B5563',
-                borderRadius: '12px',
-                padding: '11px 14px',
-                fontSize: '13px',
-                fontWeight: 600,
-                textDecoration: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-              }}
-            >
-              <span>🧭</span> Dharmic Concepts
-            </Link>
-
-            <Link
-              href="/admin/dashboard/beginner-guides"
-              style={{
-                color: '#4B5563',
-                borderRadius: '12px',
-                padding: '11px 14px',
-                fontSize: '13px',
-                fontWeight: 600,
-                textDecoration: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-              }}
-            >
-              <span>🌱</span> Beginner Guides
-            </Link>
-
-            <Link
-              href="/admin/dashboard/panchang"
-              style={{
-                color: '#4B5563',
-                borderRadius: '12px',
-                padding: '11px 14px',
-                fontSize: '13px',
-                fontWeight: 600,
-                textDecoration: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-              }}
-            >
-              <span>📅</span> Panchang &amp; Vrats
-            </Link>
-
-            <Link
-              href="/admin/dashboard/user-directory"
-              style={{
-                background: '#DE1B59',
-                color: '#FFFFFF',
-                borderRadius: '12px',
-                padding: '11px 14px',
-                fontSize: '13px',
-                fontWeight: 700,
-                textDecoration: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-              }}
-            >
-              <span>👥</span> User Directory
-            </Link>
-          </nav>
-        </div>
-
-        {/* Sidebar Footer */}
-        <div style={{ paddingTop: '20px', borderTop: '1px solid #F3F4F6' }}>
-          <button
-            type="button"
-            onClick={() => signOut({ callbackUrl: '/admin/login' })}
-            style={{
-              width: '100%',
-              background: '#FFFFFF',
-              color: '#DE1B59',
-              border: '1px solid #DE1B59',
-              borderRadius: '9999px',
-              padding: '10px 16px',
-              fontSize: '12px',
-              fontWeight: 700,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px',
-              marginBottom: '12px',
-            }}
-          >
-            ↳ Sign Out
-          </button>
-          <div style={{ fontSize: '10px', color: '#9CA3AF', textAlign: 'center' }}>
-            Legal Entity: Tale Scale Networks
-          </div>
-        </div>
-      </aside>
+      <AdminSidebar userEmail={userEmail} userRole={currentRole} />
 
       {/* MAIN CONTENT */}
       <main style={{ flex: 1, padding: '36px 40px', maxWidth: '1200px' }}>
@@ -279,13 +162,19 @@ function UserDirectoryContent() {
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '28px' }}>
           <div>
             <h1 style={{ fontFamily: "Georgia, 'Tiro Devanagari Hindi', serif", fontSize: '28px', fontWeight: 700, color: '#111827', margin: 0 }}>
-              User Directory
+              User Directory &amp; RBAC Management
             </h1>
             <p style={{ fontSize: '13px', color: '#6B7280', margin: '4px 0 0' }}>
-              View and manage registered accounts, roles, and administrative permissions.
+              View and manage registered accounts, roles, and administrative permissions ({currentRole} Console).
             </p>
           </div>
         </div>
+
+        {actionMessage && (
+          <div style={{ background: actionMessage.type === 'success' ? '#ECFDF5' : '#FEE2E2', border: `1px solid ${actionMessage.type === 'success' ? '#A7F3D0' : '#FCA5A5'}`, color: actionMessage.type === 'success' ? '#065F46' : '#991B1B', padding: '12px 16px', borderRadius: '12px', fontSize: '13px', fontWeight: 600, marginBottom: '24px' }}>
+            {actionMessage.text}
+          </div>
+        )}
 
         {/* METRICS STAT CARDS */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px', marginBottom: '28px' }}>
@@ -298,7 +187,7 @@ function UserDirectoryContent() {
             <div style={{ fontSize: '24px', fontWeight: 700, color: '#3B82F6', marginTop: '4px' }}>{customerCount}</div>
           </div>
           <div style={{ background: '#FFFFFF', border: '1px solid #EFEAE4', borderRadius: '16px', padding: '20px' }}>
-            <div style={{ fontSize: '11px', color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.5px' }}>ADMINS &amp; EDITORS</div>
+            <div style={{ fontSize: '11px', color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: '0.5px' }}>ADMINS &amp; SUPER_USERS</div>
             <div style={{ fontSize: '24px', fontWeight: 700, color: '#DE1B59', marginTop: '4px' }}>{adminCount}</div>
           </div>
         </div>
@@ -322,10 +211,9 @@ function UserDirectoryContent() {
               style={{ background: '#F9FAFB', border: '1px solid #E5E7EB', color: '#374151', padding: '9px 14px', borderRadius: '10px', fontSize: '13px', outline: 'none' }}
             >
               <option value="ALL">All Roles</option>
-              <option value="SUPER_ADMIN">SUPER_ADMIN</option>
+              <option value="SUPER_USER">SUPER_USER</option>
               <option value="ADMIN">ADMIN</option>
-              <option value="EDITOR">EDITOR</option>
-              <option value="USER">USER</option>
+              <option value="CUSTOMER">CUSTOMER</option>
             </select>
           </div>
         </div>
@@ -347,43 +235,61 @@ function UserDirectoryContent() {
                 <tr style={{ background: '#FAFAFA', borderBottom: '1px solid #EFEAE4', color: '#9CA3AF', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
                   <th style={{ padding: '14px 20px' }}>USER</th>
                   <th style={{ padding: '14px 20px' }}>CONTACT</th>
-                  <th style={{ padding: '14px 20px' }}>ROLE</th>
-                  <th style={{ padding: '14px 20px' }}>JOIN DATE</th>
+                  <th style={{ padding: '14px 20px' }}>ROLE MANAGEMENT</th>
+                  <th style={{ padding: '14px 20px', textAlign: 'right' }}>ACTIONS</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredUsers.map((user) => (
-                  <tr key={user.id} style={{ borderBottom: '1px solid #F3F4F6' }}>
-                    <td style={{ padding: '16px 20px' }}>
-                      <div style={{ fontWeight: 700, color: '#111827', fontSize: '14px' }}>
-                        {user.name || 'Anonymous User'}
-                      </div>
-                      <div style={{ fontSize: '11px', color: '#9CA3AF', fontFamily: 'monospace' }}>ID: {user.id}</div>
-                    </td>
-                    <td style={{ padding: '16px 20px', color: '#4B5563' }}>
-                      <div>{user.email || 'No email provided'}</div>
-                      <div style={{ fontSize: '11px', color: '#9CA3AF' }}>{user.phone || 'No phone provided'}</div>
-                    </td>
-                    <td style={{ padding: '16px 20px' }}>
-                      {user.role.toUpperCase() === 'SUPER_ADMIN' ? (
-                        <span style={{ background: '#FDF2F5', color: '#DE1B59', fontSize: '10px', fontWeight: 700, padding: '3px 10px', borderRadius: '9999px' }}>
-                          🛡️ SUPER_ADMIN
-                        </span>
-                      ) : user.role.toUpperCase() === 'ADMIN' ? (
-                        <span style={{ background: '#ECFDF5', color: '#059669', fontSize: '10px', fontWeight: 700, padding: '3px 10px', borderRadius: '9999px' }}>
-                          ⚡ ADMIN
-                        </span>
-                      ) : (
-                        <span style={{ background: '#F3F4F6', color: '#4B5563', fontSize: '10px', fontWeight: 700, padding: '3px 10px', borderRadius: '9999px' }}>
-                          👤 USER
-                        </span>
-                      )}
-                    </td>
-                    <td style={{ padding: '16px 20px', color: '#6B7280', fontSize: '12px' }}>
-                      {new Date(user.createdAt).toLocaleDateString('en-GB')}
-                    </td>
-                  </tr>
-                ))}
+                {filteredUsers.map((user) => {
+                  const targetRole = user.role.toUpperCase() === 'SUPER_ADMIN' ? 'SUPER_USER' : user.role.toUpperCase() === 'USER' ? 'CUSTOMER' : user.role.toUpperCase();
+                  const isSelf = user.id === currentUserId;
+
+                  return (
+                    <tr key={user.id} style={{ borderBottom: '1px solid #F3F4F6' }}>
+                      <td style={{ padding: '16px 20px' }}>
+                        <div style={{ fontWeight: 700, color: '#111827', fontSize: '14px' }}>
+                          {user.name || 'Anonymous User'} {isSelf && <span style={{ fontSize: '10px', background: '#F3F4F6', padding: '2px 6px', borderRadius: '4px', marginLeft: '4px' }}>(You)</span>}
+                        </div>
+                        <div style={{ fontSize: '11px', color: '#9CA3AF', fontFamily: 'monospace' }}>ID: {user.id}</div>
+                      </td>
+                      <td style={{ padding: '16px 20px', color: '#4B5563' }}>
+                        <div>{user.email || 'No email provided'}</div>
+                        <div style={{ fontSize: '11px', color: '#9CA3AF' }}>{user.phone || 'No phone provided'}</div>
+                      </td>
+                      <td style={{ padding: '16px 20px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <select
+                            disabled={isSelf || updatingUserId === user.id}
+                            value={targetRole}
+                            onChange={(e) => handleRoleChange(user.id, e.target.value)}
+                            style={{ background: '#F9FAFB', border: '1px solid #D1D5DB', borderRadius: '8px', padding: '6px 10px', fontSize: '12px', fontWeight: 600, outline: 'none', opacity: isSelf ? 0.6 : 1, cursor: isSelf ? 'not-allowed' : 'pointer' }}
+                          >
+                            <option value="CUSTOMER">CUSTOMER</option>
+                            <option value="ADMIN">ADMIN</option>
+                            {/* Only SUPER_USER can select/assign SUPER_USER role */}
+                            {isSuperUser && <option value="SUPER_USER">SUPER_USER</option>}
+                          </select>
+                        </div>
+                      </td>
+                      <td style={{ padding: '16px 20px', textAlign: 'right' }}>
+                        {isSuperUser && !isSelf ? (
+                          <button
+                            type="button"
+                            disabled={deletingUserId === user.id}
+                            onClick={() => handleDeleteUser(user.id, user.name || user.email || user.id)}
+                            style={{ background: '#FEE2E2', color: '#991B1B', border: '1px solid #FCA5A5', padding: '6px 12px', borderRadius: '8px', fontSize: '11px', fontWeight: 700, cursor: 'pointer', opacity: deletingUserId === user.id ? 0.5 : 1 }}
+                          >
+                            {deletingUserId === user.id ? 'Deleting...' : 'Delete User'}
+                          </button>
+                        ) : (
+                          <span style={{ fontSize: '11px', color: '#9CA3AF' }}>
+                            {isSelf ? 'Self (Protected)' : 'Read / Edit Only'}
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

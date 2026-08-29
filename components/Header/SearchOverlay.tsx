@@ -125,13 +125,26 @@ export const SearchOverlay: React.FC<SearchOverlayProps> = ({ isOpen, onClose })
           ref={inputRef}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search rituals, festivals, concepts…"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && query.trim()) {
+              onClose();
+              window.location.href = `/search?q=${encodeURIComponent(query.trim())}`;
+            }
+          }}
+          placeholder="Search rituals, festivals, concepts… (Press Enter for full results)"
         />
         {isLoading && (
           <span style={{ fontSize: '11px', color: 'var(--pink)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             Searching…
           </span>
         )}
+        <Link
+          href={`/search?q=${encodeURIComponent(query.trim() || 'ekadashi')}`}
+          onClick={onClose}
+          style={{ fontSize: '11.5px', fontWeight: 700, color: 'var(--pink)', textDecoration: 'none', whiteSpace: 'nowrap' }}
+        >
+          Full Results →
+        </Link>
         <span className="so-esc" onClick={onClose}>ESC</span>
       </div>
 

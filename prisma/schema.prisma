@@ -11,9 +11,8 @@ datasource db {
 
 enum UserRole {
   CUSTOMER
-  EDITOR
   ADMIN
-  SUPER_ADMIN
+  SUPER_USER
 }
 
 enum ContentStatus {
@@ -231,13 +230,15 @@ model User {
   phone         String?   @unique
   phoneVerified DateTime?
   password      String?
-  role          UserRole  @default(CUSTOMER)
-  createdAt     DateTime  @default(now())
+  role            UserRole  @default(CUSTOMER)
+  activeSessionId String?
+  createdAt       DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
   accounts       Account[]
   sessions       Session[]
   dharmicConcepts DharmicConcept[]
+  orders         Order[]
 
   @@index([email])
   @@index([phone])
@@ -388,5 +389,81 @@ model PanchangEntry {
   @@index([year])
   @@index([date])
 }
+
+enum OrderStatus {
+  PLACED
+  CONFIRMED
+  PROCESSING
+  DISPATCHED
+  DELIVERED
+  CANCELLATION_REQUESTED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  COD
+}
+
+model Order {
+  id              String        @id @default(cuid())
+  orderNumber     String        @unique
+  customerName    String
+  customerMobile  String
+  customerEmail   String
+  
+  streetAddress   String
+  city            String
+  state           String
+  pincode         String
+  country         String        @default("India")
+  
+  subtotal        Int
+  deliveryCharge  Int           @default(0)
+  grandTotal      Int
+  
+  paymentMethod   PaymentMethod @default(COD)
+  paymentStatus   PaymentStatus @default(PENDING)
+  orderStatus     OrderStatus   @default(PLACED)
+
+  userId          String?
+  user            User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  items           OrderItem[]
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([orderNumber])
+  @@index([customerMobile])
+  @@index([customerEmail])
+  @@index([orderStatus])
+  @@index([userId])
+}
+
+model OrderItem {
+  id            String   @id @default(cuid())
+  orderId       String
+  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  
+  productId     String
+  productName   String
+  unitPrice     Int
+  quantity      Int
+  lineTotal     Int
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([orderId])
+  @@index([productId])
+}
+
 
 

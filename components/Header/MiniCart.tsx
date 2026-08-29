@@ -1,5 +1,7 @@
 import React from 'react';
-import { MOCK_CART_ITEMS } from '@/lib/mock-data';
+import Link from 'next/link';
+import { useSession } from 'next-auth/react';
+import { useCart } from '@/context/CartContext';
 
 interface MiniCartProps {
   isOpen: boolean;
@@ -7,34 +9,69 @@ interface MiniCartProps {
 }
 
 export const MiniCart: React.FC<MiniCartProps> = ({ isOpen, onClose }) => {
-  if (!isOpen) return null;
+  const { data: session, status } = useSession();
+  const isAuthenticated = status === 'authenticated' && !!session?.user;
+  const { items, totalItems, subtotal, removeItem, increaseQuantity, decreaseQuantity } = useCart();
 
-  const total = MOCK_CART_ITEMS.reduce((sum, item) => sum + item.price, 0);
+  if (!isOpen || !isAuthenticated) return null;
 
   return (
     <div className="cart" onMouseLeave={onClose}>
       <div className="cart-h">
         <span className="cart-t">Your cart</span>
-        <span className="cart-c">{MOCK_CART_ITEMS.length} items</span>
+        <span className="cart-c">{totalItems} {totalItems === 1 ? 'item' : 'items'}</span>
       </div>
-      {MOCK_CART_ITEMS.map((item) => (
-        <div key={item.id} className="cart-i">
-          <div className="cart-th" style={{ background: item.gradient }}></div>
-          <div>
-            <div className="cart-n">{item.name}</div>
-            <div className="cart-m">{item.cutoff}</div>
+      {items.length > 0 ? (
+        items.map((item) => (
+          <div key={item.id} className="cart-i flex items-center justify-between gap-3">
+            <div className="cart-th" style={{ background: 'linear-gradient(150deg,#7A4A12,#2A1408)' }}></div>
+            <div className="flex-1 min-w-0">
+              <div className="cart-n truncate">{item.name}</div>
+              <div className="cart-m">{item.cutoff || 'In stock'}</div>
+              <div className="flex items-center gap-2 mt-1 text-xs text-[var(--sub-text)]">
+                <button
+                  type="button"
+                  className="px-1.5 py-0.5 bg-[var(--bg)] border border-[var(--border)] rounded font-bold cursor-pointer"
+                  onClick={() => decreaseQuantity(item.id)}
+                >
+                  -
+                </button>
+                <span>Qty: {item.quantity}</span>
+                <button
+                  type="button"
+                  className="px-1.5 py-0.5 bg-[var(--bg)] border border-[var(--border)] rounded font-bold cursor-pointer"
+                  onClick={() => increaseQuantity(item.id)}
+                >
+                  +
+                </button>
+                <button
+                  type="button"
+                  className="ml-auto text-[var(--pink)] underline text-[11px] cursor-pointer"
+                  onClick={() => removeItem(item.id)}
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+            <div className="cart-p font-bold">₹{(item.price * item.quantity).toLocaleString('en-IN')}</div>
           </div>
-          <div className="cart-p">₹{item.price.toLocaleString('en-IN')}</div>
+        ))
+      ) : (
+        <div className="py-6 text-center text-xs text-[var(--sub-text)]">
+          Your cart is currently empty.
         </div>
-      ))}
+      )}
       <div className="cart-f">
         <div className="cart-row">
           <span>Subtotal</span>
-          <b>₹{total.toLocaleString('en-IN')}</b>
+          <b>₹{subtotal.toLocaleString('en-IN')}</b>
         </div>
-        <button className="cart-b" onClick={() => alert('Checkout is coming soon in Phase 2!')}>
+        <Link href="/cart" onClick={onClose} className="block text-center text-xs font-bold text-[var(--pink)] hover:underline mb-2">
+          View full cart ›
+        </Link>
+        <Link href="/checkout" onClick={onClose} className="cart-b block text-center">
           Checkout ›
-        </button>
+        </Link>
         <p className="cart-note">Dated kits are prepaid. Free cancellation until dispatch.</p>
       </div>
     </div>

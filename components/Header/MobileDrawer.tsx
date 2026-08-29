@@ -5,9 +5,10 @@ import { Logo } from './Logo';
 interface MobileDrawerProps {
   isOpen: boolean;
   onClose: () => void;
+  userName?: string | null;
 }
 
-export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose }) => {
+export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose, userName }) => {
   const [openSection, setOpenSection] = useState<string | null>('rg');
 
   if (!isOpen) return null;
@@ -99,12 +100,20 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({ isOpen, onClose }) =
             </svg>
             Join the Tapa Circle · ₹499/yr
           </button>
-          <Link href="/admin/login?mode=signup" onClick={onClose} style={{ display: 'block', width: '100%' }}>
-            <button className="mob-b pink" style={{ width: '100%' }}>Create account</button>
-          </Link>
-          <Link href="/admin/login" onClick={onClose} style={{ display: 'block', width: '100%' }}>
-            <button className="mob-b ghost" style={{ width: '100%' }}>Sign in</button>
-          </Link>
+          {userName ? (
+            <Link href="/account" onClick={onClose} style={{ display: 'block', width: '100%' }}>
+              <button className="mob-b pink" style={{ width: '100%' }}>👤 {userName}</button>
+            </Link>
+          ) : (
+            <>
+              <Link href="/admin/login?mode=signup" onClick={onClose} style={{ display: 'block', width: '100%' }}>
+                <button className="mob-b pink" style={{ width: '100%' }}>Create account</button>
+              </Link>
+              <Link href="/admin/login" onClick={onClose} style={{ display: 'block', width: '100%' }}>
+                <button className="mob-b ghost" style={{ width: '100%' }}>Sign in</button>
+              </Link>
+            </>
+          )}
         </div>
 
         <div className="mob-lang">

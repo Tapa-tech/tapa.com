@@ -15,9 +15,6 @@ export type AuthenticatedRouteHandler = (
   }
 ) => Promise<Response> | Response;
 
-/**
- * Reusable server-side wrapper for protecting API Route Handlers with specific role requirements
- */
 export function withAuth(handler: AuthenticatedRouteHandler, allowedRoles?: RoleName | RoleName[]) {
   return async (req: Request, context?: any) => {
     const auth = await authorizeRequest(allowedRoles);
@@ -33,23 +30,14 @@ export function withAuth(handler: AuthenticatedRouteHandler, allowedRoles?: Role
   };
 }
 
-/**
- * Reusable guard requiring USER, EDITOR, or ADMIN role
- */
 export function withUserAuth(handler: AuthenticatedRouteHandler) {
-  return withAuth(handler, ['CUSTOMER', 'EDITOR', 'ADMIN', 'SUPER_ADMIN']);
+  return withAuth(handler, ['CUSTOMER', 'ADMIN', 'SUPER_USER']);
 }
 
-/**
- * Reusable guard requiring EDITOR or ADMIN role
- */
 export function withEditorAuth(handler: AuthenticatedRouteHandler) {
-  return withAuth(handler, ['EDITOR', 'ADMIN']);
+  return withAuth(handler, ['ADMIN', 'SUPER_USER']);
 }
 
-/**
- * Reusable guard requiring ADMIN role
- */
 export function withAdminAuth(handler: AuthenticatedRouteHandler) {
-  return withAuth(handler, ['ADMIN']);
+  return withAuth(handler, ['ADMIN', 'SUPER_USER']);
 }

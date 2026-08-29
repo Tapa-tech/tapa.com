@@ -1,0 +1,629 @@
+/* ============================================================
+   THE TAPA CO. — SEARCH SYSTEM & RESULTS STYLES
+   Exact CSS design system matching Search System Pages.html
+   ============================================================ */
+:root {
+  --bg: #F2EDE4;
+  --card: #FFFFFF;
+  --dark: #1C1712;
+  --darkbar: #1A1208;
+  --pink: #FD066D;
+  --amber: #E8A020;
+  --gold: #A07800;
+  --yellow: #EDAB3A;
+  --body-text: #2C2010;
+  --mid-text: #5C4B12;
+  --sub-text: #8A7A68;
+  --border: #E8E0D0;
+  --border-light: #F0E8D8;
+  --hero-text: #FFFDF5;
+  --dim: #7A6A55;
+  --dimmer: #5C4E36;
+  --d-bg: #E6F1E6;
+  --d-tx: #27500A;
+  --d-bd: #C9DFC9;
+  --p-bg: #FFF8E6;
+  --p-tx: #A07800;
+  --p-bd: #EFE0B8;
+  --b-bg: #F0E9E1;
+  --b-tx: #4A3525;
+  --b-bd: #D9CBB8;
+  --data-bg: #EEF3F7;
+  --data-tx: #1F4460;
+  --data-bd: #C3D6E4;
+  --wa: #1F9D52;
+}
+
+/* SEARCH BAR CONTAINER */
+.tapa-sbar {
+  background: var(--darkbar);
+  padding: 26px 40px 24px;
+}
+.tapa-sbar-in {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+.tapa-sf {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  background: rgba(255, 255, 255, 0.09);
+  border: 1.5px solid rgba(255, 255, 255, 0.24);
+  border-radius: 14px;
+  padding: 15px 20px;
+  max-width: 760px;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+.tapa-sf:focus-within {
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.13);
+}
+.tapa-sf input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  font-size: 17px;
+  color: #fff;
+  font-family: inherit;
+}
+.tapa-sf input::placeholder {
+  color: var(--dim);
+}
+.tapa-sf-go {
+  background: var(--pink);
+  border: none;
+  border-radius: 10px;
+  padding: 9px 20px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+.tapa-sf-go:hover {
+  opacity: 0.9;
+}
+.tapa-sf-x {
+  font-size: 19px;
+  color: var(--dim);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+.tapa-sf-x:hover {
+  color: #fff;
+}
+.tapa-sres {
+  font-size: 13.5px;
+  color: #C4A882;
+  margin-top: 14px;
+}
+.tapa-sres b {
+  color: #fff;
+  font-weight: 700;
+}
+
+/* FILTERS BAR */
+.tapa-filters {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  padding: 13px 40px;
+}
+.tapa-f-in {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+.tapa-fc {
+  background: var(--bg);
+  border: 1.5px solid var(--border);
+  border-radius: 9px;
+  padding: 7px 14px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--body-text);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.tapa-fc:hover {
+  border-color: var(--pink);
+}
+.tapa-fc.on {
+  border-color: var(--pink);
+  background: #FFF0F5;
+  color: var(--pink);
+  font-weight: 700;
+}
+.tapa-fc .n {
+  font-size: 10.5px;
+  color: var(--sub-text);
+  margin-left: 6px;
+}
+.tapa-fc.on .n {
+  color: var(--pink);
+}
+
+/* LAYOUT GRID */
+.tapa-search-layout {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 40px;
+  align-items: start;
+  padding: 28px 0 60px;
+}
+.tapa-search-main {
+  max-width: 760px;
+}
+
+/* DID YOU MEAN BANNER */
+.tapa-dym {
+  background: var(--p-bg);
+  border: 1px solid var(--p-bd);
+  border-radius: 13px;
+  padding: 14px 18px;
+  font-size: 14.5px;
+  line-height: 1.7;
+  margin-bottom: 20px;
+}
+.tapa-dym b {
+  color: var(--p-tx);
+  font-weight: 700;
+}
+.tapa-dym button, .tapa-dym a {
+  color: var(--pink);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+/* GLOSSARY ANSWER CARD — RANKS ABOVE ARTICLES */
+.tapa-gans {
+  background: var(--card);
+  border: 1.5px solid var(--p-bd);
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 26px;
+  box-shadow: 0 4px 16px rgba(160, 120, 0, 0.06);
+}
+.tapa-ga-h {
+  background: var(--p-bg);
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--p-bd);
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--p-tx);
+  letter-spacing: 0.6px;
+}
+.tapa-ga-b {
+  padding: 18px 20px;
+}
+.tapa-ga-t {
+  font-size: 23px;
+  font-weight: 700;
+  color: var(--dark);
+  line-height: 1.2;
+}
+.tapa-ga-dev {
+  font-family: 'Tiro Devanagari Hindi', 'Noto Sans Devanagari', Georgia, serif;
+  font-size: 24px;
+  color: var(--gold);
+  line-height: 1.5;
+  margin: 2px 0 8px;
+}
+.tapa-ga-m {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.tapa-ga-say {
+  font-size: 13px;
+  color: var(--sub-text);
+  font-style: italic;
+}
+.tapa-ga-dot {
+  color: #CFC3AE;
+  font-size: 11px;
+}
+.tapa-ga-tag {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 3px 9px;
+  border-radius: 5px;
+  background: var(--bg);
+  color: var(--mid-text);
+  border: 1px solid var(--border);
+}
+.tapa-ga-d {
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--body-text);
+  margin-bottom: 13px;
+}
+.tapa-ga-f {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex-wrap: wrap;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-light);
+}
+.tapa-ga-l {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: var(--sub-text);
+  letter-spacing: 0.5px;
+  margin-right: 2px;
+}
+.tapa-ga-a {
+  font-size: 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 5px 11px;
+  color: var(--mid-text);
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+.tapa-ga-a:hover {
+  border-color: var(--pink);
+  color: var(--pink);
+}
+.tapa-ga-a.c {
+  background: #FFF0F5;
+  border-color: #F7C0D6;
+  color: var(--pink);
+  font-weight: 700;
+}
+
+/* RESULT GROUPS */
+.tapa-grp {
+  margin-bottom: 28px;
+}
+.tapa-grp-h {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+  padding-bottom: 9px;
+  border-bottom: 1px solid var(--border);
+}
+.tapa-grp-t {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 0.7px;
+}
+.tapa-grp-a {
+  font-size: 12px;
+  color: var(--pink);
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}
+.tapa-r {
+  display: flex;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 0.5px solid var(--border-light);
+  text-decoration: none;
+  color: inherit;
+  transition: background-color 0.15s ease;
+}
+.tapa-r:last-child {
+  border-bottom: none;
+}
+.tapa-r-th {
+  width: 74px;
+  height: 74px;
+  border-radius: 11px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+.tapa-r-n {
+  flex: 1;
+  min-width: 0;
+}
+.tapa-r-c {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--sub-text);
+  letter-spacing: 0.4px;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+}
+.tapa-r-t {
+  display: block;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--dark);
+  line-height: 1.3;
+  margin-bottom: 4px;
+}
+.tapa-r-t mark, .tapa-r-t em {
+  font-style: normal;
+  background: #FFF0C4;
+  padding: 0 2px;
+  border-radius: 2px;
+  color: inherit;
+}
+.tapa-r-s {
+  display: block;
+  font-size: 13.5px;
+  color: var(--sub-text);
+  line-height: 1.68;
+  margin-bottom: 8px;
+}
+.tapa-r-s mark, .tapa-r-s em {
+  font-style: normal;
+  background: #FFF0C4;
+  padding: 0 2px;
+  border-radius: 2px;
+  color: inherit;
+}
+.tapa-r-m {
+  display: flex;
+  gap: 7px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+/* THUMBNAIL GRADIENTS */
+.h-devi { background: linear-gradient(150deg, #5C1A30, #A83358); }
+.h-shiva { background: linear-gradient(150deg, #1A1440, #3A2E70); }
+.h-vishnu { background: linear-gradient(150deg, #0C2A3A, #1B5670); }
+.h-ganesh { background: linear-gradient(150deg, #6B3410, #B5651D); }
+.h-data { background: linear-gradient(150deg, #1B3A52, #0C1A26); }
+.h-earth { background: linear-gradient(150deg, #2C1C10, #6B4A28); }
+
+/* BADGES / PILLS */
+.tapa-pill {
+  font-size: 10px;
+  padding: 3px 9px;
+  border-radius: 5px;
+  font-weight: 700;
+}
+.tapa-pill.d {
+  background: var(--d-bg);
+  color: var(--d-tx);
+  border: 1px solid var(--d-bd);
+}
+.tapa-pill.n {
+  background: var(--bg);
+  color: var(--sub-text);
+  border: 1px solid var(--border);
+}
+.tapa-pill.dt {
+  background: var(--data-bg);
+  color: var(--data-tx);
+  border: 1px solid var(--data-bd);
+}
+
+/* SIDEBAR */
+.tapa-side {
+  position: sticky;
+  top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+}
+.tapa-sbx {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.tapa-sbx-h {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--dark);
+}
+.tapa-sbx-i {
+  display: block;
+  padding: 10px 16px;
+  border-bottom: 0.5px solid var(--border-light);
+  font-size: 13.5px;
+  color: var(--body-text);
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.tapa-sbx-i:hover {
+  background: #FAF7F2;
+}
+.tapa-sbx-i:last-child {
+  border-bottom: none;
+}
+.tapa-sbx-i span {
+  display: block;
+  font-size: 11.5px;
+  color: var(--sub-text);
+  margin-top: 2px;
+}
+.tapa-chips {
+  padding: 14px 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+.tapa-chip {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12.5px;
+  color: var(--body-text);
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.tapa-chip:hover {
+  border-color: var(--pink);
+  color: var(--pink);
+}
+.tapa-sbn {
+  background: var(--p-bg);
+  border: 1px solid var(--p-bd);
+  border-radius: 14px;
+  padding: 15px 17px;
+}
+.tapa-sbn-h {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 0.6px;
+  margin-bottom: 9px;
+}
+.tapa-sbn-t {
+  font-size: 13px;
+  line-height: 1.75;
+  color: var(--body-text);
+}
+.tapa-sbn-t b {
+  color: var(--p-tx);
+}
+
+/* EMPTY STATE */
+.tapa-empty {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 40px 36px;
+  text-align: center;
+  margin-bottom: 24px;
+}
+.tapa-e-i {
+  font-size: 36px;
+  margin-bottom: 14px;
+}
+.tapa-e-t {
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--dark);
+  line-height: 1.28;
+  margin-bottom: 10px;
+  letter-spacing: -0.4px;
+}
+.tapa-e-s {
+  font-size: 15px;
+  color: var(--sub-text);
+  line-height: 1.8;
+  max-width: 460px;
+  margin: 0 auto 20px;
+}
+.tapa-e-b {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.tapa-eb {
+  border: none;
+  border-radius: 11px;
+  padding: 12px 22px;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+.tapa-eb:hover {
+  opacity: 0.9;
+}
+.tapa-eb.pink {
+  background: var(--pink);
+  color: #fff;
+}
+.tapa-eb.ghost {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  color: var(--body-text);
+}
+
+/* LOADING & ERROR STATES */
+.tapa-search-loading {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 48px;
+  text-align: center;
+  color: var(--sub-text);
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+.tapa-search-error {
+  background: #FFF0F5;
+  border: 1.5px solid #F7C0D6;
+  border-radius: 18px;
+  padding: 36px;
+  text-align: center;
+  color: var(--pink);
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+
+/* MOBILE RESPONSIVE MEDIA QUERIES */
+@media (max-width: 900px) {
+  .tapa-sbar {
+    padding: 18px 16px;
+  }
+  .tapa-sf {
+    padding: 13px 15px;
+  }
+  .tapa-sf input {
+    font-size: 15px;
+    min-width: 0;
+  }
+  .tapa-filters {
+    padding: 11px 16px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .tapa-f-in {
+    flex-wrap: nowrap;
+  }
+  .tapa-search-layout {
+    grid-template-columns: 1fr;
+    gap: 0;
+    padding: 20px 0 50px;
+  }
+  .tapa-search-main {
+    max-width: none;
+  }
+  .tapa-side {
+    position: static;
+    margin-top: 26px;
+  }
+  .tapa-r {
+    gap: 12px;
+  }
+  .tapa-r-th {
+    width: 58px;
+    height: 58px;
+  }
+  .tapa-r-t {
+    font-size: 15.5px;
+  }
+  .tapa-empty {
+    padding: 30px 20px;
+  }
+  .tapa-e-t {
+    font-size: 20px;
+  }
+}

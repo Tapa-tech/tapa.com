@@ -559,11 +559,7 @@ function ArticlesListingContent() {
         }
 
         if (newItems.length > 0) {
-          setArticles((prev) => {
-            const cmsSlugs = new Set(newItems.map((i) => i.slug));
-            const filteredDefaults = prev.filter((i) => !cmsSlugs.has(i.slug));
-            return [...newItems, ...filteredDefaults];
-          });
+          setArticles(newItems);
         }
       } catch (err) {
         console.error('Failed to load dynamic articles:', err);
@@ -610,7 +606,9 @@ function ArticlesListingContent() {
       {/* Breadcrumb */}
       <div className="bcrumb">
         <div className="bc-in">
-          <Link href="/">Home</Link> › <Link href="/ritual-guides">Ritual Guides</Link> › <b>All Articles</b>
+          <div className="bc-l">
+            <Link href="/">Home</Link> › <Link href="/ritual-guides">Ritual Guides</Link> › <b>All Articles</b>
+          </div>
         </div>
       </div>
 

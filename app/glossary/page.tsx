@@ -84,7 +84,9 @@ export default function GlossaryPage() {
       {/* BREADCRUMB */}
       <div className="bcrumb">
         <div className="bc-in">
-          <Link href="/">Home</Link> ›<b>Glossary</b>
+          <div className="bc-l">
+            <Link href="/">Home</Link> › <b>Glossary</b>
+          </div>
         </div>
       </div>
 

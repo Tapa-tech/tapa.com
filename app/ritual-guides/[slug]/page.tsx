@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 
 import { getBeginnerGuideBySlug } from '@/lib/beginner-guides-data';
@@ -26,114 +26,414 @@ const BEGINNER_SLUGS = new Set([
   'ramcharitmanas-seven-kandas-explained',
 ]);
 
+import { safeParseJson, joinTruthy } from '@/lib/utils';
+
+function decodeHtmlEntities(str: string): string {
+  if (!str || (!str.includes('&lt;') && !str.includes('&gt;') && !str.includes('&amp;'))) return str;
+  return str
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/&amp;/gi, '&');
+}
+
+function cleanHtmlString(input: string | null | undefined): string {
+  if (!input) return '';
+  let cleaned = decodeHtmlEntities(input);
+  cleaned = cleaned.replace(/style="[^"]*--tw-[^"]*"/gi, (match) => {
+    const content = match.slice(7, -1);
+    const nonTwParts = content
+      .split(';')
+      .map((p) => p.trim())
+      .filter((p) => p && !p.startsWith('--tw-'));
+    return nonTwParts.length > 0 ? `style="${nonTwParts.join('; ')}"` : '';
+  });
+  cleaned = cleaned.replace(/style='[^']*--tw-[^']*'/gi, (match) => {
+    const content = match.slice(7, -1);
+    const nonTwParts = content
+      .split(';')
+      .map((p) => p.trim())
+      .filter((p) => p && !p.startsWith('--tw-'));
+    return nonTwParts.length > 0 ? `style='${nonTwParts.join('; ')}'` : '';
+  });
+  return cleaned;
+}
+
 export default function RitualGuideDetailPage({ params }: PageProps) {
   const { slug } = params;
 
-  const [isBeginnerGuide, setIsBeginnerGuide] = useState<boolean>(() => {
-    return (
-      BEGINNER_SLUGS.has(slug) ||
-      slug.includes('beginner') ||
-      slug.includes('kanda') ||
-      slug.includes('ramcharitmanas')
-    );
-  });
+  // ────────────────────────────────────────────────────────────────
+  // ALL HOOKS FIRST — unconditionally, before any early return.
+  // ────────────────────────────────────────────────────────────────
+  const [isBeginnerGuide, setIsBeginnerGuide] = useState<boolean>(() =>
+    BEGINNER_SLUGS.has(slug) ||
+    slug.includes('beginner') ||
+    slug.includes('kanda') ||
+    slug.includes('ramcharitmanas')
+  );
 
+  const [lang, setLang] = useState<'EN' | 'HI'>('EN');
+  const [isSaved, setIsSaved] = useState(false);
+  const [japaCount, setJapaCount] = useState(0);
+  const [isMantraPlaying, setIsMantraPlaying] = useState(false);
+  const [checkedSamagri, setCheckedSamagri] = useState<{ [key: number]: boolean }>({});
+  const [showStickyBar, setShowStickyBar] = useState(false);
+  const [isCardModalOpen, setIsCardModalOpen] = useState(false);
+  const [guideData, setGuideData] = useState<any>(null);
+
+  const mantraAudioRef = useRef<HTMLAudioElement>(null);
+  const mantraPlayRunRef = useRef(0);
+
+  // Detect beginner guide (only runs if not already known from slug heuristics)
   useEffect(() => {
-    async function checkBeginnerGuide() {
-      if (isBeginnerGuide) return;
+    if (isBeginnerGuide || !slug) return;
+    let cancelled = false;
+
+    (async () => {
       try {
         const res = await fetch(`/api/public/beginner-guides/${slug}`);
-        if (res.ok) {
-          const json = await res.json();
-          if (json.success && json.data) {
-            setIsBeginnerGuide(true);
-          }
-        }
-      } catch (err) { }
-    }
-    if (slug) {
-      checkBeginnerGuide();
-    }
+        if (!res.ok) return;
+        const json = await res.json();
+        if (!cancelled && json.success && json.data) setIsBeginnerGuide(true);
+      } catch {
+        /* ignore — falls through to the regular ritual guide view */
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [slug, isBeginnerGuide]);
 
+  // Fetch main guide data
+  useEffect(() => {
+    if (!slug) return;
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const res = await fetch(`/api/public/ritual-guides/${slug}`);
+        if (!res.ok) return;
+        const json = await res.json();
+        if (!cancelled && json.success && json.data) setGuideData(json.data);
+      } catch (err) {
+        console.error('Failed to fetch ritual guide data:', err);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [slug]);
+
+  // Sticky bottom bar on scroll
+  useEffect(() => {
+    const handleScroll = () => setShowStickyBar(window.scrollY > 400);
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Only used as a last-resort page heading — derived from the URL, not invented copy.
+  const formattedTitle = useMemo(() => {
+    if (!slug) return '';
+    return slug
+      .split('-')
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(' ');
+  }, [slug]);
+
+  // vidhiDaysJson is used in a few places — parse it exactly once and reuse everywhere.
+  const vidhiDays = useMemo<any[]>(
+    () => safeParseJson<any[]>(guideData?.vidhiDaysJson) || [],
+    [guideData?.vidhiDaysJson]
+  );
+  const firstVidhiDay = vidhiDays[0] || null;
+
+  // Mantra data comes only from the guide record or its first vidhi day — no invented Sanskrit/label/audio.
+  const mantraData = useMemo(() => {
+    const label = guideData?.mantraLabel || firstVidhiDay?.mantraLabel || '';
+    const text = guideData?.mantraText || firstVidhiDay?.mantraText || '';
+    const transliteration = guideData?.mantraTransliteration || firstVidhiDay?.mantraTransliteration || '';
+    const audioUrl = guideData?.mantraAudio || firstVidhiDay?.mantraAudio || '';
+    return { label, text, transliteration, audioUrl, hasMantra: !!text };
+  }, [guideData, firstVidhiDay]);
+
+  const panchangCards = useMemo(() => {
+    const parsed = safeParseJson<any[]>(guideData?.panchangCardsJson);
+    if (!parsed || parsed.length === 0) return [];
+    return parsed.map((c: any) => ({
+      k: c.k || c.key || c.title || '',
+      v: c.v || c.value || c.date || '',
+      s: c.s || c.sub || c.subtitle || '',
+    }));
+  }, [guideData?.panchangCardsJson]);
+
+  const sankalpaCards = useMemo(() => {
+    const parsed = safeParseJson<any[]>(guideData?.sankalpaDetailsJson);
+    if (!parsed || parsed.length === 0) return [];
+    return parsed.map((c: any) => ({
+      k: c.k || c.key || c.title || '',
+      v: c.v || c.val || c.value || c.description || '',
+    }));
+  }, [guideData?.sankalpaDetailsJson]);
+
+  const kathaCards = useMemo(() => {
+    const parsed = safeParseJson<any[]>(guideData?.kathaCardsJson);
+    if (!parsed || parsed.length === 0) return [];
+    return parsed.map((c: any, idx: number) => ({
+      cardNumber: c.cardNumber || c.number || idx + 1,
+      cardTitle: c.cardTitle || c.title || '',
+      cardDescription: c.cardDescription || c.description || '',
+    }));
+  }, [guideData?.kathaCardsJson]);
+
+  const nineDays = useMemo<any[]>(() => {
+    const raw = guideData?.nineDaysTableJson || guideData?.nineDaysJson || guideData?.vidhiDaysJson;
+    return safeParseJson<any[]>(raw) || [];
+  }, [guideData?.nineDaysTableJson, guideData?.nineDaysJson, guideData?.vidhiDaysJson]);
+
+  const samagriList = useMemo<any[]>(
+    () => safeParseJson<any[]>(guideData?.samagriItemsJson) || [],
+    [guideData?.samagriItemsJson]
+  );
+
+  const fastingOptions = useMemo(() => {
+    const parsed = safeParseJson<any[]>(guideData?.fastingOptionsJson);
+    if (!parsed) return [];
+    return parsed.map((opt: any) => ({
+      title: opt.title || opt.heading || opt.name || '',
+      description: opt.description || opt.details || opt.content || '',
+    }));
+  }, [guideData?.fastingOptionsJson]);
+
+  const mythsList = useMemo<any[]>(
+    () => safeParseJson<any[]>(guideData?.mythsItemsJson) || [],
+    [guideData?.mythsItemsJson]
+  );
+
+  const relatedData = useMemo(
+    () => ({
+      guides: safeParseJson<any[]>(guideData?.relatedRitualGuidesJson) || [],
+      pujans: safeParseJson<any[]>(guideData?.relatedPujansJson) || [],
+      concepts: safeParseJson<any[]>(guideData?.relatedConceptsJson) || [],
+      dates: safeParseJson<any[]>(guideData?.relatedDatesJson) || [],
+    }),
+    [
+      guideData?.relatedRitualGuidesJson,
+      guideData?.relatedPujansJson,
+      guideData?.relatedConceptsJson,
+      guideData?.relatedDatesJson,
+    ]
+  );
+
+  const hasRelatedItems =
+    relatedData.guides.length > 0 ||
+    relatedData.pujans.length > 0 ||
+    relatedData.concepts.length > 0 ||
+    relatedData.dates.length > 0;
+
+  // Derived flags — used to decide which sections/anchors exist at all.
+  const hasStory = !!(guideData?.storyTitle || guideData?.storyIntroduction || guideData?.storyContent || guideData?.storyContinuation);
+  const hasSankalpa = !!(guideData?.sankalpaText || sankalpaCards.length > 0);
+  const hasVidhi = vidhiDays.length > 0;
+  const hasKatha = !!(guideData?.kathaHeadline || kathaCards.length > 0);
+  const hasSamagri = samagriList.length > 0;
+  const hasFasting = fastingOptions.length > 0;
+  const hasMyths = mythsList.length > 0;
+  const hasFestivalContext = !!guideData?.festivalContextTitle;
+  const hasSotCard = !!(guideData?.sotPracticeTitle || guideData?.sotScripturalSource);
+  const hasPanchang = panchangCards.length > 0;
+  const hasIntel = !!(guideData?.intelHeading || guideData?.intelBody || guideData?.intelSummary);
+  const heroTagLine = joinTruthy([
+    guideData?.category?.toUpperCase(),
+    guideData?.rating,
+    guideData?.classification?.toUpperCase(),
+  ]);
+
+  const toggleSamagri = (index: number) => {
+    setCheckedSamagri((prev) => ({ ...prev, [index]: !prev[index] }));
+  };
+
+  const handleDownloadSamagriPdf = () => {
+    if (!samagriList || samagriList.length === 0) return;
+
+    const guideTitle = guideData?.title || guideData?.guideTitle || formattedTitle || 'Ritual Guide';
+    const rawDesc = guideData?.guideSubtitle || guideData?.samagriSubtitle || guideData?.storyIntroduction || '';
+    const guideDesc = rawDesc.replace(/<[^>]*>/g, '').trim();
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const logoSrc = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIQAAACMCAYAAAC9FwHKAAAxlUlEQVR4nO29eZxlV1nu/33X2vsMVdVzd9KZQyYgaaYkguJP01HCEL0IF6rBCFdFb7iCgnpxQNBKg6LXAbmiMsgVBAGtDj8CXEBE6G5IDARCIKRDhs7Y81Bz1Rn23ms99491TncHEtJJutND6smnU1X7nL33Wmu/e613eN53wXEKCQO454PPOPPODz/rHICREdyRbdXRj+N3gK66xAMs2730VSt2Dr0O4CouOX77O48fjhFw5DD3iufdNPOyn94uXZmLNGvM46FxXL4xGh32V4GK/zt8kbvfP715h50094E7L+t/doSbd1TjuBQI1oGB+Fzn9Y1duYt7DX1d/8MMse5IN24ejys0ghPY3JaXntp+3uWzk8tfEKdPfGFor76smLnux1YJTMPzs8RD4bitITZsuMQZiL8rf6OxLRukkQdr5LGxtZG7Ty7+LQMd6TYezTiuBEIjuNuB3A13S3/51tWp5S6m7m1lTlXzJwyb/rF2urq2x1+Lw3f1h3Jt3Z91bO1nLg+mX23q1i1y13XvtJ6z5vf+Uv9833V1qyLWte133f9+t//u9+433rM164K4h7l05l0a2tL/3Fz6+98v7v3tL8z7p3ePbd+3N/7+3z0v7zN0b6+0V1y/1yvNnZ517mvhfO0y19r3p/d9d/mP1S5/7v719/5e0/2+e9e1+v/d9z0z07/d5s77p/8+/272x88v5z/3b733ve/c513/f510v0/bX7v9l/m//9n/3d3d+3v9f0d7e6u+q9f3d9l8855v7N69e3e3b3c3c7v/c1u2fXFw13/f7Tz/fN897n+5d+6Z//n+bNn6d/+j/2ffXv9d6/5X5u9100v0/z01b5v7c/+y85m31u2dvefV38/9rN+a2vW3d/f+629/5/1+0397p//oXw0+t5v7Lz02r5t3/Z+172zXf2vvd5l9t8zNzV3d7/v5192+9+8s3p5r/s7/nly//0d1v617v12a4P1a3Xm2x1Xl6z31s17p/3u8fLzN0v7+6/v1+h7b+0/2vf++x/2b834X9P5Z/2L9v/W29v6h394q9/mrf97705s5P/bvv3L1c518//w+l2x//q13X/fJ010p7tN1y//tve518/39uX90u7686bZ16d+/z01vLw7s0zM19j12j/25fX/tXN3f02p76w0zbf7+5X2r113z+/1n7d6d+s///J3b6m7e7z2m/903e1/4nN+uN9f9b5X8v/+696/zO4Z1P+m5d/5t1u6/zN3t/b//d/99e2//vbfv7e4f16vT1y35n3+/c/j/9q09v02z26v25b59h/X529s7u5s3t3N3t7e5gAAAAABJRU5ErkJggg==';
+
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>${guideTitle} - Samagri PDF</title>
+  <style>
+    @media print {
+      @page { margin: 15mm; size: A4; }
+      body { margin: 0; -webkit-print-color-adjust: exact; }
+    }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #111827;
+      background: #FFFFFF;
+      padding: 32px;
+      max-width: 750px;
+      margin: 0 auto;
+    }
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid #DE1B59;
+      padding-bottom: 16px;
+      margin-bottom: 24px;
+    }
+    .logo { height: 48px; width: auto; }
+    .brand-name { font-size: 14px; font-weight: 700; color: #DE1B59; text-transform: lowercase; }
+    .meta-block { margin-bottom: 24px; }
+    .guide-title { font-family: Georgia, serif; font-size: 26px; font-weight: 700; color: #111827; margin: 0 0 6px 0; }
+    .guide-subtitle { font-size: 14px; color: #4B5563; line-height: 1.5; margin: 0; }
+    .sec-title { font-size: 16px; font-weight: 700; color: #111827; margin: 24px 0 12px 0; padding-bottom: 6px; border-bottom: 1px solid #E5E7EB; text-transform: uppercase; letter-spacing: 0.5px; }
+    .samagri-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    .samagri-table th, .samagri-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #E5E7EB; }
+    .samagri-table th { background: #FAFAFA; font-size: 11px; text-transform: uppercase; color: #6B7280; letter-spacing: 0.5px; }
+    .samagri-table td { font-size: 13px; color: #1F2937; }
+    .box { display: inline-block; width: 14px; height: 14px; border: 1.5px solid #9CA3AF; border-radius: 3px; margin-right: 8px; vertical-align: middle; }
+    .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid #E5E7EB; text-align: center; font-size: 12px; color: #9CA3AF; }
+  </style>
+</head>
+<body>
+  <div class="top-bar">
+    <img src="${logoSrc}" class="logo" alt="tapa" />
+    <span class="brand-name">the tapa company</span>
+  </div>
+  <div class="meta-block">
+    <h1 class="guide-title">${guideTitle}</h1>
+    ${guideDesc ? `<p class="guide-subtitle">${guideDesc}</p>` : ''}
+  </div>
+  <div class="sec-title">🧺 Samagri (Materials) Checklist</div>
+  <table class="samagri-table">
+    <thead>
+      <tr>
+        <th style="width: 30px;"></th>
+        <th>Item Name</th>
+        <th>Details / Note</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${samagriList
+        .map(
+          (s: any) => `
+        <tr>
+          <td><span class="box"></span></td>
+          <td style="font-weight: 600;">${(s.item || s.itemName || s.name || '').replace(/<[^>]*>/g, '')}</td>
+          <td style="color: #6B7280;">${(s.note || s.itemDetails || s.details || '').replace(/<[^>]*>/g, '')}</td>
+        </tr>
+      `
+        )
+        .join('')}
+    </tbody>
+  </table>
+  <div class="footer">
+    The Tapa Company • Ritual Guide Samagri Checklist
+  </div>
+  <script>
+    window.onload = function() {
+      window.print();
+    };
+  </script>
+</body>
+</html>`;
+
+    printWindow.document.open();
+    printWindow.document.write(html);
+    printWindow.document.close();
+  };
+
+  const toggleMantraAudio = async () => {
+    const audio = mantraAudioRef.current;
+    if (!mantraData.audioUrl || !audio) return;
+
+    if (isMantraPlaying) {
+      mantraPlayRunRef.current += 1;
+      audio.pause();
+      audio.currentTime = 0;
+      setIsMantraPlaying(false);
+      return;
+    }
+
+    if (japaCount <= 0) return;
+
+    const runId = ++mantraPlayRunRef.current;
+    setIsMantraPlaying(true);
+
+    try {
+      for (let i = 0; i < japaCount; i += 1) {
+        if (runId !== mantraPlayRunRef.current) break;
+
+        audio.currentTime = 0;
+        await new Promise<void>((resolve, reject) => {
+          const handleEnded = () => {
+            cleanup();
+            resolve();
+          };
+
+          const handleError = () => {
+            cleanup();
+            reject(new Error('Mantra audio playback failed'));
+          };
+
+          const cleanup = () => {
+            audio.removeEventListener('ended', handleEnded);
+            audio.removeEventListener('error', handleError);
+          };
+
+          audio.addEventListener('ended', handleEnded, { once: true });
+          audio.addEventListener('error', handleError, { once: true });
+
+          audio.play().catch((error) => {
+            cleanup();
+            reject(error);
+          });
+        });
+      }
+    } catch (error) {
+      if (runId === mantraPlayRunRef.current) {
+        console.error('Mantra audio playback failed:', error);
+      }
+    } finally {
+      if (runId === mantraPlayRunRef.current) {
+        setIsMantraPlaying(false);
+        audio.pause();
+        audio.currentTime = 0;
+      }
+    }
+  };
+
+  const handleShare = () => {
+    if (typeof window === 'undefined') return;
+    if (navigator.share) {
+      navigator.share({ title: formattedTitle, url: window.location.href }).catch(() => { });
+    } else {
+      navigator.clipboard.writeText(window.location.href);
+      alert('Link copied to clipboard!');
+    }
+  };
+
+  // ────────────────────────────────────────────────────────────────
+  // Early return — now safely AFTER every hook has run.
+  // ────────────────────────────────────────────────────────────────
   if (isBeginnerGuide) {
     const guide = getBeginnerGuideBySlug(slug);
     return <BeginnerGuideDetailView guide={guide} />;
   }
 
-  // Dynamic title formatting from slug
-  const formattedTitle = slug
-    ? slug
-      .split('-')
-      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-      .join(' ')
-    : 'Sharad Navratri';
-
-  // Interactive States
-  const [lang, setLang] = useState<'EN' | 'HI'>('EN');
-  const [isSaved, setIsSaved] = useState(false);
-  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
-  const [japaCount, setJapaCount] = useState(0);
-  const [activeMantraAudio, setActiveMantraAudio] = useState<number | null>(null);
-  const [checkedSamagri, setCheckedSamagri] = useState<{ [key: number]: boolean }>({});
-  const [showStickyBar, setShowStickyBar] = useState(false);
-  const [isCardModalOpen, setIsCardModalOpen] = useState(false);
-
-  // Dynamic Ritual Guide Data for Banner and future sections
-  const [guideData, setGuideData] = useState<any>(null);
-
-  useEffect(() => {
-    async function fetchGuideData() {
-      try {
-        const res = await fetch(`/api/public/ritual-guides/${slug}`);
-        if (res.ok) {
-          const json = await res.json();
-          if (json.success && json.data) {
-            setGuideData(json.data);
-          }
-        }
-      } catch (err) {
-        console.error('Failed to fetch ritual guide data:', err);
-      }
-    }
-    if (slug) {
-      fetchGuideData();
-    }
-  }, [slug]);
-
-  // Scroll listener for sticky bottom bar
-  useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 400) {
-        setShowStickyBar(true);
-      } else {
-        setShowStickyBar(false);
-      }
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const toggleSamagri = (index: number) => {
-    setCheckedSamagri((prev) => ({
-      ...prev,
-      [index]: !prev[index],
-    }));
-  };
-
-  const handleShare = () => {
-    if (typeof window !== 'undefined') {
-      if (navigator.share) {
-        navigator.share({ title: formattedTitle, url: window.location.href }).catch(() => { });
-      } else {
-        navigator.clipboard.writeText(window.location.href);
-        alert('Link copied to clipboard!');
-      }
-    }
-  };
-
-  // Count checked samagri items for sidebar counter
-  const checkedCount = Object.values(checkedSamagri).filter(Boolean).length;
+  const heroTitle = guideData?.guideTitle || guideData?.title || formattedTitle;
 
   return (
     <div className="rg-detail-root w-full max-w-full overflow-x-hidden min-h-screen">
@@ -141,25 +441,10 @@ export default function RitualGuideDetailPage({ params }: PageProps) {
       <div className="bcrumb">
         <div className="bc-in">
           <div className="bc-l">
-            <Link href="/">Home</Link> › <Link href="/ritual-guides">Ritual Guides</Link> › Festive Pujans ›{' '}
-            <b>{formattedTitle}</b>
+            <Link href="/">Home</Link> › <Link href="/ritual-guides">Ritual Guides</Link>
+            {guideData?.category ? ` › ${guideData.category}` : ''} › <b>{heroTitle}</b>
           </div>
-          <div className="bc-r">
-            <div className="lang">
-              <button className={lang === 'EN' ? 'on' : ''} onClick={() => setLang('EN')}>
-                EN
-              </button>
-              <button className={lang === 'HI' ? 'on' : ''} onClick={() => setLang('HI')}>
-                हिं
-              </button>
-            </div>
-            <button className="bcb" onClick={() => setIsSaved(!isSaved)}>
-              {isSaved ? '🔖 Saved' : '🔖 Save'}
-            </button>
-            <button className="bcb" onClick={handleShare}>
-              ↗ Share
-            </button>
-          </div>
+
         </div>
       </div>
 
@@ -172,103 +457,75 @@ export default function RitualGuideDetailPage({ params }: PageProps) {
         </button>
         <div className="hero-c">
           <div className="hero-in">
-            <p className="hero-ey">
-              {guideData?.sectionLabel || 'RITUAL GUIDES · FESTIVE PUJANS'}
-            </p>
-            <div className="hero-tag">
-              ◆ {(guideData?.category || 'DHARMA').toUpperCase()} · {guideData?.rating || '4/5'} · {(guideData?.classification || 'PURANIC').toUpperCase()}
-            </div>
-            <h1 className="hero-h1">
-              {guideData?.guideTitle || guideData?.title || `${formattedTitle}: The Complete 9-Day Guide`}
-            </h1>
-            <p className="hero-sub">
-              {guideData?.guideSubtitle || 'Ghatasthapana to Maha Navami — nine forms, nine nights, one Mother.'}
-            </p>
-            <p className="hero-date">
-              {guideData?.festivalName ? `${guideData.festivalName} · ${guideData.panchangLocation || 'Delhi-NCR'}` : '11–19 October 2026 · Ashwin Shukla Paksha · Delhi-NCR'}
-            </p>
-            <div className="hero-btns">
-              <a href={guideData?.primaryButtonTarget || '#vidhi'} className="hb-p">
-                {guideData?.primaryButtonText || 'Start with Ghatasthapana'}
-              </a>
-              <button
-                className="hb-g"
-                onClick={() => {
-                  if (guideData?.secondaryButtonTarget && guideData.secondaryButtonTarget.startsWith('http')) {
-                    window.open(guideData.secondaryButtonTarget, '_blank');
-                  } else {
-                    setIsCardModalOpen(true);
-                  }
-                }}
-              >
-                {guideData?.secondaryButtonText || 'Download Ritual Card'}
-              </button>
-              <button
-                className="hb-g"
-                onClick={() => {
-                  if (guideData?.thirdButtonTarget) {
-                    if (guideData.thirdButtonTarget.startsWith('http')) {
-                      window.open(guideData.thirdButtonTarget, '_blank');
-                    } else if (guideData.thirdButtonTarget.startsWith('#')) {
-                      const el = document.querySelector(guideData.thirdButtonTarget);
-                      if (el) el.scrollIntoView({ behavior: 'smooth' });
-                    } else {
-                      window.location.href = guideData.thirdButtonTarget;
-                    }
-                  }
-                }}
-              >
-                {guideData?.thirdButtonText || 'Pre-book the kit'}
-              </button>
-            </div>
+            {guideData?.sectionLabel && <p className="hero-ey">{guideData.sectionLabel}</p>}
+            {heroTagLine && <div className="hero-tag">◆ {heroTagLine}</div>}
+            <h1 className="hero-h1">{heroTitle}</h1>
+            {guideData?.guideSubtitle && <p className="hero-sub">{guideData.guideSubtitle}</p>}
+            {guideData?.festivalName && (
+              <p className="hero-date">
+                {joinTruthy([guideData.festivalName, guideData.panchangLocation])}
+              </p>
+            )}
+            {(guideData?.primaryButtonText || guideData?.secondaryButtonText || guideData?.thirdButtonText) && (
+              <div className="hero-btns">
+                {guideData?.primaryButtonText && (
+                  <a href={guideData?.primaryButtonTarget || '#'} className="hb-p">
+                    {guideData.primaryButtonText}
+                  </a>
+                )}
+                {guideData?.secondaryButtonText && (
+                  <button
+                    className="hb-g"
+                    onClick={() => {
+                      if (guideData?.secondaryButtonTarget?.startsWith('http')) {
+                        window.open(guideData.secondaryButtonTarget, '_blank');
+                      } else {
+                        setIsCardModalOpen(true);
+                      }
+                    }}
+                  >
+                    {guideData.secondaryButtonText}
+                  </button>
+                )}
+                {guideData?.thirdButtonText && (
+                  <button
+                    className="hb-g"
+                    onClick={() => {
+                      const target = guideData?.thirdButtonTarget;
+                      if (!target) return;
+                      if (target.startsWith('http')) {
+                        window.open(target, '_blank');
+                      } else if (target.startsWith('#')) {
+                        document.querySelector(target)?.scrollIntoView({ behavior: 'smooth' });
+                      } else {
+                        window.location.href = target;
+                      }
+                    }}
+                  >
+                    {guideData.thirdButtonText}
+                  </button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </section>
 
-      {/* Trust & Audio Strip */}
-      <div className="strip">
-        <div className="strip-in">
-          <div className="tp">
-            <span className="tpi">
-              <span className="tpd" style={{ background: '#27500A' }}></span>Scripturally sourced
-            </span>
-            <span className="tpi">
-              <span className="tpd" style={{ background: '#E8A020' }}></span>Region aware
-            </span>
-            <span className="tpi">
-              <span className="tpd" style={{ background: '#EF0F54' }}></span>Fear-free
-            </span>
+      {/* Jump-to Chips Bar — only for sections that actually have content */}
+      {(hasStory || hasSankalpa || hasVidhi || hasKatha || hasSamagri || hasFasting || hasMyths) && (
+        <div className="chips">
+          <div className="chips-in">
+            <span className="chip-l">JUMP TO</span>
+            {hasStory && <a className="chip" href="#story">📖 The story</a>}
+            {hasSankalpa && <a className="chip" href="#sankalp">✋ Sankalpa</a>}
+            {hasVidhi && <a className="chip" href="#vidhi">🪔 Vidhi</a>}
+            {hasKatha && <a className="chip" href="#katha">📿 Vrat Katha</a>}
+            {hasSamagri && <a className="chip" href="#samagri">🧺 Samagri</a>}
+            {hasFasting && <a className="chip" href="#fast">🍎 Fasting</a>}
+            {hasMyths && <a className="chip" href="#myths">✕ Myths</a>}
           </div>
         </div>
-      </div>
-
-      {/* Jump-to Chips Bar */}
-      <div className="chips">
-        <div className="chips-in">
-          <span className="chip-l">JUMP TO</span>
-          <a className="chip" href="#story">
-            📖 The story
-          </a>
-          <a className="chip" href="#sankalp">
-            ✋ Sankalpa
-          </a>
-          <a className="chip" href="#vidhi">
-            🪔 Ghatasthapana
-          </a>
-          <a className="chip" href="#katha">
-            📿 Vrat Katha
-          </a>
-          <a className="chip" href="#samagri">
-            🧺 Samagri
-          </a>
-          <a className="chip" href="#fast">
-            🍎 Fasting
-          </a>
-          <a className="chip" href="#myths">
-            ✕ Myths
-          </a>
-        </div>
-      </div>
+      )}
 
       {/* Main Layout Grid */}
       <div className="wrap">
@@ -276,1014 +533,812 @@ export default function RitualGuideDetailPage({ params }: PageProps) {
           {/* Main Column */}
           <div className="main">
             {/* Credibility Card */}
-            <div className="cc">
-              <div className="cc-h">
-                <span className="cc-hl">{guideData?.sotSectionHeading || 'SOURCE OF TRUTH'}</span>
-                <Link href={guideData?.sotButtonTarget || '/editorial-method'} className="cc-hr">
-                  {guideData?.sotButtonText ? (guideData.sotButtonText.includes('›') ? guideData.sotButtonText : `${guideData.sotButtonText} ›`) : 'Read source ›'}
-                </Link>
-              </div>
-              <div className="cc-b">
-                <div className="cc-core">{guideData?.sotPracticeLabel || 'CORE PRACTICE'}</div>
-                <div className="cc-claim">{guideData?.sotPracticeTitle || 'Worship of Durga across the nine nights of Ashwin Shukla Paksha'}</div>
-                <div className="cc-row">
-                  <span className="pill d">
-                    {(guideData?.sotPracticeCategory || guideData?.category || 'DHARMA').toUpperCase()} · {guideData?.sotPracticeRating || guideData?.rating || '4/5'}
-                  </span>
-                  <span className="badge puranic">
-                    {(guideData?.sotPracticeClassification || guideData?.classification || 'PURANIC').toUpperCase()}
-                  </span>
-                  <span className="pill src">
-                    {guideData?.sotScripturalSource
-                      ? guideData?.sotParentScripture
-                        ? `${guideData.sotScripturalSource} · ${guideData.sotParentScripture}`
-                        : guideData.sotScripturalSource
-                      : 'Devi Mahatmya · Markandeya Purana'}
-                  </span>
+            {hasSotCard && (
+              <div className="cc">
+                <div className="cc-h">
+                  {guideData?.sotSectionHeading && <span className="cc-hl">{guideData.sotSectionHeading}</span>}
+                  {guideData?.sotButtonTarget && (
+                    <Link href={guideData.sotButtonTarget} className="cc-hr">
+                      {guideData?.sotButtonText
+                        ? guideData.sotButtonText.includes('›')
+                          ? guideData.sotButtonText
+                          : `${guideData.sotButtonText} ›`
+                        : 'Read source ›'}
+                    </Link>
+                  )}
                 </div>
+                <div className="cc-b">
+                  {guideData?.sotPracticeLabel && <div className="cc-core">{guideData.sotPracticeLabel}</div>}
+                  {guideData?.sotPracticeTitle && <div className="cc-claim">{guideData.sotPracticeTitle}</div>}
+                  <div className="cc-row">
+                    {(guideData?.sotPracticeCategory || guideData?.category) && (
+                      <span className="pill d">
+                        {joinTruthy([
+                          (guideData?.sotPracticeCategory || guideData?.category)?.toUpperCase(),
+                          guideData?.sotPracticeRating || guideData?.rating,
+                        ])}
+                      </span>
+                    )}
+                    {(guideData?.sotPracticeClassification || guideData?.classification) && (
+                      <span className="badge puranic">
+                        {(guideData?.sotPracticeClassification || guideData?.classification)?.toUpperCase()}
+                      </span>
+                    )}
+                    {guideData?.sotScripturalSource && (
+                      <span className="pill src">
+                        {joinTruthy([guideData.sotScripturalSource, guideData?.sotParentScripture])}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                {(guideData?.sotCorePracticesCount != null ||
+                  guideData?.sotScripturalElementsCount != null ||
+                  guideData?.sotRegionalCustomsCount != null ||
+                  guideData?.sotCorrectionsCount != null) && (
+                    <p className="cc-comp">
+                      This guide:{' '}
+                      {joinTruthy(
+                        [
+                          guideData?.sotCorePracticesCount != null ? `${guideData.sotCorePracticesCount} core practice` : null,
+                          guideData?.sotScripturalElementsCount != null
+                            ? `${guideData.sotScripturalElementsCount} scriptural elements`
+                            : null,
+                          guideData?.sotRegionalCustomsCount != null
+                            ? `${guideData.sotRegionalCustomsCount} regional customs`
+                            : null,
+                          guideData?.sotCorrectionsCount != null ? `${guideData.sotCorrectionsCount} corrections` : null,
+                        ],
+                        ' · '
+                      )}
+                    </p>
+                  )}
               </div>
-              <p className="cc-comp">
-                This guide: <b>{guideData?.sotCorePracticesCount ?? 1} core practice</b> · <b>{guideData?.sotScripturalElementsCount ?? 4} scriptural elements</b> · <b>{guideData?.sotRegionalCustomsCount ?? 4} regional customs</b> ·{' '}
-                <b>{guideData?.sotCorrectionsCount ?? 3} corrections</b>
-              </p>
-            </div>
+            )}
 
             {/* Panchang Card */}
-            <div className="pan">
-              <div className="pan-h">
-                <span className="pan-hl">
-                  📅 {guideData?.festivalName ? (guideData.festivalName.includes('2026') ? guideData.festivalName.toUpperCase() : `${guideData.festivalName.toUpperCase()} 2026`) : 'NAVRATRI 2026'}
-                </span>
-                <span className="pan-hr">
-                  {guideData?.panchangLocation || 'Delhi-NCR'} · {guideData?.panchangSource || 'Drik Panchang'}
-                </span>
-              </div>
-              <div className="pan-g">
-                {(() => {
-                  let cards = [
-                    { k: 'THE NINE NIGHTS', v: '11–19 Oct', s: 'Ashwin Shukla Paksha' },
-                    { k: 'GHATASTHAPANA', v: 'Sun 11 Oct', s: '6:19–10:12 AM · Abhijit 11:44–12:31 PM' },
-                    { k: 'ASHTAMI / NAVAMI', v: '19 Oct', s: 'Tithis merge this year' },
-                    { k: 'VIJAYADASHAMI', v: 'Tue 20 Oct', s: 'The tenth day' },
-                  ];
-                  if (guideData?.panchangCardsJson) {
-                    try {
-                      const parsed = typeof guideData.panchangCardsJson === 'string' ? JSON.parse(guideData.panchangCardsJson) : guideData.panchangCardsJson;
-                      if (Array.isArray(parsed) && parsed.length > 0) {
-                        cards = parsed.map((c: any) => ({
-                          k: c.k || c.key || c.title || '',
-                          v: c.v || c.value || c.date || '',
-                          s: c.s || c.sub || c.subtitle || '',
-                        }));
-                      }
-                    } catch (e) { }
-                  }
-                  return cards.map((card, idx) => (
+            {hasPanchang && (
+              <div className="pan">
+                <div className="pan-h">
+                  {guideData?.festivalName && <span className="pan-hl">📅 {guideData.festivalName.toUpperCase()}</span>}
+                  {(guideData?.panchangLocation || guideData?.panchangSource) && (
+                    <span className="pan-hr">{joinTruthy([guideData?.panchangLocation, guideData?.panchangSource])}</span>
+                  )}
+                </div>
+                <div className="pan-g">
+                  {panchangCards.map((card, idx) => (
                     <div className="pc" key={idx}>
                       <div className="pc-k">{card.k}</div>
                       <div className="pc-v">{card.v}</div>
                       <div className="pc-s">{card.s}</div>
                     </div>
-                  ));
-                })()}
-              </div>
-              <p className="pan-n">
-                {guideData?.panchangNote ? (
-                  <span dangerouslySetInnerHTML={{ __html: guideData.panchangNote }} />
-                ) : (
-                  <>
-                    <b>Two things to check against your own panchang.</b> Saptami covers both 17 and 18 October this year,
-                    so the observance stretches across ten civil days. And panchangs differ on whether Durga Ashtami falls
-                    on the 18th or the 19th — follow your family or community panchang.
-                  </>
+                  ))}
+                </div>
+                {guideData?.panchangNote && (
+                  <p className="pan-n">
+                    <span dangerouslySetInnerHTML={{ __html: guideData.panchangNote }} />
+                  </p>
                 )}
-              </p>
-            </div>
+              </div>
+            )}
 
             {/* Story / Opening Prose */}
-            <p className="open">{guideData?.storyTitle || 'Nine nights, one Mother.'}</p>
-            <p className="p">
-              {guideData?.storyIntroduction ||
-                'Navratri means nine nights. It is not nine separate festivals — it is one continuous arc of worship, moving from darkness through fire to light.'}
-            </p>
+            {hasStory && (
+              <>
+                {guideData?.storyTitle && <p className="open">{guideData.storyTitle}</p>}
+                {guideData?.storyIntroduction && (
+                  <p
+                    className="p"
+                    dangerouslySetInnerHTML={{ __html: cleanHtmlString(guideData.storyIntroduction) }}
+                  />
+                )}
 
-            <div className="sh" id="story">
-              <span className="sh-p">+</span>
-              <span className="sh-t">{guideData?.storySubsectionTitle || 'The story the nine nights re-enact'}</span>
-            </div>
-            <p className="p">
-              {guideData?.storyContent ||
-                'The Devi Mahatmya tells it plainly. The gods were losing. Mahishasura had taken heaven and no god could defeat him. The collective energy of all the gods converged into one form: Durga. She fought for nine nights, and on the tenth day she won.'}
-            </p>
-            <div className="tagrow">
-              <span className="pill d">
-                {(guideData?.storyPracticeCategory || guideData?.category || 'DHARMA').toUpperCase()} · {guideData?.storyPracticeRating || guideData?.rating || '4/5'}
-              </span>
-              <span className="badge puranic">
-                {(guideData?.storyPracticeClassification || guideData?.classification || 'PURANIC').toUpperCase()}
-              </span>
-              <span className="pill src">
-                {guideData?.storyScripturalSource || 'Devi Mahatmya, Markandeya Purana'}
-              </span>
-            </div>
-            <p className="p">
-              {guideData?.storyContinuation ||
-                'Every year the tradition re-enacts that arc, not as mythology but as practice. You set up a kalash. You light a flame and keep it lit. You worship a different form of the Mother each day. And on the tenth day you mark the outcome.'}
-            </p>
+                {(guideData?.storySubsectionTitle || guideData?.storyContent) && (
+                  <div className="sh" id="story">
+                    <span className="sh-p">+</span>
+                    {guideData?.storySubsectionTitle && <span className="sh-t">{guideData.storySubsectionTitle}</span>}
+                  </div>
+                )}
+                {guideData?.storyContent && (
+                  <p
+                    className="p"
+                    dangerouslySetInnerHTML={{ __html: cleanHtmlString(guideData.storyContent) }}
+                  />
+                )}
 
-            {/* Image Banner */}
-            <figure className="art">
-              <img
-                src={guideData?.storyImage || 'https://images.unsplash.com/photo-1609137144813-7d9921338f24?auto=format&fit=crop&w=1200&q=80'}
-                alt={guideData?.storyImageAltText || `${formattedTitle} Durga Pujan`}
-                style={{ maxHeight: '380px', objectFit: 'cover' }}
-              />
-            </figure>
+                {(guideData?.storyPracticeCategory ||
+                  guideData?.category ||
+                  guideData?.storyPracticeClassification ||
+                  guideData?.classification ||
+                  guideData?.storyScripturalSource) && (
+                    <div className="tagrow">
+                      {(guideData?.storyPracticeCategory || guideData?.category) && (
+                        <span className="pill d">
+                          {joinTruthy([
+                            (guideData?.storyPracticeCategory || guideData?.category)?.toUpperCase(),
+                            guideData?.storyPracticeRating || guideData?.rating,
+                          ])}
+                        </span>
+                      )}
+                      {(guideData?.storyPracticeClassification || guideData?.classification) && (
+                        <span className="badge puranic">
+                          {(guideData?.storyPracticeClassification || guideData?.classification)?.toUpperCase()}
+                        </span>
+                      )}
+                      {guideData?.storyScripturalSource && (
+                        <span className="pill src">{guideData.storyScripturalSource}</span>
+                      )}
+                    </div>
+                  )}
+                {guideData?.storyContinuation && (
+                  <p
+                    className="p"
+                    dangerouslySetInnerHTML={{ __html: cleanHtmlString(guideData.storyContinuation) }}
+                  />
+                )}
+              </>
+            )}
+
+            {/* Image Banner — only if an image actually came from the guide record */}
+            {guideData?.storyImage && (
+              <figure className="art">
+                <img
+                  src={guideData.storyImage}
+                  alt={guideData?.storyImageAltText || heroTitle}
+                  style={{ maxHeight: '380px', objectFit: 'cover' }}
+                />
+              </figure>
+            )}
 
             {/* Vidhi Days & Steps — Purely Dynamic from Admin Panel */}
-            {(() => {
-              if (!guideData?.vidhiDaysJson) return null;
-              let vidhiDays: any[] = [];
-              try {
-                vidhiDays = typeof guideData.vidhiDaysJson === 'string'
-                  ? JSON.parse(guideData.vidhiDaysJson)
-                  : guideData.vidhiDaysJson;
-              } catch (e) {
-                console.error('Error parsing vidhiDaysJson:', e);
-              }
-
-              if (!Array.isArray(vidhiDays) || vidhiDays.length === 0) return null;
-
-              return vidhiDays.map((day: any, dIdx: number) => {
-                const dayNum = day.dayNumber || dIdx + 1;
-                const steps = Array.isArray(day.steps) ? day.steps : [];
-                return (
-                  <div key={day.id || dIdx}>
-                    <div className="sh" id={dIdx === 0 ? "vidhi" : `vidhi-day-${dayNum}`}>
-                      <span className="sh-p">+</span>
-                      <span className="sh-t">Day {dayNum} — {day.dayTitle}</span>
-                    </div>
-                    {day.dayDescription && <p className="sh-s">{day.dayDescription}</p>}
-
-                    {day.muhuratInformation && (
-                      <div className="muh">
-                        <b>{day.muhuratLabel ? (day.muhuratLabel.endsWith('.') ? day.muhuratLabel : `${day.muhuratLabel}.`) : 'Muhurat.'}</b>{' '}
-                        {day.muhuratInformation}
-                      </div>
-                    )}
-
-                    {steps.map((st: any, sIdx: number) => {
-                      const isLast = sIdx === steps.length - 1;
-                      const stepNum = st.stepNumber || sIdx + 1;
-                      const labels = Array.isArray(st.stepLabels) ? st.stepLabels : [];
-                      return (
-                        <div className="step" key={st.id || sIdx}>
-                          <div className="st-c">
-                            <div className={`st-n ${isLast ? 'end' : ''}`}>{stepNum}</div>
-                            {!isLast && <div className="st-l"></div>}
-                          </div>
-                          <div className="st-b">
-                            <p>{st.stepDescription}</p>
-                            {labels.length > 0 && (
-                              <div className="tagrow" style={{ margin: '8px 0 0' }}>
-                                {labels.map((lbl: string, lIdx: number) => (
-                                  <span
-                                    key={lIdx}
-                                    className={
-                                      lbl.includes('SHASTRA') || lbl.includes('PURANIC')
-                                        ? 'badge shastra'
-                                        : lbl.includes('DHARMA')
-                                          ? 'pill d'
-                                          : 'pill p'
-                                    }
-                                  >
-                                    {lbl}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              });
-            })()}
-
-            {/* Mantra Box — Purely Dynamic from Admin Panel */}
-            {(() => {
-              let parsedDay: any = null;
-              if (guideData?.vidhiDaysJson) {
-                try {
-                  const parsed = typeof guideData.vidhiDaysJson === 'string' ? JSON.parse(guideData.vidhiDaysJson) : guideData.vidhiDaysJson;
-                  if (Array.isArray(parsed) && parsed.length > 0) {
-                    parsedDay = parsed[0];
-                  }
-                } catch (e) { }
-              }
-
-              const mantraLabel = guideData?.mantraLabel || parsedDay?.mantraLabel || 'DAY ONE MANTRA';
-              const mantraText = guideData?.mantraText || parsedDay?.mantraText || 'ओं ह्रीं शैलपुत्र्यै नमः';
-              const mantraTransliteration = guideData?.mantraTransliteration || parsedDay?.mantraTransliteration || 'Om Hreem Shailputryai Namah';
-
+            {vidhiDays.map((day: any, dIdx: number) => {
+              const dayNum = day.dayNumber || dIdx + 1;
+              const steps = Array.isArray(day.steps) ? day.steps : [];
               return (
-                <div className="mantra">
-                  <div className="mn-top" style={{ display: 'block' }}>
-                    <div className="mn-l">{mantraLabel}</div>
-                  </div>
-                  <div className="mn-d">{mantraText}</div>
-                  <div className="mn-r">{mantraTransliteration}</div>
-                  <div className="japa">
-                    <div>
-                      <div className="jp-l">JAPA COUNT</div>
-                      <div className="jp-t" style={{ textAlign: 'left', marginTop: '4px' }}>Tap as you complete each round</div>
-                    </div>
-                    <div className="jp-ctr">
-                      <button className="jp-b" onClick={() => setJapaCount(Math.max(0, (japaCount || 27) - 1))}>−</button>
-                      <div>
-                        <div className="jp-n">{japaCount || 27}</div>
-                        <div className="jp-t">of 108</div>
-                      </div>
-                      <button className="jp-b" onClick={() => setJapaCount((japaCount || 27) + 1)}>+</button>
-                    </div>
-                    <div className="jp-presets">
-                      <button className={`jp-p ${(japaCount || 27) === 11 ? 'on' : ''}`} onClick={() => setJapaCount(11)}>11</button>
-                      <button className={`jp-p ${(japaCount || 27) === 21 ? 'on' : ''}`} onClick={() => setJapaCount(21)}>21</button>
-                      <button className={`jp-p ${(japaCount || 27) === 51 ? 'on' : ''}`} onClick={() => setJapaCount(51)}>51</button>
-                      <button className={`jp-p ${(japaCount || 27) === 108 ? 'on' : ''}`} onClick={() => setJapaCount(108)}>108</button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })()}
-
-            <p className="p">Sowing barley on the first day is a widespread North Indian practice rather than a scriptural requirement. Where it is kept, the sprouts are watched through the nine days and distributed as prasad at the end.</p>
-            <div className="tagrow"><span className="pill p">PRATHA</span></div>
-
-            {/* Sankalpa Section — Dynamic from Admin Panel */}
-            <div className="sh" id="sankalp">
-              <span className="sh-p">+</span>
-              <span className="sh-t">{guideData?.sankalpaTitle || 'The sankalpa'}</span>
-            </div>
-            <p className="sh-s">{guideData?.sankalpaSubtitle || 'Said once, at the start, before anything else is done.'}</p>
-
-            <div className="sank">
-              <div className="sank-h">
-                {guideData?.sankalpaInstruction || 'SPOKEN WITH WATER IN THE RIGHT HAND, THEN POURED OUT'}
-              </div>
-              <div className="sank-b">
-                <p className="sank-dev">
-                  {guideData?.sankalpaText || 'ओं विष्णुर्विष्णुर्विष्णुः … मम आत्मनः श्रुतिस्मृतिपुराणोक्तफलप्राप्त्यर्थं श्री दुर्गा प्रीत्यर्थं नवरात्र व्रतम् अहं करिष्ये॥'}
-                </p>
-                <p className="sank-r">
-                  {guideData?.sankalpaMeaning || '"I take up the Navratri vrat, for the pleasure of Sri Durga."'}
-                </p>
-                {guideData?.sankalpaExplanation ? (
-                  <p className="sank-m" dangerouslySetInnerHTML={{ __html: guideData.sankalpaExplanation }} />
-                ) : (
-                  <p className="sank-m">
-                    A sankalpa is a stated intention, not a formula that must be pronounced correctly. It names <b>who is doing it, when, where and for what</b>. That is the whole of its structure.
-                  </p>
-                )}
-                <div className="sank-g">
-                  {(() => {
-                    let cards = [
-                      { k: 'WHO', v: 'Your name, and your gotra if your family uses one. If you do not know it, leave it out.' },
-                      { k: 'WHEN AND WHERE', v: 'The tithi and the place. "Today, at home" is sufficient.' },
-                      { k: 'FOR WHAT', v: 'The observance you are taking up, and for whom. Here: the nine-night vrat, for Durga.' },
-                    ];
-                    if (guideData?.sankalpaDetailsJson) {
-                      try {
-                        const parsed = typeof guideData.sankalpaDetailsJson === 'string'
-                          ? JSON.parse(guideData.sankalpaDetailsJson)
-                          : guideData.sankalpaDetailsJson;
-                        if (Array.isArray(parsed) && parsed.length > 0) {
-                          cards = parsed.map((c: any) => ({
-                            k: c.k || c.key || c.title || '',
-                            v: c.v || c.val || c.value || c.description || '',
-                          }));
-                        }
-                      } catch (e) { }
-                    }
-                    return cards.map((card, idx) => (
-                      <div className="sg" key={idx}>
-                        <div className="sg-k">{card.k}</div>
-                        <div className="sg-v">{card.v}</div>
-                      </div>
-                    ));
-                  })()}
-                </div>
-              </div>
-              <p className="sank-note">
-                {guideData?.sankalpaNoteHeading ? <b>{guideData.sankalpaNoteHeading} </b> : <b>Say it in whatever language you think in. </b>}
-                {guideData?.sankalpaNoteContent || 'The Sanskrit is given because people ask for it. A sankalpa said in Hindi or English, meant sincerely, is a sankalpa.'}
-              </p>
-            </div>
-
-            {/* Vrat Katha Card — Dynamic from Admin Panel */}
-            <div className="sh" id="katha">
-              <span className="sh-p">+</span>
-              <span className="sh-t">{guideData?.kathaTitle || 'The Vrat Katha'}</span>
-            </div>
-            <p className="sh-s">{guideData?.kathaSubtitle || 'Read on any of the nine nights, most often on Ashtami.'}</p>
-
-            <div className="katha">
-              <div className="k-top">
-                <div className="k-l">
-                  {(guideData?.kathaScripturalReference || 'DEVI MAHATMYA · MARKANDEYA PURANA').toUpperCase()}
-                </div>
-                <div className="k-t">{guideData?.kathaHeadline || 'The gods were losing, and no god could win'}</div>
-                <p className="k-s">
-                  {guideData?.kathaIntroduction ||
-                    'Mahishasura had taken heaven. What defeated him was not a stronger god — it was every god surrendering their power into one form.'}
-                </p>
-              </div>
-              <div className="k-b">
-                <div className="k-beats">
-                  {(() => {
-                    let cards = [
-                      { cardNumber: 1, cardTitle: 'The boon', cardDescription: 'Mahishasura cannot be killed by any man or god. He asks for the exemption he thinks is safest.' },
-                      { cardNumber: 2, cardTitle: 'Heaven falls', cardDescription: 'The devas are driven out. Each one alone is not enough, and they know it.' },
-                      { cardNumber: 3, cardTitle: 'The convergence', cardDescription: 'Their combined energy takes one form — Durga, holding a weapon from each of them.' },
-                      { cardNumber: 4, cardTitle: 'Nine nights', cardDescription: 'She fights for nine nights. On the tenth day, she wins.' },
-                    ];
-                    if (guideData?.kathaCardsJson) {
-                      try {
-                        const parsed = typeof guideData.kathaCardsJson === 'string' ? JSON.parse(guideData.kathaCardsJson) : guideData.kathaCardsJson;
-                        if (Array.isArray(parsed) && parsed.length > 0) {
-                          cards = parsed.map((c: any, idx: number) => ({
-                            cardNumber: c.cardNumber || c.number || idx + 1,
-                            cardTitle: c.cardTitle || c.title || '',
-                            cardDescription: c.cardDescription || c.description || '',
-                          }));
-                        }
-                      } catch (e) { }
-                    }
-                    return cards.map((card, idx) => (
-                      <div className="kb" key={idx}>
-                        <div className="kb-n">{card.cardNumber}</div>
-                        <div className="kb-t">{card.cardTitle}</div>
-                        <p className="kb-s">{card.cardDescription}</p>
-                      </div>
-                    ));
-                  })()}
-                </div>
-                <div className="k-f">
-                  <p className="k-moral">
-                    {guideData?.kathaSupportingExplanation ? (
-                      <span dangerouslySetInnerHTML={{ __html: guideData.kathaSupportingExplanation }} />
-                    ) : (
-                      <>
-                        <b>Why it is read across nine nights, not one:</b> the battle took nine. The reading follows the
-                        fight rather than summarising it.
-                      </>
-                    )}
-                  </p>
-                  <button
-                    className="k-audio"
-                    onClick={() => {
-                      if (guideData?.kathaAudio) {
-                        window.open(guideData.kathaAudio, '_blank');
-                      }
-                    }}
-                  >
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
-                      <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
-                      <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
-                    </svg>
-                    <span>
-                      {guideData?.kathaAudioButtonText || 'Listen'} · {guideData?.kathaAudioDuration || '14 min'}
+                <div key={day.id || dIdx}>
+                  <div className="sh" id={dIdx === 0 ? 'vidhi' : `vidhi-day-${dayNum}`}>
+                    <span className="sh-p">+</span>
+                    <span className="sh-t">
+                      Day {dayNum}
+                      {day.dayTitle ? ` — ${day.dayTitle}` : ''}
                     </span>
-                  </button>
-                  <button
-                    className="k-c"
-                    onClick={() => {
-                      if (guideData?.kathaFullKathaLink) {
-                        window.open(guideData.kathaFullKathaLink, '_blank');
-                      }
-                    }}
-                  >
-                    {guideData?.kathaFullKathaButtonText ? (guideData.kathaFullKathaButtonText.includes('›') ? guideData.kathaFullKathaButtonText : `${guideData.kathaFullKathaButtonText} ›`) : 'Read the full katha ›'}
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Ashtami and Navami Section — Dynamic from Admin Panel */}
-            <div className="sh">
-              <span className="sh-p">+</span>
-              <span className="sh-t">{guideData?.festivalContextTitle || 'Durga Ashtami and Maha Navami'}</span>
-            </div>
-            <p className="p">
-              {guideData?.festivalContextIntroduction ||
-                'These are the most intensive days of the nine. In 2026 the two tithis merge on 19 October, so confirm your panchang before fixing the day.'}
-            </p>
-            {guideData?.festivalContextDetails ? (
-              <p className="p" dangerouslySetInnerHTML={{ __html: guideData.festivalContextDetails }} />
-            ) : (
-              <p className="p">
-                Havan is traditionally performed on Ashtami. <strong>Kanya Pujan</strong> — inviting young girls and honouring
-                them as living forms of the Devi — is kept on Ashtami or Navami according to family tradition. Their feet
-                are washed, food is offered, and blessings are taken from them.
-              </p>
-            )}
-            <div className="tagrow">
-              <span className="pill d">
-                {(guideData?.festivalPracticeCategory || guideData?.category || 'DHARMA').toUpperCase()} · {guideData?.festivalPracticeRating || guideData?.rating || '4/5'}
-              </span>
-              <span className="badge shastra">
-                {(guideData?.festivalClassification || guideData?.classification || 'SHASTRA').toUpperCase()}
-              </span>
-            </div>
-            <p className="p">
-              {guideData?.sandhiPujaInformation ||
-                'Where Ashtami and Navami cross, Sandhi Puja is performed in the window spanning the join.'}
-            </p>
-
-            <div className="hr"></div>
-
-            {/* Nine Days Table — Purely Dynamic from Admin Panel */}
-            {(() => {
-              const rawJson = guideData?.nineDaysTableJson || guideData?.nineDaysJson || guideData?.vidhiDaysJson;
-              if (!rawJson) return null;
-              let daysList: any[] = [];
-              try {
-                const parsed = typeof rawJson === 'string' ? JSON.parse(rawJson) : rawJson;
-                if (Array.isArray(parsed) && parsed.length > 0) {
-                  daysList = parsed;
-                }
-              } catch (e) { }
-
-              if (daysList.length === 0) return null;
-
-              return (
-                <>
-                  <div className="sh">
-                    <span className="sh-p">+</span>
-                    <span className="sh-t">{guideData?.nineDaysTitle || 'The Nine Forms & Nine Days'}</span>
                   </div>
+                  {day.dayDescription && <p className="sh-s">{day.dayDescription}</p>}
 
-                  <div className="days" style={{ marginTop: '16px' }}>
-                    <div className="dh">
-                      <span>DAY</span>
-                      <span>DATE</span>
-                      <span>DEVI FORM &amp; SIGNIFICANCE</span>
-                      <span>COLOUR</span>
-                      <span>OFFERING</span>
+                  {day.muhuratInformation && (
+                    <div className="muh">
+                      {day.muhuratLabel && (
+                        <b>{day.muhuratLabel.endsWith('.') ? day.muhuratLabel : `${day.muhuratLabel}.`}</b>
+                      )}{' '}
+                      {day.muhuratInformation}
                     </div>
+                  )}
 
-                    {daysList.map((item: any, idx: number) => {
-                      const num = item.n || item.dayNumber || item.day || idx + 1;
-                      const dateStr = item.dt || item.date || item.dayDate || '';
-                      const deviForm = item.dv || item.deviForm || item.form || item.dayTitle || '';
-                      const deviSig = item.ds || item.deviSignificance || item.significance || item.dayDescription || '';
-                      const colorName = item.col || item.colour || item.color || '';
-                      const swatch = item.sw || item.colourSwatch || item.swatch || item.colorHex || '';
-                      const offering = item.of || item.offering || item.prasadam || '';
-
-                      return (
-                        <div className="dr" key={item.id || idx}>
-                          <span className="d-n">{num}</span>
-                          <span className="d-dt">{dateStr}</span>
-                          <span>
-                            <span className="d-dv">{deviForm}</span>
-                            {deviSig && <span className="d-ds">{deviSig}</span>}
-                          </span>
-                          <span className="d-col">
-                            {swatch && <span className="d-sw" style={{ background: swatch }}></span>}
-                            {colorName}
-                          </span>
-                          <span className="d-of">{offering}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  <div className="hr"></div>
-                </>
-              );
-            })()}
-
-            {/* Samagri Checklist Section — Purely Dynamic from Admin Panel */}
-            {(() => {
-              if (!guideData?.samagriItemsJson) return null;
-              let samagriList: any[] = [];
-              try {
-                const parsed = typeof guideData.samagriItemsJson === 'string'
-                  ? JSON.parse(guideData.samagriItemsJson)
-                  : guideData.samagriItemsJson;
-                if (Array.isArray(parsed) && parsed.length > 0) {
-                  samagriList = parsed;
-                }
-              } catch (e) { }
-
-              if (samagriList.length === 0) return null;
-
-              return (
-                <>
-                  <div className="sh" id="samagri">
-                    <span className="sh-p">+</span>
-                    <span className="sh-t">{guideData?.samagriTitle || 'Samagri'}</span>
-                  </div>
-                  <p className="sh-s">
-                    {guideData?.samagriSubtitle || 'Everything is available in any local puja market. Substitutions are noted where they matter.'}
-                  </p>
-
-                  <div className="sam">
-                    {samagriList.map((s: any, idx: number) => {
-                      const itemName = s.item || s.itemName || s.name || '';
-                      const itemNote = s.note || s.itemDetails || s.details || '';
-                      return (
-                        <div className="sam-r" key={s.id || idx}>
-                          <input
-                            type="checkbox"
-                            className="cb"
-                            checked={!!checkedSamagri[idx]}
-                            onChange={() => toggleSamagri(idx)}
-                          />
-                          <span className="sam-i" style={{ textDecoration: checkedSamagri[idx] ? 'line-through' : 'none' }}>
-                            {itemName}
-                          </span>
-                          <span className="sam-n">{itemNote}</span>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  <div className="hr"></div>
-                </>
-              );
-            })()}
-
-            {/* Fasting Section — Purely Dynamic from Admin Panel */}
-            {(() => {
-              if (!guideData?.fastingOptionsJson) return null;
-              let options: any[] = [];
-              try {
-                const parsed = typeof guideData.fastingOptionsJson === 'string'
-                  ? JSON.parse(guideData.fastingOptionsJson)
-                  : guideData.fastingOptionsJson;
-                if (Array.isArray(parsed) && parsed.length > 0) {
-                  options = parsed.map((opt: any) => ({
-                    title: opt.title || opt.heading || opt.name || '',
-                    description: opt.description || opt.details || opt.content || '',
-                  }));
-                }
-              } catch (e) { }
-
-              if (options.length === 0) return null;
-
-              return (
-                <>
-                  <div className="sh" id="fast">
-                    <span className="sh-p">+</span>
-                    <span className="sh-t">{guideData?.fastingTitle || 'Fasting'}</span>
-                  </div>
-                  <p className="sh-s">
-                    {guideData?.fastingSubtitle || 'Three forms are commonly kept, and all three are accepted.'}
-                  </p>
-
-                  <div className="fast">
-                    {options.map((opt, idx) => (
-                      <div className="fb" key={idx}>
-                        <div className="fb-t">{opt.title}</div>
-                        <p className="fb-s">{opt.description}</p>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="fnote">
-                    {guideData?.fastingGuidanceHeading ? <b>{guideData.fastingGuidanceHeading} </b> : <b>The tradition prescribes devotion, not starvation. </b>}
-                    {guideData?.fastingGuidanceContent || 'If a nine-day fast is not physically possible for you, a shorter form kept with sincerity fulfils the vrat.'}
-                  </div>
-
-                  <div className="hr"></div>
-                </>
-              );
-            })()}
-
-            {/* Myths & Facts — Purely Dynamic from Admin Panel */}
-            {(() => {
-              if (!guideData?.mythsItemsJson) return null;
-              let mythsList: any[] = [];
-              try {
-                const parsed = typeof guideData.mythsItemsJson === 'string'
-                  ? JSON.parse(guideData.mythsItemsJson)
-                  : guideData.mythsItemsJson;
-                if (Array.isArray(parsed) && parsed.length > 0) {
-                  mythsList = parsed;
-                }
-              } catch (e) { }
-
-              if (mythsList.length === 0) return null;
-
-              return (
-                <>
-                  <div className="sh" id="myths">
-                    <span className="sh-p">+</span>
-                    <span className="sh-t">{guideData?.mythsTitle || 'Myths & Facts'}</span>
-                  </div>
-
-                  {mythsList.map((m: any, idx: number) => {
-                    const statement = m.mythStatement || m.statement || m.myth || m.question || '';
-                    const label = m.correctionLabel || m.label || m.badge || 'CORRECTION';
-                    const content = m.correctionContent || m.content || m.answer || m.correction || '';
-
+                  {steps.map((st: any, sIdx: number) => {
+                    const isLast = sIdx === steps.length - 1;
+                    const stepNum = st.stepNumber || sIdx + 1;
+                    const labels = Array.isArray(st.stepLabels) ? st.stepLabels : [];
                     return (
-                      <div className="myth" key={m.id || idx}>
-                        <div className="my-q">
-                          <span className="my-qt">{statement}</span>
-                          <span className="my-bd">{label}</span>
+                      <div className="step" key={st.id || sIdx}>
+                        <div className="st-c">
+                          <div className={`st-n ${isLast ? 'end' : ''}`}>{stepNum}</div>
+                          {!isLast && <div className="st-l"></div>}
                         </div>
-                        <p className="my-a">{content}</p>
+                        <div className="st-b">
+                          <p>{st.stepDescription}</p>
+                          {labels.length > 0 && (
+                            <div className="tagrow" style={{ margin: '8px 0 0' }}>
+                              {labels.map((lbl: string, lIdx: number) => (
+                                <span
+                                  key={lIdx}
+                                  className={
+                                    lbl.includes('SHASTRA') || lbl.includes('PURANIC')
+                                      ? 'badge shastra'
+                                      : lbl.includes('DHARMA')
+                                        ? 'pill d'
+                                        : 'pill p'
+                                  }
+                                >
+                                  {lbl}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
-                </>
+                </div>
               );
-            })()}
+            })}
 
-            {/* Intelligence Layer — Dynamic from Admin Panel */}
-            <div className="intel">
-              <div className="in-l">{guideData?.intelTagline || '◗ WHY NINE NIGHTS?'}</div>
-              <div className="in-t">{guideData?.intelHeading || 'The number is not decorative'}</div>
-              <p className="in-s">
-                {guideData?.intelBody ||
-                  guideData?.intelSummary ||
-                  'Nine nights appear across the tradition — four Navratris in a year, not one. The count, the arc from tamas through rajas to sattva, and why the tenth day sits outside the nine are explained once and apply to all of them.'}
-              </p>
-              <Link
-                href={guideData?.intelCtaLink || '/dharmic-concepts/navratri-nine-nights'}
-                className="in-c"
-              >
-                {guideData?.intelCtaText || 'Read: What Navratri is — the nine nights ›'}
-              </Link>
-            </div>
+            {/* Mantra Box — only if the guide (or its first vidhi day) actually supplies a mantra */}
+            {mantraData.hasMantra && (
+              <div className="mantra">
+                <div className="mn-top" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  {mantraData.label && <div className="mn-l">{mantraData.label}</div>}
 
-            {/* Poetic Closing — Dynamic from Admin Panel */}
-            <div className="closing">
-              {guideData?.closingContent ? (
-                <div dangerouslySetInnerHTML={{ __html: guideData.closingContent }} />
-              ) : (
-                <>
-                  <p>
-                    Navratri is the tradition&apos;s most sustained worship — nine nights without a break. The kalash stays
-                    filled. The flame stays lit. The flowers are replaced each morning. The mantra changes daily.
-                  </p>
-                  <p>
-                    And on the ninth night you look at the barley you sowed on the first day, now tall and green and
-                    reaching upward, and you understand what the nine nights were doing: growing something that was barely
-                    a seed when you began.
-                  </p>
-                </>
-              )}
-            </div>
+                  {mantraData.audioUrl && (
+                    <>
+                      <button
+                        type="button"
+                        className="mn-play-btn"
+                        onClick={toggleMantraAudio}
+                        aria-label={isMantraPlaying ? 'Pause mantra audio' : 'Play mantra audio'}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '50%',
+                          border: 'none',
+                          background: '#DE1B59',
+                          color: '#FFFFFF',
+                          cursor: 'pointer',
+                          flexShrink: 0,
+                          fontSize: '14px',
+                          lineHeight: 1,
+                        }}
+                      >
+                        {isMantraPlaying ? '❚❚' : '▶'}
+                      </button>
+                      <audio
+                        ref={mantraAudioRef}
+                        src={mantraData.audioUrl}
+                        preload="auto"
+                        style={{ display: 'none' }}
+                      />
+                    </>
+                  )}
+                </div>
 
-            {/* Related Grid — Purely Dynamic from Admin Panel */}
-            {(() => {
-              let relatedRitualGuides: any[] = [];
-              let relatedPujans: any[] = [];
-              let relatedConcepts: any[] = [];
-              let relatedDates: any[] = [];
+                <div className="mn-d">{mantraData.text}</div>
+                {mantraData.transliteration && <div className="mn-r">{mantraData.transliteration}</div>}
 
-              if (guideData?.relatedRitualGuidesJson) {
-                try {
-                  const parsed = typeof guideData.relatedRitualGuidesJson === 'string' ? JSON.parse(guideData.relatedRitualGuidesJson) : guideData.relatedRitualGuidesJson;
-                  if (Array.isArray(parsed)) relatedRitualGuides = parsed;
-                } catch (e) { }
-              }
-              if (guideData?.relatedPujansJson) {
-                try {
-                  const parsed = typeof guideData.relatedPujansJson === 'string' ? JSON.parse(guideData.relatedPujansJson) : guideData.relatedPujansJson;
-                  if (Array.isArray(parsed)) relatedPujans = parsed;
-                } catch (e) { }
-              }
-              if (guideData?.relatedConceptsJson) {
-                try {
-                  const parsed = typeof guideData.relatedConceptsJson === 'string' ? JSON.parse(guideData.relatedConceptsJson) : guideData.relatedConceptsJson;
-                  if (Array.isArray(parsed)) relatedConcepts = parsed;
-                } catch (e) { }
-              }
-              if (guideData?.relatedDatesJson) {
-                try {
-                  const parsed = typeof guideData.relatedDatesJson === 'string' ? JSON.parse(guideData.relatedDatesJson) : guideData.relatedDatesJson;
-                  if (Array.isArray(parsed)) relatedDates = parsed;
-                } catch (e) { }
-              }
+                <div className="japa">
+                  <div>
+                    <div className="jp-l">JAPA COUNT</div>
+                    <div className="jp-t" style={{ textAlign: 'left', marginTop: '4px' }}>Tap as you complete each round</div>
+                  </div>
+                  <div className="jp-ctr">
+                    <button className="jp-b" onClick={() => setJapaCount((c) => Math.max(0, c - 1))}>
+                      −
+                    </button>
+                    <div>
+                      <div
+                        className="jp-n"
+                        onClick={() => {
+                          const value = window.prompt('Enter japa count', String(japaCount));
+                          if (value === null) return;
+                          const count = Number(value);
+                          if (Number.isFinite(count) && count >= 0) {
+                            setJapaCount(Math.floor(count));
+                          }
+                        }}
+                        title="Click to set count"
+                        style={{ cursor: 'pointer' }}
+                      >
+                        {japaCount}
+                      </div>
+                      <div className="jp-t">of 108</div>
+                    </div>
+                    <button className="jp-b" onClick={() => setJapaCount((c) => c + 1)}>
+                      +
+                    </button>
+                  </div>
+                  <div className="jp-presets">
+                    {[11, 21, 51, 108].map((n) => (
+                      <button
+                        key={n}
+                        className={`jp-p ${japaCount === n ? 'on' : ''}`}
+                        onClick={() => setJapaCount(n)}
+                      >
+                        {n}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
 
-              const hasItems = relatedRitualGuides.length > 0 || relatedPujans.length > 0 || relatedConcepts.length > 0 || relatedDates.length > 0;
-
-              if (!hasItems) {
-                // Return default structured categories if guideData has no JSON
-                return (
+            {/* Sankalpa Section — Dynamic from Admin Panel */}
+            {hasSankalpa && (
+              <>
+                {(guideData?.sankalpaTitle || guideData?.sankalpaSubtitle) && (
                   <>
-                    <div className="sh">
+                    <div className="sh" id="sankalp">
                       <span className="sh-p">+</span>
-                      <span className="sh-t">{guideData?.relatedSectionTitle || guideData?.relatedTitle || 'Related'}</span>
+                      {guideData?.sankalpaTitle && <span className="sh-t">{guideData.sankalpaTitle}</span>}
                     </div>
-
-                    <div className="relgrid">
-                      <div className="rel">
-                        <div className="rel-h">RELATED RITUAL GUIDES</div>
-                        <Link href="/ritual-guides/dussehra" className="rel-i">
-                          <span>
-                            <span className="rel-n">Dussehra / Vijayadashami</span>
-                            <span className="rel-s">The tenth day · 20 October</span>
-                          </span>
-                          <span className="rel-cl">CALENDAR</span>
-                        </Link>
-                        <Link href="/ritual-guides/durga-ashtami" className="rel-i">
-                          <span>
-                            <span className="rel-n">Durga Ashtami</span>
-                            <span className="rel-s">The most intensive of the nine</span>
-                          </span>
-                          <span className="rel-cl">DEITY</span>
-                        </Link>
-                      </div>
-
-                      <div className="rel">
-                        <div className="rel-h">RELATED PUJANS</div>
-                        <Link href="/ritual-kits/shakti-kit" className="rel-i">
-                          <span>
-                            <span className="rel-n">Navratri Ghatasthapana</span>
-                            <span className="rel-s">Bookable · purohit performs the sthapana</span>
-                          </span>
-                          <span className="rel-a">›</span>
-                        </Link>
-                        <Link href="/ritual-guides/durga-puja" className="rel-i">
-                          <span>
-                            <span className="rel-n">Durga Puja</span>
-                            <span className="rel-s">The Bengali observance form</span>
-                          </span>
-                          <span className="rel-a">›</span>
-                        </Link>
-                      </div>
-
-                      <div className="rel">
-                        <div className="rel-h">RELATED CONCEPTS</div>
-                        <Link href="/dharmic-concepts/what-is-navratri" className="rel-i">
-                          <span>
-                            <span className="rel-n">What Is Navratri?</span>
-                            <span className="rel-s">The three gunas across nine nights</span>
-                          </span>
-                          <span className="rel-a">›</span>
-                        </Link>
-                      </div>
-
-                      <div className="rel">
-                        <div className="rel-h">RELATED DATES</div>
-                        <Link href="/panchang" className="rel-i">
-                          <span>
-                            <span className="rel-n">Sharad Navratri 2026 Panchang</span>
-                            <span className="rel-s">Every tithi boundary, day by day</span>
-                          </span>
-                          <span className="rel-a">›</span>
-                        </Link>
-                        <Link href="/panchang/ashwin" className="rel-i">
-                          <span>
-                            <span className="rel-n">Ashwin month panchang</span>
-                            <span className="rel-s">The full month</span>
-                          </span>
-                          <span className="rel-a">›</span>
-                        </Link>
-                      </div>
-                    </div>
+                    {guideData?.sankalpaSubtitle && (
+                      <p
+                        className="sh-s"
+                        dangerouslySetInnerHTML={{ __html: cleanHtmlString(guideData.sankalpaSubtitle) }}
+                      />
+                    )}
                   </>
-                );
-              }
+                )}
 
-              return (
-                <>
+                <div className="sank" id={!guideData?.sankalpaTitle ? 'sankalp' : undefined}>
+                  {guideData?.sankalpaInstruction && (
+                    <div
+                      className="sank-h"
+                      dangerouslySetInnerHTML={{ __html: cleanHtmlString(guideData.sankalpaInstruction) }}
+                    />
+                  )}
+                  <div className="sank-b">
+                    {guideData?.sankalpaText && (
+                      <p
+                        className="sank-dev"
+                        dangerouslySetInnerHTML={{ __html: cleanHtmlString(guideData.sankalpaText) }}
+                      />
+                    )}
+                    {guideData?.sankalpaMeaning && (
+                      <p
+                        className="sank-r"
+                        dangerouslySetInnerHTML={{ __html: cleanHtmlString(guideData.sankalpaMeaning) }}
+                      />
+                    )}
+                    {guideData?.sankalpaExplanation && (
+                      <p
+                        className="sank-m"
+                        dangerouslySetInnerHTML={{ __html: cleanHtmlString(guideData.sankalpaExplanation) }}
+                      />
+                    )}
+                    {sankalpaCards.length > 0 && (
+                      <div className="sank-g">
+                        {sankalpaCards.map((card, idx) => (
+                          <div className="sg" key={idx}>
+                            <div className="sg-k">{card.k}</div>
+                            <div className="sg-v" dangerouslySetInnerHTML={{ __html: cleanHtmlString(card.v) }} />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  {(guideData?.sankalpaNoteHeading || guideData?.sankalpaNoteContent) && (
+                    <p className="sank-note">
+                      {guideData?.sankalpaNoteHeading && (
+                        <b
+                          dangerouslySetInnerHTML={{ __html: cleanHtmlString(guideData.sankalpaNoteHeading) }}
+                        />
+                      )}
+                      {guideData?.sankalpaNoteContent && (
+                        <span
+                          dangerouslySetInnerHTML={{
+                            __html: cleanHtmlString(guideData.sankalpaNoteContent),
+                          }}
+                        />
+                      )}
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
+
+            {/* Vrat Katha Card — Dynamic from Admin Panel */}
+            {hasKatha && (
+              <>
+                {(guideData?.kathaTitle || guideData?.kathaSubtitle) && (
+                  <>
+                    <div className="sh" id="katha">
+                      <span className="sh-p">+</span>
+                      {guideData?.kathaTitle && <span className="sh-t">{guideData.kathaTitle}</span>}
+                    </div>
+                    {guideData?.kathaSubtitle && <p className="sh-s">{guideData.kathaSubtitle}</p>}
+                  </>
+                )}
+
+                <div className="katha" id={!guideData?.kathaTitle ? 'katha' : undefined}>
+                  {(guideData?.kathaScripturalReference || guideData?.kathaHeadline || guideData?.kathaIntroduction) && (
+                    <div className="k-top">
+                      {guideData?.kathaScripturalReference && (
+                        <div className="k-l">{guideData.kathaScripturalReference.toUpperCase()}</div>
+                      )}
+                      {guideData?.kathaHeadline && <div className="k-t">{guideData.kathaHeadline}</div>}
+                      {guideData?.kathaIntroduction && <p className="k-s">{guideData.kathaIntroduction}</p>}
+                    </div>
+                  )}
+                  <div className="k-b">
+                    {kathaCards.length > 0 && (
+                      <div className="k-beats">
+                        {kathaCards.map((card, idx) => (
+                          <div className="kb" key={idx}>
+                            <div className="kb-n">{card.cardNumber}</div>
+                            <div className="kb-t">{card.cardTitle}</div>
+                            <p className="kb-s">{card.cardDescription}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <div className="k-f">
+                      {guideData?.kathaSupportingExplanation && (
+                        <p
+                          className="k-moral"
+                          dangerouslySetInnerHTML={{ __html: guideData.kathaSupportingExplanation }}
+                        />
+                      )}
+                      {guideData?.kathaAudio && (
+                        <button
+                          className="k-audio"
+                          onClick={() => window.open(guideData.kathaAudio, '_blank')}
+                        >
+                          <svg
+                            width="15"
+                            height="15"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            style={{ flexShrink: 0 }}
+                          >
+                            <path d="M3 18v-6a9 9 0 0 1 18 0v6" />
+                            <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z" />
+                          </svg>
+                          <span>{joinTruthy([guideData?.kathaAudioButtonText || 'Listen', guideData?.kathaAudioDuration])}</span>
+                        </button>
+                      )}
+                      {guideData?.kathaFullKathaLink && (
+                        <button className="k-c" onClick={() => window.open(guideData.kathaFullKathaLink, '_blank')}>
+                          {guideData?.kathaFullKathaButtonText
+                            ? guideData.kathaFullKathaButtonText.includes('›')
+                              ? guideData.kathaFullKathaButtonText
+                              : `${guideData.kathaFullKathaButtonText} ›`
+                            : 'Read the full katha ›'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Festival Context Section — Dynamic from Admin Panel */}
+            {hasFestivalContext && (
+              <>
+                <div className="sh">
+                  <span className="sh-p">+</span>
+                  <span className="sh-t">{guideData.festivalContextTitle}</span>
+                </div>
+                {guideData?.festivalContextIntroduction && <p className="p">{guideData.festivalContextIntroduction}</p>}
+                {guideData?.festivalContextDetails && (
+                  <p className="p" dangerouslySetInnerHTML={{ __html: guideData.festivalContextDetails }} />
+                )}
+                {(guideData?.festivalPracticeCategory ||
+                  guideData?.category ||
+                  guideData?.festivalClassification ||
+                  guideData?.classification) && (
+                    <div className="tagrow">
+                      {(guideData?.festivalPracticeCategory || guideData?.category) && (
+                        <span className="pill d">
+                          {joinTruthy([
+                            (guideData?.festivalPracticeCategory || guideData?.category)?.toUpperCase(),
+                            guideData?.festivalPracticeRating || guideData?.rating,
+                          ])}
+                        </span>
+                      )}
+                      {(guideData?.festivalClassification || guideData?.classification) && (
+                        <span className="badge shastra">
+                          {(guideData?.festivalClassification || guideData?.classification)?.toUpperCase()}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                {guideData?.sandhiPujaInformation && <p className="p">{guideData.sandhiPujaInformation}</p>}
+                <div className="hr"></div>
+              </>
+            )}
+
+            {/* Nine Days Table — Purely Dynamic from Admin Panel */}
+            {nineDays.length > 0 && (
+              <>
+                {guideData?.nineDaysTitle && (
                   <div className="sh">
                     <span className="sh-p">+</span>
-                    <span className="sh-t">{guideData?.relatedSectionTitle || guideData?.relatedTitle || 'Related'}</span>
+                    <span className="sh-t">{guideData.nineDaysTitle}</span>
+                  </div>
+                )}
+
+                <div className="days" style={{ marginTop: '16px' }}>
+                  <div className="dh">
+                    <span>DAY</span>
+                    <span>DATE</span>
+                    <span>DEVI FORM &amp; SIGNIFICANCE</span>
+                    <span>COLOUR</span>
+                    <span>OFFERING</span>
                   </div>
 
-                  <div className="relgrid">
-                    {relatedRitualGuides.length > 0 && (
-                      <div className="rel">
-                        <div className="rel-h">{guideData?.relatedGuidesHeading || 'RELATED RITUAL GUIDES'}</div>
-                        {relatedRitualGuides.map((item: any, idx: number) => (
-                          <Link href={item.link || item.url || '#'} className="rel-i" key={idx}>
-                            <span>
-                              <span className="rel-n">{item.title || item.name}</span>
-                              <span className="rel-s">{item.subtitle || item.sub}</span>
-                            </span>
-                            {item.tag ? <span className="rel-cl">{item.tag}</span> : <span className="rel-a">›</span>}
-                          </Link>
-                        ))}
-                      </div>
-                    )}
+                  {nineDays.map((item: any, idx: number) => {
+                    const num = item.n || item.dayNumber || item.day || idx + 1;
+                    const dateStr = item.dt || item.date || item.dayDate || '';
+                    const deviForm = item.dv || item.deviForm || item.form || item.dayTitle || '';
+                    const deviSig = item.ds || item.deviSignificance || item.significance || item.dayDescription || '';
+                    const colorName = item.col || item.colour || item.color || '';
+                    const swatch = item.sw || item.colourSwatch || item.swatch || item.colorHex || '';
+                    const offering = item.of || item.offering || item.prasadam || '';
 
-                    {relatedPujans.length > 0 && (
-                      <div className="rel">
-                        <div className="rel-h">{guideData?.relatedPujansHeading || 'RELATED PUJANS'}</div>
-                        {relatedPujans.map((item: any, idx: number) => (
-                          <Link href={item.link || item.url || '#'} className="rel-i" key={idx}>
-                            <span>
-                              <span className="rel-n">{item.title || item.name}</span>
-                              <span className="rel-s">{item.subtitle || item.sub}</span>
-                            </span>
-                            <span className="rel-a">›</span>
-                          </Link>
-                        ))}
+                    return (
+                      <div className="dr" key={item.id || idx}>
+                        <span className="d-n">{num}</span>
+                        <span className="d-dt">{dateStr}</span>
+                        <span>
+                          <span className="d-dv">{deviForm}</span>
+                          {deviSig && <span className="d-ds">{deviSig}</span>}
+                        </span>
+                        <span className="d-col">
+                          {swatch && <span className="d-sw" style={{ background: swatch }}></span>}
+                          {colorName}
+                        </span>
+                        <span className="d-of">{offering}</span>
                       </div>
-                    )}
-
-                    {relatedConcepts.length > 0 && (
-                      <div className="rel">
-                        <div className="rel-h">{guideData?.relatedConceptsHeading || 'RELATED CONCEPTS'}</div>
-                        {relatedConcepts.map((item: any, idx: number) => (
-                          <Link href={item.link || item.url || '#'} className="rel-i" key={idx}>
-                            <span>
-                              <span className="rel-n">{item.title || item.name}</span>
-                              <span className="rel-s">{item.subtitle || item.sub}</span>
-                            </span>
-                            <span className="rel-a">›</span>
-                          </Link>
-                        ))}
-                      </div>
-                    )}
-
-                    {relatedDates.length > 0 && (
-                      <div className="rel">
-                        <div className="rel-h">{guideData?.relatedDatesHeading || 'RELATED DATES'}</div>
-                        {relatedDates.map((item: any, idx: number) => (
-                          <Link href={item.link || item.url || '#'} className="rel-i" key={idx}>
-                            <span>
-                              <span className="rel-n">{item.title || item.name}</span>
-                              <span className="rel-s">{item.subtitle || item.sub}</span>
-                            </span>
-                            <span className="rel-a">›</span>
-                          </Link>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </>
-              );
-            })()}
-
-            {/* Revenue Row */}
-            <div className="sh">
-              <span className="sh-p">+</span>
-              <span className="sh-t">Prefer to have it all taken care of?</span>
-            </div>
-            <div className="rev">
-              <div className="rev-c feat">
-                <div className="rev-i">🪔</div>
-                <div className="rev-l">RITUAL KIT</div>
-                <div className="rev-t">Shakti Kit</div>
-                <p className="rev-s">
-                  Nine days of samagri in one box — kalash set, barley and pot, chunri, akhand jyoti vessel, Saptashati,
-                  puja powders and the Kanya Pujan items.
-                </p>
-                <button className="rev-b">Pre-book — ₹1,751</button>
-              </div>
-              <div className="rev-c live">
-                <div className="rev-i">🙏</div>
-                <div className="rev-l">PUROHIT &amp; PUJA</div>
-                <div className="rev-t">Book a purohit for Ghatasthapana</div>
-                <p className="rev-s">
-                  Any devotee can perform the sthapana. A purohit adds muhurat precision and takes the procedure off
-                  your hands on a working Sunday morning.
-                </p>
-                <button className="rev-b pur">Check availability ›</button>
-              </div>
-              <div className="rev-c live">
-                <div className="rev-i" style={{ background: '#E9F7EE', borderColor: '#C6E6D2' }}>
-                  💬
+                    );
+                  })}
                 </div>
-                <div className="rev-l">THE TAPA CIRCLE</div>
-                <div className="rev-t">Never miss a date again</div>
-                <p className="rev-s">
-                  Festival and vrat reminders on WhatsApp, with the guide attached and the kit cut-off if there is one.
-                  ₹499 a year.
-                </p>
-                <button className="rev-b wa">Join the Tapa Circle ›</button>
+
+                <div className="hr"></div>
+              </>
+            )}
+
+            {/* Samagri Checklist Section — Purely Dynamic from Admin Panel */}
+            {hasSamagri && (
+              <>
+                <div className="sh" id="samagri">
+                  <span className="sh-p">+</span>
+                  {guideData?.samagriTitle && <span className="sh-t">{guideData.samagriTitle}</span>}
+                </div>
+                {guideData?.samagriSubtitle && <p className="sh-s">{guideData.samagriSubtitle}</p>}
+
+                <div className="sam">
+                  {samagriList.map((s: any, idx: number) => {
+                    const itemName = s.item || s.itemName || s.name || '';
+                    const itemNote = s.note || s.itemDetails || s.details || '';
+                    return (
+                      <div className="sam-r" key={s.id || idx}>
+                        <span className="sam-i">
+                          ▫ {itemName}
+                        </span>
+
+                        <span className="sam-n">
+                          {itemNote}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="hr"></div>
+              </>
+            )}
+
+            {/* Fasting Section — Purely Dynamic from Admin Panel */}
+            {hasFasting && (
+              <>
+                <div className="sh" id="fast">
+                  <span className="sh-p">+</span>
+                  {guideData?.fastingTitle && <span className="sh-t">{guideData.fastingTitle}</span>}
+                </div>
+                {guideData?.fastingSubtitle && <p className="sh-s">{guideData.fastingSubtitle}</p>}
+
+                <div className="fast">
+                  {fastingOptions.map((opt, idx) => (
+                    <div className="fb" key={idx}>
+                      <div className="fb-t">{opt.title}</div>
+                      <p className="fb-s" dangerouslySetInnerHTML={{ __html: cleanHtmlString(opt.description) }} />
+                    </div>
+                  ))}
+                </div>
+                {(guideData?.fastingGuidanceHeading || guideData?.fastingGuidanceContent) && (
+                  <div className="fnote">
+                    {guideData?.fastingGuidanceHeading && <b>{guideData.fastingGuidanceHeading} </b>}
+                    <span
+                      dangerouslySetInnerHTML={{
+                        __html: cleanHtmlString(guideData.fastingGuidanceContent),
+                      }}
+                    />
+                  </div>
+                )}
+
+                <div className="hr"></div>
+              </>
+            )}
+
+            {/* Myths & Facts — Purely Dynamic from Admin Panel */}
+            {hasMyths && (
+              <>
+                <div className="sh" id="myths">
+                  <span className="sh-p">+</span>
+                  {guideData?.mythsTitle && <span className="sh-t">{guideData.mythsTitle}</span>}
+                </div>
+
+                {mythsList.map((m: any, idx: number) => {
+                  const statement = m.mythStatement || m.statement || m.myth || m.question || '';
+                  const label = m.correctionLabel || m.label || m.badge || '';
+                  const content = m.correctionContent || m.content || m.answer || m.correction || '';
+
+                  return (
+                    <div className="myth" key={m.id || idx}>
+                      <div className="my-q">
+                        <span className="my-qt">{statement}</span>
+                        {label && <span className="my-bd">{label}</span>}
+                      </div>
+                      <p className="my-a" dangerouslySetInnerHTML={{ __html: cleanHtmlString(content) }} />
+                    </div>
+                  );
+                })}
+              </>
+            )}
+
+            {/* Intelligence Layer — Dynamic from Admin Panel */}
+            {hasIntel && (
+              <div className="intel">
+                {guideData?.intelTagline && <div className="in-l">{guideData.intelTagline}</div>}
+                {guideData?.intelHeading && <div className="in-t">{guideData.intelHeading}</div>}
+                {(guideData?.intelBody || guideData?.intelSummary) && (
+                  <p className="in-s">{guideData?.intelBody || guideData?.intelSummary}</p>
+                )}
+                {guideData?.intelCtaLink && guideData?.intelCtaText && (
+                  <Link href={guideData.intelCtaLink} className="in-c">
+                    {guideData.intelCtaText}
+                  </Link>
+                )}
               </div>
-            </div>
-            <p className="rev-note">
-              You do not need any of these to observe Navratri. The samagri list above is complete and free, and no text
-              ranks a bought kit above an assembled one.
-            </p>
+            )}
+
+            {/* Poetic Closing — Dynamic from Admin Panel */}
+            {guideData?.closingContent && (
+              <div className="closing" dangerouslySetInnerHTML={{ __html: guideData.closingContent }} />
+            )}
+
+            {/* Related Grid — Purely Dynamic from Admin Panel */}
+            {hasRelatedItems && (
+              <>
+                <div className="sh">
+                  <span className="sh-p">+</span>
+                  <span className="sh-t">{guideData?.relatedSectionTitle || guideData?.relatedTitle || 'Related'}</span>
+                </div>
+
+                <div className="relgrid">
+                  {relatedData.guides.length > 0 && (
+                    <div className="rel">
+                      <div className="rel-h">{guideData?.relatedGuidesHeading || 'RELATED RITUAL GUIDES'}</div>
+                      {relatedData.guides.map((item: any, idx: number) => (
+                        <Link href={item.link || item.url || '#'} className="rel-i" key={idx}>
+                          <span>
+                            <span className="rel-n">{item.title || item.name}</span>
+                            <span className="rel-s">{item.subtitle || item.sub}</span>
+                          </span>
+                          {item.tag ? <span className="rel-cl">{item.tag}</span> : <span className="rel-a">›</span>}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+
+                  {relatedData.pujans.length > 0 && (
+                    <div className="rel">
+                      <div className="rel-h">{guideData?.relatedPujansHeading || 'RELATED PUJANS'}</div>
+                      {relatedData.pujans.map((item: any, idx: number) => (
+                        <Link href={item.link || item.url || '#'} className="rel-i" key={idx}>
+                          <span>
+                            <span className="rel-n">{item.title || item.name}</span>
+                            <span className="rel-s">{item.subtitle || item.sub}</span>
+                          </span>
+                          <span className="rel-a">›</span>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+
+                  {relatedData.concepts.length > 0 && (
+                    <div className="rel">
+                      <div className="rel-h">{guideData?.relatedConceptsHeading || 'RELATED CONCEPTS'}</div>
+                      {relatedData.concepts.map((item: any, idx: number) => (
+                        <Link href={item.link || item.url || '#'} className="rel-i" key={idx}>
+                          <span>
+                            <span className="rel-n">{item.title || item.name}</span>
+                            <span className="rel-s">{item.subtitle || item.sub}</span>
+                          </span>
+                          <span className="rel-a">›</span>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+
+                  {relatedData.dates.length > 0 && (
+                    <div className="rel">
+                      <div className="rel-h">{guideData?.relatedDatesHeading || 'RELATED DATES'}</div>
+                      {relatedData.dates.map((item: any, idx: number) => (
+                        <Link href={item.link || item.url || '#'} className="rel-i" key={idx}>
+                          <span>
+                            <span className="rel-n">{item.title || item.name}</span>
+                            <span className="rel-s">{item.subtitle || item.sub}</span>
+                          </span>
+                          <span className="rel-a">›</span>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </div>
 
           {/* Sticky Sidebar */}
           <aside className="side">
-            <button className="sbcta pink">
-              <span className="sb-ci">🧺</span>
-              <span className="sb-ct">Pre-book the Shakti kit</span>
-              <span className="sb-cs">₹1,751 · delivered before 11 October</span>
-            </button>
+            {guideData?.secondaryButtonText && (
+              <button className="sbcta dk" onClick={() => setIsCardModalOpen(true)}>
+                <span className="sb-ci">↓</span>
+                <span className="sb-ct">{guideData.secondaryButtonText}</span>
+              </button>
+            )}
 
-            <button className="sbcta wa">
-              <span className="sb-ci">💬</span>
-              <span className="sb-ct">Join the Tapa Circle</span>
-              <span className="sb-cs">WhatsApp reminders · ₹499 a year</span>
-            </button>
-
-            <button className="sbcta dk" onClick={() => setIsCardModalOpen(true)}>
-              <span className="sb-ci">↓</span>
-              <span className="sb-ct">Download the ritual card</span>
-              <span className="sb-cs">One page — samagri, steps, mantras, timings</span>
-            </button>
-
-            {/* Also Available Companion Box */}
-            <div className="sbcomp">
-              <div className="sbcomp-h">
-                <span className="sbcomp-i">📖</span>
-                <span className="sbcomp-l">ALSO AVAILABLE</span>
-                <span className="sbcomp-d">DUMMY</span>
-              </div>
-              <p className="sbcomp-t">A plain-language version of this ritual — no citations, no Sanskrit to look up.</p>
-              <button className="sbcomp-b">Navratri Beginner&apos;s Guide</button>
-            </div>
-
-            {/* Samagri Checklist Sidebar Box */}
-            <div className="sb">
-              <div className="sb-h">
-                <span>Samagri checklist</span>
-                <span className="sb-c">{checkedCount} / 11</span>
-              </div>
-              {[
-                'Kalash — brass or copper',
-                'Clay pot, soil, barley',
-                'Red cloth and chunri',
-                'Durga idol or image',
-                'Akhand jyoti vessel',
-                'Durga Saptashati',
-                'Flowers, daily',
-                'Puja powders',
-                'Ghee, incense, camphor',
-                'Kanya Pujan items',
-                'Havan samagri — optional',
-              ].map((item, idx) => (
-                <div className="sb-i" key={idx}>
-                  <input
-                    type="checkbox"
-                    className="cb"
-                    checked={!!checkedSamagri[idx]}
-                    onChange={() => toggleSamagri(idx)}
-                  />
-                  <span style={{ textDecoration: checkedSamagri[idx] ? 'line-through' : 'none' }}>{item}</span>
+            {/* Samagri Checklist Sidebar Box — mirrors the API-sourced samagri list, not a static one */}
+            {hasSamagri && (
+              <div className="sb">
+                <div className="sb-h">
+                  <span>{guideData?.samagriTitle || 'Samagri checklist'}</span>
+                  <span className="sb-c">
+                    {Object.values(checkedSamagri).filter(Boolean).length} / {samagriList.length}
+                  </span>
                 </div>
-              ))}
-              <div className="sb-act">
-                <button className="sb-wa">Send to WhatsApp</button>
-                <button className="sb-dl" onClick={() => setIsCardModalOpen(true)}>Download</button>
+                {samagriList.map((s: any, idx: number) => {
+                  const itemName = s.item || s.itemName || s.name || '';
+                  return (
+                    <div className="sb-i" key={s.id || idx}>
+                      <input
+                        type="checkbox"
+                        className="cb"
+                        checked={!!checkedSamagri[idx]}
+                        onChange={() => toggleSamagri(idx)}
+                      />
+                      <span style={{ textDecoration: checkedSamagri[idx] ? 'line-through' : 'none' }}>{itemName}</span>
+                    </div>
+                  );
+                })}
+                <div className="sb-act">
+                  <button className="sb-dl" onClick={handleDownloadSamagriPdf}>
+                    Download
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
-            <div className="sbn">
-              <div className="sbn-h">WHAT THE BADGE MEANS</div>
-              <p className="sbn-t">
-                <b>Puranic · 4/5</b> — clearly stated in a Mahapurana, Dharmashastra, Kalpa Sutra or Agama. Here, the Devi
-                Mahatmya within the Markandeya Purana.
-              </p>
-              <Link href="/editorial-method" className="sbn-c">
-                How we decide what is true ›
-              </Link>
-            </div>
+            {(guideData?.classification || guideData?.rating) && (
+              <div className="sbn">
+                <div className="sbn-h">WHAT THE BADGE MEANS</div>
+                <p className="sbn-t">
+                  {joinTruthy([guideData?.classification, guideData?.rating ? `${guideData.rating}` : null])}
+                  {guideData?.sotScripturalSource ? ` — ${guideData.sotScripturalSource}` : ''}
+                </p>
+                <Link href="/editorial-method" className="sbn-c">
+                  How we decide what is true ›
+                </Link>
+              </div>
+            )}
           </aside>
         </div>
       </div>
 
-      {/* Sticky Bottom Bar (Desktop & Mobile) */}
-      <div className={`dsticky ${showStickyBar ? 'on' : ''}`}>
-        <div className="ds-in">
-          <div>
-            <div className="ds-t">{formattedTitle}: The Complete 9-Day Guide</div>
-            <div className="ds-s">Scripturally sourced · Region aware · Fear-free</div>
-          </div>
-          <div className="ds-b">
-            <button className="ds-btn card" onClick={() => setIsCardModalOpen(true)}>Download Ritual Card</button>
-            <button className="ds-btn wa">WhatsApp Reminders</button>
-            <button className="ds-btn kit">Pre-book Shakti Kit</button>
+      {/* Sticky Bottom Bar — only once we actually have a title and a download action */}
+      {guideData?.secondaryButtonText && (
+        <div className={`dsticky ${showStickyBar ? 'on' : ''}`}>
+          <div className="ds-in">
+            <div>
+              <div className="ds-t">{heroTitle}</div>
+              {guideData?.guideSubtitle && <div className="ds-s">{guideData.guideSubtitle}</div>}
+            </div>
+            <div className="ds-b">
+              <button className="ds-btn card" onClick={() => setIsCardModalOpen(true)}>
+                {guideData.secondaryButtonText}
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-
-      {/* Mobile Sticky Bar */}
-      <div className="sticky">
-        <button className="a">
-          Subscribe
-          <small>₹499/yr</small>
-        </button>
-        <button className="b">
-          Pre-book the Shakti kit
-          <small>₹1,751 · before 11 October</small>
-        </button>
-      </div>
-
+      )}
 
       {/* Ritual Card Modal */}
-      <RitualCardModal
-        isOpen={isCardModalOpen}
-        onClose={() => setIsCardModalOpen(false)}
-        slug={slug}
-        title={formattedTitle}
-      />
+      <RitualCardModal isOpen={isCardModalOpen} onClose={() => setIsCardModalOpen(false)} slug={slug} title={heroTitle} />
     </div>
   );
 }

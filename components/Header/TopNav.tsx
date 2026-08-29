@@ -12,6 +12,7 @@ interface TopNavProps {
   onToggleMobileDrawer: () => void;
   phase?: 1 | 2;
   cartCount?: number;
+  userName?: string | null;
 }
 
 export const TopNav: React.FC<TopNavProps> = ({
@@ -22,7 +23,8 @@ export const TopNav: React.FC<TopNavProps> = ({
   onToggleCart,
   onToggleMobileDrawer,
   phase = 1,
-  cartCount = 2,
+  cartCount = 0,
+  userName,
 }) => {
   const pathname = usePathname();
   const router = useRouter();
@@ -188,37 +190,59 @@ export const TopNav: React.FC<TopNavProps> = ({
               )}
             </div>
 
-            {/* Sign In */}
-            <Link href="/admin/login">
+            {/* Sign In / User Name */}
+            {userName ? (
               <button
                 type="button"
                 className="signin hidden md:block"
+                onClick={onToggleAccount}
               >
-                Sign in
+                {userName}
               </button>
-            </Link>
+            ) : (
+              <Link href="/admin/login">
+                <button
+                  type="button"
+                  className="signin hidden md:block"
+                >
+                  Sign in
+                </button>
+              </Link>
+            )}
           </>
         ) : (
           <>
-            {/* Sign In */}
-            <Link href="/admin/login">
+            {/* Sign In / User Name */}
+            {userName ? (
               <button
                 type="button"
                 className="signin hidden md:block"
+                onClick={onToggleAccount}
               >
-                Sign in
+                {userName}
               </button>
-            </Link>
+            ) : (
+              <>
+                <Link href="/admin/login">
+                  <button
+                    type="button"
+                    className="signin hidden md:block"
+                  >
+                    Sign in
+                  </button>
+                </Link>
 
-            {/* Create Account */}
-            <Link href="/admin/login?mode=signup">
-              <button
-                type="button"
-                className="signup hidden md:block"
-              >
-                Create account
-              </button>
-            </Link>
+                {/* Create Account */}
+                <Link href="/admin/login?mode=signup">
+                  <button
+                    type="button"
+                    className="signup hidden md:block"
+                  >
+                    Create account
+                  </button>
+                </Link>
+              </>
+            )}
           </>
         )}
       </div>
