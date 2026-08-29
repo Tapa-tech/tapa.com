@@ -1,21 +1,8 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { withEditorAuth } from '@/lib/api-auth';
+import { slugify } from '@/lib/utils';
 
-function slugify(text: string): string {
-  return text
-    .toString()
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, '-')
-    .replace(/[^\w\-]+/g, '')
-    .replace(/\-\-+/g, '-');
-}
-
-/**
- * GET /api/admin/beginner-guides
- * Listing endpoint for Beginner Guides with search & filters
- */
 export const GET = withEditorAuth(async (req) => {
   const { searchParams } = new URL(req.url);
   const search = searchParams.get('search')?.trim() || '';
@@ -53,10 +40,6 @@ export const GET = withEditorAuth(async (req) => {
   });
 });
 
-/**
- * POST /api/admin/beginner-guides
- * Create endpoint for Beginner Guides
- */
 export const POST = withEditorAuth(async (req) => {
   try {
     const body = await req.json();
@@ -110,17 +93,19 @@ export const POST = withEditorAuth(async (req) => {
       );
     }
 
-    slug = slug && typeof slug === 'string' && slug.trim() ? slugify(slug) : slugify(guideTitle);
-
-    const existing = await prisma.beginnerGuide.findUnique({
+    const baseSlug = slug && typeof slug === 'string' && slug.trim() ? slugify(slug) : slugify(guideTitle);
+    slug = baseSlug;
+    let existing = await prisma.beginnerGuide.findUnique({
       where: { slug },
     });
 
-    if (existing) {
-      return NextResponse.json(
-        { success: false, error: `Validation Error: A guide with slug '${slug}' already exists.` },
-        { status: 400 }
-      );
+    let counter = 1;
+    while (existing) {
+      slug = `${baseSlug}-${counter}`;
+      existing = await prisma.beginnerGuide.findUnique({
+        where: { slug },
+      });
+      counter++;
     }
 
     const validStatus = ['DRAFT', 'PUBLISHED', 'ARCHIVED'].includes(status) ? status : 'DRAFT';

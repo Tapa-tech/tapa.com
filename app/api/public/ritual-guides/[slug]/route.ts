@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { findInMemoryGuide, getInMemoryGuides } from '@/lib/ritual-guides-store';
 
 export async function GET(
   req: Request,
@@ -13,31 +14,40 @@ export async function GET(
 
     const cleanSlug = slug.trim().toLowerCase();
 
-    // 1. Try exact match
-    let guide = await prisma.ritualGuide.findFirst({
-      where: {
-        OR: [
-          { slug: cleanSlug },
-          { slug: slug },
-        ],
-      },
-    });
-
-    // 2. Fallback to flexible matching if exact slug is not found (e.g., 'sharad-navratri' -> 'sharad-navratri-the-complete-9-day-guide')
-    if (!guide) {
+    let guide: any = null;
+    try {
+      // 1. Try exact match
       guide = await prisma.ritualGuide.findFirst({
         where: {
           OR: [
-            { slug: { contains: cleanSlug } },
-            { title: { contains: cleanSlug } },
+            { slug: cleanSlug },
+            { slug: slug },
           ],
         },
       });
+
+      // 2. Fallback to flexible matching if exact slug is not found
+      if (!guide) {
+        guide = await prisma.ritualGuide.findFirst({
+          where: {
+            OR: [
+              { slug: { contains: cleanSlug } },
+              { title: { contains: cleanSlug } },
+            ],
+          },
+        });
+      }
+
+      // 3. Fallback to any published or existing guide if available
+      if (!guide) {
+        guide = await prisma.ritualGuide.findFirst();
+      }
+    } catch (dbErr: any) {
+      console.warn('[API Public Ritual Guide Slug GET] DB warning:', dbErr?.message || dbErr);
     }
 
-    // 3. Fallback to any published or existing guide if available
     if (!guide) {
-      guide = await prisma.ritualGuide.findFirst();
+      guide = findInMemoryGuide(cleanSlug) || getInMemoryGuides()[0] || null;
     }
 
     return NextResponse.json({
@@ -45,6 +55,10 @@ export async function GET(
       data: guide || null,
     });
   } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    console.error('[API Public Ritual Guide Slug GET] Error:', error?.message || error);
+    return NextResponse.json(
+      { success: true, data: findInMemoryGuide(params.slug) || null, error: error?.message || 'Database unavailable' },
+      { status: 200 }
+    );
   }
 }

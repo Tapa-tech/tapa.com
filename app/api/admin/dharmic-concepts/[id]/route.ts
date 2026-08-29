@@ -1,41 +1,55 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { withEditorAuth } from '@/lib/api-auth';
-
-function slugify(text: string): string {
-  return text
-    .toString()
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, '-')
-    .replace(/[^\w\-]+/g, '')
-    .replace(/\-\-+/g, '-');
-}
+import { slugify } from '@/lib/utils';
+import {
+  findInMemoryDharmicConcept,
+  saveInMemoryDharmicConcept,
+  deleteInMemoryDharmicConcept,
+} from '@/lib/ritual-guides-store';
 
 /**
  * GET /api/admin/dharmic-concepts/[id]
  * Fetch single concept details (Requires EDITOR or ADMIN)
  */
 export const GET = withEditorAuth(async (req, { params }) => {
-  const { id } = params || {};
+  try {
+    const { id } = params || {};
 
-  const concept = await prisma.dharmicConcept.findUnique({
-    where: { id },
-    include: {
-      author: {
-        select: { id: true, name: true, email: true, role: true },
-      },
-    },
-  });
+    let concept: any = null;
+    try {
+      concept = await prisma.dharmicConcept.findUnique({
+        where: { id },
+        include: {
+          author: {
+            select: { id: true, name: true, email: true, role: true },
+          },
+        },
+      });
+    } catch (dbErr: any) {
+      console.warn('[API DharmicConcept GET single] DB error, using in-memory store:', dbErr?.message || dbErr);
+      concept = findInMemoryDharmicConcept(id);
+    }
 
-  if (!concept) {
+    if (!concept) {
+      concept = findInMemoryDharmicConcept(id);
+    }
+
+    if (!concept) {
+      return NextResponse.json(
+        { success: false, error: 'Dharmic Concept not found.' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({ success: true, data: concept });
+  } catch (err: any) {
+    console.error('[API DharmicConcept GET single] Error:', err);
     return NextResponse.json(
-      { success: false, error: 'Dharmic Concept not found.' },
-      { status: 404 }
+      { success: false, error: 'Failed to fetch Dharmic Concept.' },
+      { status: 500 }
     );
   }
-
-  return NextResponse.json({ success: true, data: concept });
 });
 
 /**
@@ -45,7 +59,16 @@ export const GET = withEditorAuth(async (req, { params }) => {
 export const PUT = withEditorAuth(async (req, { params }) => {
   try {
     const { id } = params || {};
-    const existing = await prisma.dharmicConcept.findUnique({ where: { id } });
+    let existing: any = null;
+    try {
+      existing = await prisma.dharmicConcept.findUnique({ where: { id } });
+    } catch (dbErr: any) {
+      console.warn('[API DharmicConcept PUT] DB existing check warning:', dbErr?.message || dbErr);
+    }
+
+    if (!existing) {
+      existing = findInMemoryDharmicConcept(id);
+    }
 
     if (!existing) {
       return NextResponse.json(
@@ -154,28 +177,43 @@ export const PUT = withEditorAuth(async (req, { params }) => {
     if (slug && typeof slug === 'string') {
       const formattedSlug = slugify(slug);
       if (formattedSlug !== existing.slug) {
-        const slugExists = await prisma.dharmicConcept.findUnique({
-          where: { slug: formattedSlug },
-        });
-        if (slugExists) {
-          return NextResponse.json(
-            { success: false, error: `Slug '${formattedSlug}' is already in use by another concept.` },
-            { status: 400 }
-          );
+        try {
+          const slugExists = await prisma.dharmicConcept.findUnique({
+            where: { slug: formattedSlug },
+          });
+          if (slugExists) {
+            return NextResponse.json(
+              { success: false, error: `Slug '${formattedSlug}' is already in use by another concept.` },
+              { status: 400 }
+            );
+          }
+        } catch (slugErr: any) {
+          console.warn('[API DharmicConcept PUT] Slug check warning:', slugErr?.message || slugErr);
         }
         updateData.slug = formattedSlug;
       }
     }
 
-    const updatedConcept = await prisma.dharmicConcept.update({
-      where: { id },
-      data: updateData,
-      include: {
-        author: {
-          select: { id: true, name: true, email: true, role: true },
+    let updatedConcept: any = null;
+    try {
+      updatedConcept = await prisma.dharmicConcept.update({
+        where: { id },
+        data: updateData,
+        include: {
+          author: {
+            select: { id: true, name: true, email: true, role: true },
+          },
         },
-      },
-    });
+      });
+    } catch (dbErr: any) {
+      console.warn('[API DharmicConcept PUT] DB update warning, using in-memory store:', dbErr?.message || dbErr);
+      updatedConcept = {
+        ...existing,
+        ...updateData,
+        updatedAt: new Date().toISOString(),
+      };
+      saveInMemoryDharmicConcept(updatedConcept);
+    }
 
     return NextResponse.json({
       success: true,
@@ -198,7 +236,16 @@ export const PUT = withEditorAuth(async (req, { params }) => {
 export const DELETE = withEditorAuth(async (req, { params }) => {
   try {
     const { id } = params || {};
-    const existing = await prisma.dharmicConcept.findUnique({ where: { id } });
+    let existing: any = null;
+    try {
+      existing = await prisma.dharmicConcept.findUnique({ where: { id } });
+    } catch (dbErr: any) {
+      console.warn('[API DharmicConcept DELETE] DB check warning:', dbErr?.message || dbErr);
+    }
+
+    if (!existing) {
+      existing = findInMemoryDharmicConcept(id);
+    }
 
     if (!existing) {
       return NextResponse.json(
@@ -207,7 +254,12 @@ export const DELETE = withEditorAuth(async (req, { params }) => {
       );
     }
 
-    await prisma.dharmicConcept.delete({ where: { id } });
+    try {
+      await prisma.dharmicConcept.delete({ where: { id } });
+    } catch (dbErr: any) {
+      console.warn('[API DharmicConcept DELETE] DB delete warning, removing from in-memory:', dbErr?.message || dbErr);
+      deleteInMemoryDharmicConcept(id);
+    }
 
     return NextResponse.json({
       success: true,

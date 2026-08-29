@@ -126,7 +126,9 @@ export default function RitualGuidesPage() {
       {/* Breadcrumb */}
       <div className="bcrumb">
         <div className="bc-in">
-          <Link href="/">Home</Link> › <b>Ritual Guides</b>
+          <div className="bc-l">
+            <Link href="/">Home</Link> › <b>Ritual Guides</b>
+          </div>
         </div>
       </div>
 

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { SessionProvider, signOut, useSession } from 'next-auth/react';
 import Link from 'next/link';
+import { readFileAsDataUrl } from '@/lib/utils';
 
 interface KandaItem {
   id: string;
@@ -275,7 +276,7 @@ const DEFAULT_BANNER_DEMO = {
 const DEFAULT_INTRO_DEMO = {
   introHeading: 'The map before the journey.',
   introDescription: '<p>The Ramcharitmanas is Tulsidas\'s retelling of the Ramayana in Awadhi, and it is divided into seven sections called kandas. Each covers a phase of Ram\'s story.</p><p>If you are starting with Sundarkand — as most people do — this shows you where it sits and what surrounds it.</p>',
-  introImage: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80',
+  introImage: '',
   introImageAltText: 'Seven Ramcharitmanas books representing the seven kandas, with Sundarkand as the fifth.',
   introImageCaption: 'Seven books. One story. Sundarkand is the fifth.',
 };
@@ -500,8 +501,13 @@ function BeginnerGuidesCmsContent() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const userRole = (session?.user as { role?: string })?.role?.toUpperCase() || 'USER';
-  const isAuthorized = ['ADMIN', 'EDITOR', 'SUPER_ADMIN'].includes(userRole);
+  const isAuthorized = ['ADMIN', 'EDITOR', 'SUPER_ADMIN', 'SUPER_USER'].includes(userRole);
   const userEmail = session?.user?.email || (session?.user as any)?.phone || 'admin@tapa.co';
+
+  const uploadMedia = async (file: File): Promise<string> => {
+    return readFileAsDataUrl(file);
+  };
+
 
   // Fetch guides from backend API
   const fetchGuides = useCallback(async () => {
@@ -1741,52 +1747,39 @@ function BeginnerGuidesCmsContent() {
                       </div>
                     )}
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '12px', alignItems: 'center', marginBottom: '12px' }}>
-                      <div>
-                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Intro Image URL *</label>
-                        <input
-                          type="text"
-                          placeholder="https://images.unsplash.com/..."
-                          value={formData.introImage}
-                          onChange={(e) => setFormData({ ...formData, introImage: e.target.value })}
-                          style={{ width: '100%', background: '#FFFFFF', border: '1px solid #D1D5DB', color: '#111827', padding: '9px 12px', borderRadius: '8px', fontSize: '12px', boxSizing: 'border-box', outline: 'none' }}
-                        />
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const newUrl = prompt('Enter image URL or asset link:', formData.introImage);
-                          if (newUrl) setFormData({ ...formData, introImage: newUrl });
-                        }}
-                        style={{ background: '#F3F4F6', color: '#374151', border: '1px solid #D1D5DB', borderRadius: '8px', padding: '9px 14px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', marginTop: '18px' }}
-                      >
-                        🖼 Replace Image
-                      </button>
-                    </div>
-
-                    <div>
-                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Intro Image Alt Text *</label>
+                    <div style={{ marginBottom: '12px' }}>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Intro Image</label>
                       <input
-                        type="text"
-                        placeholder="Seven Ramcharitmanas books representing the seven kandas, with Sundarkand as the fifth."
-                        value={formData.introImageAltText}
-                        onChange={(e) => setFormData({ ...formData, introImageAltText: e.target.value })}
+                        type="file"
+                        accept="image/*"
+                        onChange={async (e) => {
+                          const target = e.currentTarget;
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          try {
+                            setFormError(null);
+                            const url = await uploadMedia(file);
+                            setFormData((prev) => ({ ...prev, introImage: url }));
+                          } catch (error) {
+                            setFormError(error instanceof Error ? error.message : 'Image upload failed');
+                          }
+                        }}
                         style={{ width: '100%', background: '#FFFFFF', border: '1px solid #D1D5DB', color: '#111827', padding: '9px 12px', borderRadius: '8px', fontSize: '12px', boxSizing: 'border-box', outline: 'none' }}
                       />
                     </div>
-                  </div>
 
-                  {/* 4. IMAGE CAPTION (RICH TEXT EDITOR) */}
-                  <div>
-                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
-                      Intro Image Caption * (Rich Text Editor)
-                    </label>
-                    <RichTextEditor
-                      value={formData.introImageCaption}
-                      onChange={(html) => setFormData({ ...formData, introImageCaption: html })}
-                      placeholder="Seven books. One story. Sundarkand is the fifth."
-                      minHeight="90px"
-                    />
+                    {/* 4. IMAGE CAPTION (RICH TEXT EDITOR) */}
+                    <div>
+                      <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
+                        Intro Image Caption * (Rich Text Editor)
+                      </label>
+                      <RichTextEditor
+                        value={formData.introImageCaption}
+                        onChange={(html) => setFormData({ ...formData, introImageCaption: html })}
+                        placeholder="Seven books. One story. Sundarkand is the fifth."
+                        minHeight="90px"
+                      />
+                    </div>
                   </div>
                 </div>
               )}

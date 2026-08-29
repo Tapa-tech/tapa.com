@@ -12,10 +12,10 @@ export async function GET() {
       data: guides || [],
     });
   } catch (error: any) {
-    console.error('[API Public Beginner Guides GET] Error:', error);
+    console.error('[API Public Beginner Guides GET] Error:', error?.message || error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Internal Server Error', data: [] },
-      { status: 500 }
+      { success: true, data: [], error: error?.message || 'Database unavailable' },
+      { status: 200 }
     );
   }
 }

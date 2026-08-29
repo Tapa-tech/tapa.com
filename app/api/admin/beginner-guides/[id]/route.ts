@@ -1,16 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { withEditorAuth } from '@/lib/api-auth';
-
-function slugify(text: string): string {
-  return text
-    .toString()
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, '-')
-    .replace(/[^\w\-]+/g, '')
-    .replace(/\-\-+/g, '-');
-}
+import { slugify } from '@/lib/utils';
 
 /**
  * GET /api/admin/beginner-guides/[id]

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { SessionProvider, signOut, useSession } from 'next-auth/react';
 import Link from 'next/link';
+import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import RichTextEditor from '@/components/admin/RichTextEditor';
 
 interface SankalpaCard {
@@ -84,7 +85,7 @@ interface RitualGuide {
   id: string;
   title: string;
   slug: string;
-  status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+  status: 'DRAFT' | 'PUBLISHED';
 
   // Banner Content
   sectionLabel: string | null;
@@ -207,365 +208,180 @@ interface RitualGuide {
   updatedAt: string;
 }
 
-const DEFAULT_SANKALPA_CARDS: SankalpaCard[] = [
-  {
-    id: 'card-1',
-    cardTitle: 'WHO',
-    cardDescription: 'Your name, and your gotra if your family uses one. If you do not know it, leave it out.',
-  },
-  {
-    id: 'card-2',
-    cardTitle: 'WHEN AND WHERE',
-    cardDescription: 'The tithi and the place. "Today, at home" is sufficient.',
-  },
-  {
-    id: 'card-3',
-    cardTitle: 'FOR WHAT',
-    cardDescription: 'The observance you are taking up, and for whom. Here: the nine-night vrat, for Durga.',
-  },
-];
+const DEFAULT_SANKALPA_CARDS: SankalpaCard[] = [];
 
-const DEFAULT_KATHA_CARDS: KathaCard[] = [
-  {
-    id: 'kcard-1',
-    cardNumber: 1,
-    cardTitle: 'The boon',
-    cardDescription: 'Mahishasura cannot be killed by any man or god. He asks for the exemption he thinks is safest.',
-  },
-  {
-    id: 'kcard-2',
-    cardNumber: 2,
-    cardTitle: 'Heaven falls',
-    cardDescription: 'The devas are driven out. Each one alone is not enough, and they know it.',
-  },
-  {
-    id: 'kcard-3',
-    cardNumber: 3,
-    cardTitle: 'The convergence',
-    cardDescription: 'Their combined energy takes one form — Durga, holding a weapon from each of them.',
-  },
-  {
-    id: 'kcard-4',
-    cardNumber: 4,
-    cardTitle: 'Nine nights',
-    cardDescription: 'She fights for nine nights. On the tenth day, she wins.',
-  },
-];
+const DEFAULT_KATHA_CARDS: KathaCard[] = [];
 
-const DEFAULT_SAMAGRI_ITEMS: SamagriItem[] = [
-  {
-    id: 'sitem-1',
-    itemName: 'Kalash — brass or copper',
-    itemDetails: 'With mango leaves, coconut, coin, supari, akshat',
-    itemOrder: 1,
-  },
-  {
-    id: 'sitem-2',
-    itemName: 'Clay pot, soil, barley seeds',
-    itemDetails: 'For sowing on day one',
-    itemOrder: 2,
-  },
-  {
-    id: 'sitem-3',
-    itemName: 'Red cloth and chunri',
-    itemDetails: 'For the chowki and for Kanya Pujan',
-    itemOrder: 3,
-  },
-  {
-    id: 'sitem-4',
-    itemName: 'Durga idol or framed image',
-    itemDetails: '—',
-    itemOrder: 4,
-  },
-  {
-    id: 'sitem-5',
-    itemName: 'Akhand jyoti vessel with ghee or oil',
-    itemDetails: 'Large enough to burn through nine days',
-    itemOrder: 5,
-  },
-  {
-    id: 'sitem-6',
-    itemName: 'Durga Saptashati',
-    itemDetails: 'The 700-verse text',
-    itemOrder: 6,
-  },
-  {
-    id: 'sitem-7',
-    itemName: 'Fresh flowers daily',
-    itemDetails: 'Red hibiscus, marigold, jasmine',
-    itemOrder: 7,
-  },
-  {
-    id: 'sitem-8',
-    itemName: 'Sindoor, kumkum, chandan, akshat, haldi',
-    itemDetails: '—',
-    itemOrder: 8,
-  },
-  {
-    id: 'sitem-9',
-    itemName: 'Ghee, incense, camphor',
-    itemDetails: 'Daily',
-    itemOrder: 9,
-  },
-  {
-    id: 'sitem-10',
-    itemName: 'Kanya Pujan items',
-    itemDetails: 'Halwa, poori, chana; red chunri; a small token for each girl',
-    itemOrder: 10,
-  },
-  {
-    id: 'sitem-11',
-    itemName: 'Havan samagri',
-    itemDetails: 'If performing the Ashtami or Navami havan',
-    itemOrder: 11,
-  },
-];
+const DEFAULT_SAMAGRI_ITEMS: SamagriItem[] = [];
 
-const DEFAULT_FASTING_OPTIONS: FastingOption[] = [
-  {
-    id: 'foption-1',
-    title: 'Full nine days',
-    description: 'No grains, no regular salt — use sendha namak — no onion or garlic, no non-vegetarian food. Phalahar through the day.',
-    displayOrder: 1,
-  },
-  {
-    id: 'foption-2',
-    title: 'Partial',
-    description: 'On Pratipada, Ashtami and Navami only, eating sattvic on the other days.',
-    displayOrder: 2,
-  },
-  {
-    id: 'foption-3',
-    title: 'First and last',
-    description: 'Day one and day nine only.',
-    displayOrder: 3,
-  },
-];
+const DEFAULT_FASTING_OPTIONS: FastingOption[] = [];
 
-const DEFAULT_MYTHS_ITEMS: MythItem[] = [
-  {
-    id: 'mitem-1',
-    mythStatement: '"If the Akhand Jyoti goes out, the whole Navratri is wasted."',
-    correctionLabel: 'CORRECTION',
-    correctionContent: 'Relight it and continue. The tradition values the intention of maintaining a continuous flame. An accidental extinguishing does not cancel the days already kept. This fear contradicts the Devi\'s own teaching — she fights for you, not against you.',
-    displayOrder: 1,
-  },
-  {
-    id: 'mitem-2',
-    mythStatement: '"Wearing the wrong colour on a day brings bad luck."',
-    correctionLabel: 'CORRECTION',
-    correctionContent: 'The daily colour system is custom, not scripture. No named text assigns colours to days. If you wear green on a red day, nothing is owed and nothing is lost.',
-    displayOrder: 2,
-  },
-  {
-    id: 'mitem-3',
-    mythStatement: '"Kanya Pujan must be exactly nine girls — fewer is disrespectful."',
-    correctionLabel: 'CORRECTION',
-    correctionContent: 'Nine is the ideal, matching the nine forms. Two, five and seven are all accepted across traditions. The practice is the honouring, not the headcount.',
-    displayOrder: 3,
-  },
-];
+const DEFAULT_MYTHS_ITEMS: MythItem[] = [];
 
 const DEFAULT_VIDHI_DAYS: VidhiDay[] = [
   {
     id: 'day-1',
     dayNumber: 1,
-    dayTitle: 'Ghatasthapana',
-    dayDescription: 'Sunday 11 October · Maa Shailputri, daughter of the mountain — Parvati in her first form.',
-    muhuratLabel: 'Muhurat.',
-    muhuratInformation: 'Morning 6:19–10:12 AM is preferred. Abhijit muhurat, 11:44 AM–12:31 PM, is the fallback. Ghatasthapana is not performed after midday.',
+    dayTitle: '',
+    dayDescription: '',
+    muhuratLabel: '',
+    muhuratInformation: '',
     steps: [
       {
         id: 'step-1',
         stepNumber: 1,
-        stepDescription: 'Clean the space. Place a chowki and cover it with red cloth.',
-        stepLabels: [],
-      },
-      {
-        id: 'step-2',
-        stepNumber: 2,
-        stepDescription: 'Kalash sthapana — fill a brass or copper kalash with water, add akshat, a coin and a supari, place five or seven mango leaves around the rim, seal with a coconut.',
-        stepLabels: [],
-      },
-      {
-        id: 'step-3',
-        stepNumber: 3,
-        stepDescription: 'Sow barley or sapta-dhanya in a small clay pot of soil. Water lightly.',
-        stepLabels: ['PRATHA'],
-      },
-      {
-        id: 'step-4',
-        stepNumber: 4,
-        stepDescription: 'Place the Durga image or idol behind the kalash and install it with prayer.',
-        stepLabels: [],
-      },
-      {
-        id: 'step-5',
-        stepNumber: 5,
-        stepDescription: 'Light the akhand jyoti — a ghee lamp intended to burn through the nine days. Use a vessel large enough to hold sufficient ghee or oil.',
-        stepLabels: ['DHARMA · 4/5', 'SHASTRA'],
-      },
-      {
-        id: 'step-6',
-        stepNumber: 6,
-        stepDescription: 'Offer flowers, incense and fruit. Chant Ya Devi Sarvabhuteshu, or Durga Saptashati Chapter 1.',
-        stepLabels: [],
-      },
-      {
-        id: 'step-7',
-        stepNumber: 7,
-        stepDescription: 'Take the Navratri vrat sankalp.',
+        stepDescription: '',
         stepLabels: [],
       },
     ],
-    mantraLabel: 'DAY ONE MANTRA',
-    mantraText: 'ॐ ह्रीं शैलपुत्र्यै नमः',
-    mantraTransliteration: 'Om Hreem Shailputrayai Namah',
-    mantraAudio: 'https://tapa.co/audio/mantra-day-1.mp3',
-    japaAudio: 'https://tapa.co/audio/japa-108.mp3',
-    dayExplanation: 'Sowing barley on the first day is a widespread North Indian practice rather than a scriptural requirement. Where it is kept, the sprouts are watched through the nine days and distributed as prasad at the end.',
-    explanationLabels: ['PRATHA'],
+    mantraLabel: '',
+    mantraText: '',
+    mantraTransliteration: '',
+    mantraAudio: '',
+    japaAudio: '',
+    dayExplanation: '',
+    explanationLabels: [],
   },
 ];
 
-const EXACT_DEMO_DATA = {
-  title: 'Hartalika Teej: The Complete 9-Day Guide',
-  slug: 'hartalika-teej-guide',
-  status: 'DRAFT' as 'DRAFT' | 'PUBLISHED' | 'ARCHIVED',
+const EMPTY_FORM_DATA = {
+  title: '',
+  slug: '',
+  status: 'DRAFT' as 'DRAFT' | 'PUBLISHED',
 
-  // Banner Information Demo Data
-  sectionLabel: 'RITUAL GUIDES · FESTIVE PUJANS',
-  category: 'Dharma',
-  rating: '4/5',
-  classification: 'Puranic',
-  guideTitle: 'Hartalika Teej: The Complete 9-Day Guide',
-  guideSubtitle: 'Ghatasthapana to Maha Navami — nine forms, nine nights, one Mother.',
-  festivalName: 'Navratri',
-  panchangLocation: 'Delhi-NCR',
+  // Banner Information
+  sectionLabel: '',
+  category: '',
+  rating: '',
+  classification: '',
+  guideTitle: '',
+  guideSubtitle: '',
+  festivalName: '',
+  panchangLocation: '',
 
-  primaryButtonText: 'Start with Ghatasthapana',
-  primaryButtonAction: 'Scroll to Section',
-  primaryButtonTarget: '#ghatasthapana',
-  secondaryButtonText: 'Download Ritual Card',
-  secondaryButtonAction: 'Download File',
-  secondaryButtonTarget: '/assets/ritual-card.pdf',
-  thirdButtonText: 'Pre-book the kit',
-  thirdButtonAction: 'Open URL',
-  thirdButtonTarget: 'https://tapa.co/kits/navratri',
+  primaryButtonText: '',
+  primaryButtonAction: '',
+  primaryButtonTarget: '',
+  secondaryButtonText: '',
+  secondaryButtonAction: '',
+  secondaryButtonTarget: '',
+  thirdButtonText: '',
+  thirdButtonAction: '',
+  thirdButtonTarget: '',
 
-  // Source of Truth Demo Data
-  sotSectionHeading: 'SOURCE OF TRUTH',
-  sotButtonText: 'Read source',
-  sotButtonAction: 'Open URL',
-  sotButtonTarget: 'https://tapa.co/sources/devi-mahatmya',
-  sotPracticeLabel: 'CORE PRACTICE',
-  sotPracticeTitle: 'Worship of Durga across the nine nights of Ashwin Shukla Paksha',
-  sotPracticeCategory: 'DHARMA',
-  sotPracticeRating: '4/5',
-  sotPracticeClassification: 'PURANIC',
-  sotScripturalSource: 'Devi Mahatmya',
-  sotParentScripture: 'Markandeya Purana',
+  // Source of Truth
+  sotSectionHeading: '',
+  sotButtonText: '',
+  sotButtonAction: '',
+  sotButtonTarget: '',
+  sotPracticeLabel: '',
+  sotPracticeTitle: '',
+  sotPracticeCategory: '',
+  sotPracticeRating: '',
+  sotPracticeClassification: '',
+  sotScripturalSource: '',
+  sotParentScripture: '',
   sotSourceReference: '',
   sotSourceUrl: '',
   sotSourceNotes: '',
-  sotSummaryLabel: 'This guide',
-  sotCorePracticesCount: 1,
-  sotScripturalElementsCount: 4,
-  sotRegionalCustomsCount: 4,
-  sotCorrectionsCount: 3,
+  sotSummaryLabel: '',
+  sotCorePracticesCount: 0,
+  sotScripturalElementsCount: 0,
+  sotRegionalCustomsCount: 0,
+  sotCorrectionsCount: 0,
 
-  // Story Section Exact Demo Data
-  storyTitle: 'Nine nights, one Mother.',
-  storyIntroduction: 'Navratri means nine nights. It is not nine separate festivals — it is one continuous arc of worship, moving from darkness through fire to light.',
-  storySubsectionTitle: 'The story the nine nights re-enact',
-  storyContent: 'The Devi Mahatmya tells it plainly. The gods were losing. Mahishasura had taken heaven and no god could defeat him. The collective energy of all the gods converged into one form: Durga. She fought for nine nights, and on the tenth day she won.',
-  storyPracticeCategory: 'DHARMA',
-  storyPracticeRating: '4/5',
-  storyPracticeClassification: 'PURANIC',
-  storyScripturalSource: 'Devi Mahatmya, Markandeya Purana',
-  storyContinuation: 'Every year the tradition re-enacts that arc, not as mythology but as practice. You set up a kalash. You light a flame and keep it lit. You worship a different form of the Mother each day. And on the tenth day you mark the outcome.',
-  storyImage: 'https://images.unsplash.com/photo-1605379399642-870262d3d051?auto=format&fit=crop&w=1200&q=80',
-  storyImageAltText: 'Navratri puja setup with kalash, barley and diya',
-  storyImageCaption: 'Day 1. The kalash is filled. The barley is sown. The flame begins. Nine nights start here.',
-  storyImageCredit: 'Photo via Unsplash',
-  storyImageSource: 'https://images.unsplash.com/photo-1605379399642-870262d3d051',
+  // Story Section
+  storyTitle: '',
+  storyIntroduction: '',
+  storySubsectionTitle: '',
+  storyContent: '',
+  storyPracticeCategory: '',
+  storyPracticeRating: '',
+  storyPracticeClassification: '',
+  storyScripturalSource: '',
+  storyContinuation: '',
+  storyImage: '',
+  storyImageAltText: '',
+  storyImageCaption: '',
+  storyImageCredit: '',
+  storyImageSource: '',
 
-  // Sankalpa Section Exact Demo Data
-  sankalpaTitle: 'The sankalpa',
-  sankalpaSubtitle: 'Said once, at the start, before anything else is done.',
-  sankalpaInstruction: 'SPOKEN WITH WATER IN THE RIGHT HAND, THEN POURED OUT',
-  sankalpaText: 'ॐ विष्णुर्विष्णुर्विष्णुः ... मम आत्मनः श्रुतिस्मृतिपुराणोक्तफलप्राप्त्यर्थं श्री दुर्गा प्रीत्यर्थं नवरात्र व्रतम् अहं करिष्ये॥',
-  sankalpaMeaning: '"I take up the Navratri vrat, for the pleasure of Sri Durga."',
-  sankalpaExplanation: 'A sankalpa is a stated intention, not a formula that must be pronounced correctly. It names <b>who is doing it, when, where and for what</b>. That is the whole of its structure.',
+  // Sankalpa Section
+  sankalpaTitle: '',
+  sankalpaSubtitle: '',
+  sankalpaInstruction: '',
+  sankalpaText: '',
+  sankalpaMeaning: '',
+  sankalpaExplanation: '',
   sankalpaCards: DEFAULT_SANKALPA_CARDS,
-  sankalpaNoteHeading: '<b>Say it in whatever language you think in.</b>',
-  sankalpaNoteContent: 'The Sanskrit is given because people ask for it. A sankalpa said in Hindi or English, meant sincerely, is a sankalpa.',
-  sankalpaImage: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=1200&q=80',
+  sankalpaNoteHeading: '',
+  sankalpaNoteContent: '',
+  sankalpaImage: '',
 
-  // Vidhi Section Exact Demo Data
+  // Vidhi Section
   vidhiDays: DEFAULT_VIDHI_DAYS,
 
-  // Vrat Katha Section Exact Demo Data
-  kathaTitle: 'The Vrat Katha',
-  kathaSubtitle: 'Read on any of the nine nights, most often on Ashtami.',
-  kathaScripturalReference: 'Devi Mahatmya · Markandeya Purana',
-  kathaHeadline: 'The gods were losing, and no god could win',
-  kathaIntroduction: 'Mahishasura had taken heaven. What defeated him was not a stronger god — it was every god surrendering their power into one form.',
+  // Vrat Katha Section
+  kathaTitle: '',
+  kathaSubtitle: '',
+  kathaScripturalReference: '',
+  kathaHeadline: '',
+  kathaIntroduction: '',
   kathaCards: DEFAULT_KATHA_CARDS,
-  kathaSupportingExplanation: 'Why it is read across nine nights, not one: the battle took nine. The reading follows the fight rather than summarising it.',
-  kathaAudio: 'https://tapa.co/audio/vrat-katha.mp3',
-  kathaAudioButtonText: 'Listen',
-  kathaAudioDuration: '14 min',
-  kathaFullKathaButtonText: 'Read the full katha',
-  kathaFullKathaLink: 'https://tapa.co/katha/devi-mahatmya',
-  kathaImage: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=1200&q=80',
-  kathaImageAltText: 'Devi Durga battling Mahishasura',
-  kathaImageCaption: 'The ninth night of battle.',
+  kathaSupportingExplanation: '',
+  kathaAudio: '',
+  kathaAudioButtonText: '',
+  kathaAudioDuration: '',
+  kathaFullKathaButtonText: '',
+  kathaFullKathaLink: '',
+  kathaImage: '',
+  kathaImageAltText: '',
+  kathaImageCaption: '',
 
-  // Durga Ashtami & Maha Navami Context Exact Demo Data
-  festivalContextTitle: 'Durga Ashtami and Maha Navami',
-  festivalContextIntroduction: 'These are the most intensive days of the nine. In 2026 the two tithis merge on 19 October, so confirm your panchang before fixing the day.',
-  festivalContextDetails: 'Havan is traditionally performed on Ashtami. Kanya Pujan — inviting young girls and honouring them as living forms of the Devi — is kept on Ashtami or Navami according to family tradition. Their feet are washed, food is offered, and blessings are taken from them.',
-  festivalPracticeCategory: 'DHARMA',
-  festivalPracticeRating: '4/5',
-  festivalClassification: 'SHASTRA',
-  sandhiPujaInformation: 'Where Ashtami and Navami cross, Sandhi Puja is performed in the window spanning the join.',
+  // Durga Ashtami & Maha Navami Context
+  festivalContextTitle: '',
+  festivalContextIntroduction: '',
+  festivalContextDetails: '',
+  festivalPracticeCategory: '',
+  festivalPracticeRating: '',
+  festivalClassification: '',
+  sandhiPujaInformation: '',
 
-  // Samagri Section Exact Demo Data
-  samagriTitle: 'Samagri',
-  samagriSubtitle: 'Everything is available in any local puja market. Substitutions are noted where they matter.',
+  // Samagri Section
+  samagriTitle: '',
+  samagriSubtitle: '',
   samagriItems: DEFAULT_SAMAGRI_ITEMS,
-  samagriAudio: 'https://tapa.co/audio/samagri-guide.mp3',
+  samagriAudio: '',
   samagriAudioButtonText: '',
   samagriAudioDuration: '',
 
-  // Fasting Section Exact Demo Data
-  fastingTitle: 'Fasting',
-  fastingSubtitle: 'Three forms are commonly kept, and all three are accepted.',
+  // Fasting Section
+  fastingTitle: '',
+  fastingSubtitle: '',
   fastingOptions: DEFAULT_FASTING_OPTIONS,
-  fastingGuidanceHeading: 'The tradition prescribes devotion, not starvation.',
-  fastingGuidanceContent: 'If a nine-day fast is not physically possible for you, a shorter form kept with sincerity fulfils the vrat.',
+  fastingGuidanceHeading: '',
+  fastingGuidanceContent: '',
 
-  // Myths & Corrections Section Exact Demo Data
-  mythsTitle: 'Myths & Corrections',
-  mythsSubtitle: 'Distinguishing scriptural requirements from regional customs.',
+  // Myths & Corrections Section
+  mythsTitle: '',
+  mythsSubtitle: '',
   mythsItems: DEFAULT_MYTHS_ITEMS,
 
   // Related Content Fields
-  relatedTitle: 'Related Guides & Concepts',
-  relatedSubtitle: 'Explore complementary festive rituals and dharmic concepts.',
-  relatedLinksText: 'Durga Saptashati Recitation Guide, Ghatasthapana Muhurat Calculation',
+  relatedTitle: '',
+  relatedSubtitle: '',
+  relatedLinksText: '',
 
   // Services / Booking Fields
-  servicesTitle: 'Prefer To Have It All Taken Care Of?',
-  servicesSubtitle: 'Pre-book complete authentic samagri kits and Panditji pujans.',
-  servicesButtonText: 'Pre-book Navratri Puja Kit',
-  servicesTargetUrl: 'https://tapa.co/kits/navratri',
+  servicesTitle: '',
+  servicesSubtitle: '',
+  servicesButtonText: '',
+  servicesTargetUrl: '',
 
   // SEO & Search Engine Information
-  metaTitle: 'Hartalika Teej & Navratri Puja Guide | The Tapa Co.',
-  metaDescription: 'Complete step-by-step 9-day Navratri puja guide, Vidhi, Sankalpa, Katha, Samagri, Fasting & Myths & Corrections.',
-  keywords: 'Navratri, Ghatasthapana, Durga Puja, Vrat Katha, Sankalpa, Vidhi, Fasting Rules, Myths and Corrections',
+  metaTitle: '',
+  metaDescription: '',
+  keywords: '',
 };
 
 type FormTab =
@@ -601,8 +417,8 @@ function RitualGuidesCmsContent() {
   // Active Vidhi Day Index in Modal UI
   const [activeVidhiDayIndex, setActiveVidhiDayIndex] = useState(0);
 
-  // Form Data prefilled with Exact Demo Data
-  const [formData, setFormData] = useState(EXACT_DEMO_DATA);
+  // Form Data — starts blank
+  const [formData, setFormData] = useState(EMPTY_FORM_DATA);
 
   // Action Feedback States
   const [formError, setFormError] = useState<string | null>(null);
@@ -611,7 +427,7 @@ function RitualGuidesCmsContent() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const userRole = (session?.user as { role?: string })?.role?.toUpperCase() || 'USER';
-  const isAuthorized = ['ADMIN', 'EDITOR', 'SUPER_ADMIN'].includes(userRole);
+  const isAuthorized = ['ADMIN', 'EDITOR', 'SUPER_ADMIN', 'SUPER_USER'].includes(userRole);
   const userEmail = session?.user?.email || (session?.user as any)?.phone || 'admin@tapa.co';
 
   // Fetch Ritual Guides from backend API
@@ -623,9 +439,12 @@ function RitualGuidesCmsContent() {
       if (statusFilter !== 'ALL') params.set('status', statusFilter);
 
       const res = await fetch(`/api/admin/ritual-guides?${params.toString()}`);
-      const data = await res.json();
-      if (res.ok && data.success) {
-        setGuides(data.data || []);
+      const contentType = res.headers.get('content-type') || '';
+      if (res.ok && contentType.includes('application/json')) {
+        const data = await res.json();
+        if (data.success) {
+          setGuides(data.data || []);
+        }
       }
     } catch (err) {
       console.error('Failed to fetch ritual guides:', err);
@@ -657,243 +476,130 @@ function RitualGuidesCmsContent() {
     }));
   };
 
-  // Image Upload Helpers
-  const handleStoryImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Generic image-upload helper (was duplicated per-field before; now shared by Story & Katha images)
+  const handleImageUpload = (
+    field: 'storyImage' | 'kathaImage',
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData((prev) => ({ ...prev, storyImage: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
-    }
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormData((prev) => ({ ...prev, [field]: reader.result as string }));
+    };
+    reader.readAsDataURL(file);
   };
 
-  const handleKathaImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setFormData((prev) => ({ ...prev, kathaImage: reader.result as string }));
-      };
-      reader.readAsDataURL(file);
-    }
+  // Generic repeatable-array-field helpers (previously duplicated 5x for Sankalpa/Katha/
+  // Samagri/Fasting/Myths — every card/item manager below now reuses these three).
+  type ArrayField =
+    | 'sankalpaCards'
+    | 'kathaCards'
+    | 'samagriItems'
+    | 'fastingOptions'
+    | 'mythsItems';
+
+  const updateArrayItem = (field: ArrayField, index: number, patch: Record<string, any>) => {
+    setFormData((prev) => {
+      const arr = [...(prev[field] as any[])];
+      arr[index] = { ...arr[index], ...patch };
+      return { ...prev, [field]: arr };
+    });
   };
 
-  // Sankalpa Card Management Helpers
+  const removeArrayItem = (field: ArrayField, index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: (prev[field] as any[]).filter((_, i) => i !== index),
+    }));
+  };
+
+  const moveArrayItem = (field: ArrayField, index: number, direction: 'up' | 'down') => {
+    setFormData((prev) => {
+      const arr = [...(prev[field] as any[])];
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= arr.length) return prev;
+      [arr[index], arr[targetIndex]] = [arr[targetIndex], arr[index]];
+      return { ...prev, [field]: arr };
+    });
+  };
+
+  // Sankalpa Card Management
   const addSankalpaCard = () => {
     setFormData((prev) => ({
       ...prev,
-      sankalpaCards: [
-        ...prev.sankalpaCards,
+      sankalpaCards: [...prev.sankalpaCards, { id: `card-${Date.now()}`, cardTitle: '', cardDescription: '' }],
+    }));
+  };
+  const updateSankalpaCard = (index: number, field: 'cardTitle' | 'cardDescription', value: string) =>
+    updateArrayItem('sankalpaCards', index, { [field]: value });
+  const removeSankalpaCard = (index: number) => removeArrayItem('sankalpaCards', index);
+
+  // Katha Story Cards Management
+  const addKathaCard = () => {
+    setFormData((prev) => ({
+      ...prev,
+      kathaCards: [
+        ...prev.kathaCards,
+        { id: `kcard-${Date.now()}`, cardNumber: prev.kathaCards.length + 1, cardTitle: '', cardDescription: '' },
+      ],
+    }));
+  };
+  const updateKathaCard = (index: number, field: keyof KathaCard, value: any) =>
+    updateArrayItem('kathaCards', index, { [field]: value });
+  const removeKathaCard = (index: number) => removeArrayItem('kathaCards', index);
+  const moveKathaCard = (index: number, direction: 'up' | 'down') => moveArrayItem('kathaCards', index, direction);
+
+  // Samagri Items Management
+  const addSamagriItem = () => {
+    setFormData((prev) => ({
+      ...prev,
+      samagriItems: [
+        ...prev.samagriItems,
+        { id: `sitem-${Date.now()}`, itemName: '', itemDetails: '', itemOrder: prev.samagriItems.length + 1 },
+      ],
+    }));
+  };
+  const updateSamagriItem = (index: number, field: keyof SamagriItem, value: any) =>
+    updateArrayItem('samagriItems', index, { [field]: value });
+  const removeSamagriItem = (index: number) => removeArrayItem('samagriItems', index);
+  const moveSamagriItem = (index: number, direction: 'up' | 'down') => moveArrayItem('samagriItems', index, direction);
+
+  // Fasting Options Management
+  const addFastingOption = () => {
+    setFormData((prev) => ({
+      ...prev,
+      fastingOptions: [
+        ...prev.fastingOptions,
+        { id: `foption-${Date.now()}`, title: '', description: '', displayOrder: prev.fastingOptions.length + 1 },
+      ],
+    }));
+  };
+  const updateFastingOption = (index: number, field: keyof FastingOption, value: any) =>
+    updateArrayItem('fastingOptions', index, { [field]: value });
+  const removeFastingOption = (index: number) => removeArrayItem('fastingOptions', index);
+  const moveFastingOption = (index: number, direction: 'up' | 'down') => moveArrayItem('fastingOptions', index, direction);
+
+  // Myths & Corrections Management
+  const addMythItem = () => {
+    setFormData((prev) => ({
+      ...prev,
+      mythsItems: [
+        ...prev.mythsItems,
         {
-          id: `card-${Date.now()}`,
-          cardTitle: 'NEW CARD',
-          cardDescription: 'Write card explanation here...',
+          id: `mitem-${Date.now()}`,
+          mythStatement: '',
+          correctionLabel: '',
+          correctionContent: '',
+          displayOrder: prev.mythsItems.length + 1,
         },
       ],
     }));
   };
-
-  const updateSankalpaCard = (index: number, field: 'cardTitle' | 'cardDescription', value: string) => {
-    setFormData((prev) => {
-      const updated = [...prev.sankalpaCards];
-      updated[index] = { ...updated[index], [field]: value };
-      return { ...prev, sankalpaCards: updated };
-    });
-  };
-
-  const removeSankalpaCard = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      sankalpaCards: prev.sankalpaCards.filter((_, i) => i !== index),
-    }));
-  };
-
-  // Katha Story Cards Management Helpers
-  const addKathaCard = () => {
-    setFormData((prev) => {
-      const nextCardNum = prev.kathaCards.length + 1;
-      return {
-        ...prev,
-        kathaCards: [
-          ...prev.kathaCards,
-          {
-            id: `kcard-${Date.now()}`,
-            cardNumber: nextCardNum,
-            cardTitle: `Card Title ${nextCardNum}`,
-            cardDescription: `Write card description ${nextCardNum} here...`,
-          },
-        ],
-      };
-    });
-  };
-
-  const updateKathaCard = (index: number, field: keyof KathaCard, value: any) => {
-    setFormData((prev) => {
-      const updated = [...prev.kathaCards];
-      updated[index] = { ...updated[index], [field]: value };
-      return { ...prev, kathaCards: updated };
-    });
-  };
-
-  const removeKathaCard = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      kathaCards: prev.kathaCards.filter((_, i) => i !== index),
-    }));
-  };
-
-  const moveKathaCard = (index: number, direction: 'up' | 'down') => {
-    setFormData((prev) => {
-      const cards = [...prev.kathaCards];
-      const targetIndex = direction === 'up' ? index - 1 : index + 1;
-      if (targetIndex < 0 || targetIndex >= cards.length) return prev;
-      const temp = cards[index];
-      cards[index] = cards[targetIndex];
-      cards[targetIndex] = temp;
-      return { ...prev, kathaCards: cards };
-    });
-  };
-
-  // Samagri Items Management Helpers
-  const addSamagriItem = () => {
-    setFormData((prev) => {
-      const nextOrder = prev.samagriItems.length + 1;
-      return {
-        ...prev,
-        samagriItems: [
-          ...prev.samagriItems,
-          {
-            id: `sitem-${Date.now()}`,
-            itemName: `New Samagri Item ${nextOrder}`,
-            itemDetails: 'Details for this item...',
-            itemOrder: nextOrder,
-          },
-        ],
-      };
-    });
-  };
-
-  const updateSamagriItem = (index: number, field: keyof SamagriItem, value: any) => {
-    setFormData((prev) => {
-      const updated = [...prev.samagriItems];
-      updated[index] = { ...updated[index], [field]: value };
-      return { ...prev, samagriItems: updated };
-    });
-  };
-
-  const removeSamagriItem = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      samagriItems: prev.samagriItems.filter((_, i) => i !== index),
-    }));
-  };
-
-  const moveSamagriItem = (index: number, direction: 'up' | 'down') => {
-    setFormData((prev) => {
-      const items = [...prev.samagriItems];
-      const targetIndex = direction === 'up' ? index - 1 : index + 1;
-      if (targetIndex < 0 || targetIndex >= items.length) return prev;
-      const temp = items[index];
-      items[index] = items[targetIndex];
-      items[targetIndex] = temp;
-      return { ...prev, samagriItems: items };
-    });
-  };
-
-  // Fasting Options Management Helpers
-  const addFastingOption = () => {
-    setFormData((prev) => {
-      const nextOrder = prev.fastingOptions.length + 1;
-      return {
-        ...prev,
-        fastingOptions: [
-          ...prev.fastingOptions,
-          {
-            id: `foption-${Date.now()}`,
-            title: `New Fasting Option ${nextOrder}`,
-            description: 'Write fasting option guidelines here...',
-            displayOrder: nextOrder,
-          },
-        ],
-      };
-    });
-  };
-
-  const updateFastingOption = (index: number, field: keyof FastingOption, value: any) => {
-    setFormData((prev) => {
-      const updated = [...prev.fastingOptions];
-      updated[index] = { ...updated[index], [field]: value };
-      return { ...prev, fastingOptions: updated };
-    });
-  };
-
-  const removeFastingOption = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      fastingOptions: prev.fastingOptions.filter((_, i) => i !== index),
-    }));
-  };
-
-  const moveFastingOption = (index: number, direction: 'up' | 'down') => {
-    setFormData((prev) => {
-      const options = [...prev.fastingOptions];
-      const targetIndex = direction === 'up' ? index - 1 : index + 1;
-      if (targetIndex < 0 || targetIndex >= options.length) return prev;
-      const temp = options[index];
-      options[index] = options[targetIndex];
-      options[targetIndex] = temp;
-      return { ...prev, fastingOptions: options };
-    });
-  };
-
-  // Myths & Corrections Management Helpers
-  const addMythItem = () => {
-    setFormData((prev) => {
-      const nextOrder = prev.mythsItems.length + 1;
-      return {
-        ...prev,
-        mythsItems: [
-          ...prev.mythsItems,
-          {
-            id: `mitem-${Date.now()}`,
-            mythStatement: `"Write common myth or misconception ${nextOrder} here..."`,
-            correctionLabel: 'CORRECTION',
-            correctionContent: 'Write scriptural explanation and correction here...',
-            displayOrder: nextOrder,
-          },
-        ],
-      };
-    });
-  };
-
-  const updateMythItem = (index: number, field: keyof MythItem, value: any) => {
-    setFormData((prev) => {
-      const updated = [...prev.mythsItems];
-      updated[index] = { ...updated[index], [field]: value };
-      return { ...prev, mythsItems: updated };
-    });
-  };
-
-  const removeMythItem = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      mythsItems: prev.mythsItems.filter((_, i) => i !== index),
-    }));
-  };
-
-  const moveMythItem = (index: number, direction: 'up' | 'down') => {
-    setFormData((prev) => {
-      const items = [...prev.mythsItems];
-      const targetIndex = direction === 'up' ? index - 1 : index + 1;
-      if (targetIndex < 0 || targetIndex >= items.length) return prev;
-      const temp = items[index];
-      items[index] = items[targetIndex];
-      items[targetIndex] = temp;
-      return { ...prev, mythsItems: items };
-    });
-  };
+  const updateMythItem = (index: number, field: keyof MythItem, value: any) =>
+    updateArrayItem('mythsItems', index, { [field]: value });
+  const removeMythItem = (index: number) => removeArrayItem('mythsItems', index);
+  const moveMythItem = (index: number, direction: 'up' | 'down') => moveArrayItem('mythsItems', index, direction);
 
   // Vidhi Days Management Helpers
   const addVidhiDay = () => {
@@ -902,21 +608,21 @@ function RitualGuidesCmsContent() {
       const newDay: VidhiDay = {
         id: `day-${Date.now()}`,
         dayNumber: nextDayNum,
-        dayTitle: `Day ${nextDayNum} Worship`,
-        dayDescription: `Description for Day ${nextDayNum}`,
-        muhuratLabel: 'Muhurat.',
-        muhuratInformation: 'Morning muhurat timings...',
+        dayTitle: '',
+        dayDescription: '',
+        muhuratLabel: '',
+        muhuratInformation: '',
         steps: [
           {
             id: `step-${Date.now()}-1`,
             stepNumber: 1,
-            stepDescription: 'Begin the ritual by cleaning the area.',
+            stepDescription: '',
             stepLabels: [],
           },
         ],
-        mantraLabel: `DAY ${nextDayNum} MANTRA`,
-        mantraText: 'ॐ नमः शिवाय',
-        mantraTransliteration: 'Om Namah Shivaya',
+        mantraLabel: '',
+        mantraText: '',
+        mantraTransliteration: '',
         explanationLabels: [],
       };
       return {
@@ -951,6 +657,21 @@ function RitualGuidesCmsContent() {
     setActiveVidhiDayIndex(0);
   };
 
+  // Vidhi Mantra Audio Upload Helper (stores as base64 data URL, saved to DB via vidhiDaysJson)
+  const handleMantraAudioUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      updateActiveVidhiDay('mantraAudio', reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeMantraAudio = () => {
+    updateActiveVidhiDay('mantraAudio', '');
+  };
+
   // Vidhi Steps Helpers inside active day
   const addVidhiStep = () => {
     setFormData((prev) => {
@@ -961,7 +682,7 @@ function RitualGuidesCmsContent() {
       const newStep: VidhiStep = {
         id: `step-${Date.now()}`,
         stepNumber: nextStepNum,
-        stepDescription: `Step ${nextStepNum} instructions...`,
+        stepDescription: '',
         stepLabels: [],
       };
       activeDay.steps = [...activeDay.steps, newStep];
@@ -1012,10 +733,10 @@ function RitualGuidesCmsContent() {
     });
   };
 
-  // Open modal for Create Mode (Prefills exact demo data)
+  // Open modal for Create Mode (starts fully blank)
   const openCreateModal = () => {
     setEditingId(null);
-    setFormData(EXACT_DEMO_DATA);
+    setFormData(EMPTY_FORM_DATA);
     setActiveVidhiDayIndex(0);
     setActiveTab('basic');
     setFormError(null);
@@ -1069,122 +790,122 @@ function RitualGuidesCmsContent() {
     }
 
     setFormData({
-      ...EXACT_DEMO_DATA,
-      title: guide.title || guide.guideTitle || EXACT_DEMO_DATA.title,
-      slug: guide.slug || EXACT_DEMO_DATA.slug,
+      ...EMPTY_FORM_DATA,
+      title: guide.title || guide.guideTitle || '',
+      slug: guide.slug || '',
       status: guide.status || 'DRAFT',
 
-      sectionLabel: guide.sectionLabel || EXACT_DEMO_DATA.sectionLabel,
-      category: guide.category || EXACT_DEMO_DATA.category,
-      rating: guide.rating || EXACT_DEMO_DATA.rating,
-      classification: guide.classification || EXACT_DEMO_DATA.classification,
-      guideTitle: guide.guideTitle || guide.title || EXACT_DEMO_DATA.guideTitle,
-      guideSubtitle: guide.guideSubtitle || EXACT_DEMO_DATA.guideSubtitle,
-      festivalName: guide.festivalName || EXACT_DEMO_DATA.festivalName,
-      panchangLocation: guide.panchangLocation || EXACT_DEMO_DATA.panchangLocation,
+      sectionLabel: guide.sectionLabel || '',
+      category: guide.category || '',
+      rating: guide.rating || '',
+      classification: guide.classification || '',
+      guideTitle: guide.guideTitle || guide.title || '',
+      guideSubtitle: guide.guideSubtitle || '',
+      festivalName: guide.festivalName || '',
+      panchangLocation: guide.panchangLocation || '',
 
-      primaryButtonText: guide.primaryButtonText || EXACT_DEMO_DATA.primaryButtonText,
-      primaryButtonAction: guide.primaryButtonAction || EXACT_DEMO_DATA.primaryButtonAction,
-      primaryButtonTarget: guide.primaryButtonTarget || EXACT_DEMO_DATA.primaryButtonTarget,
-      secondaryButtonText: guide.secondaryButtonText || EXACT_DEMO_DATA.secondaryButtonText,
-      secondaryButtonAction: guide.secondaryButtonAction || EXACT_DEMO_DATA.secondaryButtonAction,
-      secondaryButtonTarget: guide.secondaryButtonTarget || EXACT_DEMO_DATA.secondaryButtonTarget,
-      thirdButtonText: guide.thirdButtonText || EXACT_DEMO_DATA.thirdButtonText,
-      thirdButtonAction: guide.thirdButtonAction || EXACT_DEMO_DATA.thirdButtonAction,
-      thirdButtonTarget: guide.thirdButtonTarget || EXACT_DEMO_DATA.thirdButtonTarget,
+      primaryButtonText: guide.primaryButtonText || '',
+      primaryButtonAction: guide.primaryButtonAction || '',
+      primaryButtonTarget: guide.primaryButtonTarget || '',
+      secondaryButtonText: guide.secondaryButtonText || '',
+      secondaryButtonAction: guide.secondaryButtonAction || '',
+      secondaryButtonTarget: guide.secondaryButtonTarget || '',
+      thirdButtonText: guide.thirdButtonText || '',
+      thirdButtonAction: guide.thirdButtonAction || '',
+      thirdButtonTarget: guide.thirdButtonTarget || '',
 
-      sotSectionHeading: guide.sotSectionHeading || EXACT_DEMO_DATA.sotSectionHeading,
-      sotButtonText: guide.sotButtonText || EXACT_DEMO_DATA.sotButtonText,
-      sotButtonAction: guide.sotButtonAction || EXACT_DEMO_DATA.sotButtonAction,
-      sotButtonTarget: guide.sotButtonTarget || EXACT_DEMO_DATA.sotButtonTarget,
-      sotPracticeLabel: guide.sotPracticeLabel || EXACT_DEMO_DATA.sotPracticeLabel,
-      sotPracticeTitle: guide.sotPracticeTitle || EXACT_DEMO_DATA.sotPracticeTitle,
-      sotPracticeCategory: guide.sotPracticeCategory || EXACT_DEMO_DATA.sotPracticeCategory,
-      sotPracticeRating: guide.sotPracticeRating || EXACT_DEMO_DATA.sotPracticeRating,
-      sotPracticeClassification: guide.sotPracticeClassification || EXACT_DEMO_DATA.sotPracticeClassification,
-      sotScripturalSource: guide.sotScripturalSource || EXACT_DEMO_DATA.sotScripturalSource,
-      sotParentScripture: guide.sotParentScripture || EXACT_DEMO_DATA.sotParentScripture,
+      sotSectionHeading: guide.sotSectionHeading || '',
+      sotButtonText: guide.sotButtonText || '',
+      sotButtonAction: guide.sotButtonAction || '',
+      sotButtonTarget: guide.sotButtonTarget || '',
+      sotPracticeLabel: guide.sotPracticeLabel || '',
+      sotPracticeTitle: guide.sotPracticeTitle || '',
+      sotPracticeCategory: guide.sotPracticeCategory || '',
+      sotPracticeRating: guide.sotPracticeRating || '',
+      sotPracticeClassification: guide.sotPracticeClassification || '',
+      sotScripturalSource: guide.sotScripturalSource || '',
+      sotParentScripture: guide.sotParentScripture || '',
       sotSourceReference: guide.sotSourceReference || '',
       sotSourceUrl: guide.sotSourceUrl || '',
       sotSourceNotes: guide.sotSourceNotes || '',
-      sotSummaryLabel: guide.sotSummaryLabel || EXACT_DEMO_DATA.sotSummaryLabel,
-      sotCorePracticesCount: guide.sotCorePracticesCount ?? EXACT_DEMO_DATA.sotCorePracticesCount,
-      sotScripturalElementsCount: guide.sotScripturalElementsCount ?? EXACT_DEMO_DATA.sotScripturalElementsCount,
-      sotRegionalCustomsCount: guide.sotRegionalCustomsCount ?? EXACT_DEMO_DATA.sotRegionalCustomsCount,
-      sotCorrectionsCount: guide.sotCorrectionsCount ?? EXACT_DEMO_DATA.sotCorrectionsCount,
+      sotSummaryLabel: guide.sotSummaryLabel || '',
+      sotCorePracticesCount: guide.sotCorePracticesCount ?? 0,
+      sotScripturalElementsCount: guide.sotScripturalElementsCount ?? 0,
+      sotRegionalCustomsCount: guide.sotRegionalCustomsCount ?? 0,
+      sotCorrectionsCount: guide.sotCorrectionsCount ?? 0,
 
-      storyTitle: guide.storyTitle || EXACT_DEMO_DATA.storyTitle,
-      storyIntroduction: guide.storyIntroduction || EXACT_DEMO_DATA.storyIntroduction,
-      storySubsectionTitle: guide.storySubsectionTitle || EXACT_DEMO_DATA.storySubsectionTitle,
-      storyContent: guide.storyContent || EXACT_DEMO_DATA.storyContent,
-      storyPracticeCategory: guide.storyPracticeCategory || EXACT_DEMO_DATA.storyPracticeCategory,
-      storyPracticeRating: guide.storyPracticeRating || EXACT_DEMO_DATA.storyPracticeRating,
-      storyPracticeClassification: guide.storyPracticeClassification || EXACT_DEMO_DATA.storyPracticeClassification,
-      storyScripturalSource: guide.storyScripturalSource || EXACT_DEMO_DATA.storyScripturalSource,
-      storyContinuation: guide.storyContinuation || EXACT_DEMO_DATA.storyContinuation,
-      storyImage: guide.storyImage || EXACT_DEMO_DATA.storyImage,
-      storyImageAltText: guide.storyImageAltText || EXACT_DEMO_DATA.storyImageAltText,
-      storyImageCaption: guide.storyImageCaption || EXACT_DEMO_DATA.storyImageCaption,
-      storyImageCredit: guide.storyImageCredit || EXACT_DEMO_DATA.storyImageCredit,
-      storyImageSource: guide.storyImageSource || EXACT_DEMO_DATA.storyImageSource,
+      storyTitle: guide.storyTitle || '',
+      storyIntroduction: guide.storyIntroduction || '',
+      storySubsectionTitle: guide.storySubsectionTitle || '',
+      storyContent: guide.storyContent || '',
+      storyPracticeCategory: guide.storyPracticeCategory || '',
+      storyPracticeRating: guide.storyPracticeRating || '',
+      storyPracticeClassification: guide.storyPracticeClassification || '',
+      storyScripturalSource: guide.storyScripturalSource || '',
+      storyContinuation: guide.storyContinuation || '',
+      storyImage: guide.storyImage || '',
+      storyImageAltText: guide.storyImageAltText || '',
+      storyImageCaption: guide.storyImageCaption || '',
+      storyImageCredit: guide.storyImageCredit || '',
+      storyImageSource: guide.storyImageSource || '',
 
-      sankalpaTitle: guide.sankalpaTitle || EXACT_DEMO_DATA.sankalpaTitle,
-      sankalpaSubtitle: guide.sankalpaSubtitle || EXACT_DEMO_DATA.sankalpaSubtitle,
-      sankalpaInstruction: guide.sankalpaInstruction || EXACT_DEMO_DATA.sankalpaInstruction,
-      sankalpaText: guide.sankalpaText || EXACT_DEMO_DATA.sankalpaText,
-      sankalpaMeaning: guide.sankalpaMeaning || EXACT_DEMO_DATA.sankalpaMeaning,
-      sankalpaExplanation: guide.sankalpaExplanation || EXACT_DEMO_DATA.sankalpaExplanation,
+      sankalpaTitle: guide.sankalpaTitle || '',
+      sankalpaSubtitle: guide.sankalpaSubtitle || '',
+      sankalpaInstruction: guide.sankalpaInstruction || '',
+      sankalpaText: guide.sankalpaText || '',
+      sankalpaMeaning: guide.sankalpaMeaning || '',
+      sankalpaExplanation: guide.sankalpaExplanation || '',
       sankalpaCards: parsedCards,
-      sankalpaNoteHeading: guide.sankalpaNoteHeading || EXACT_DEMO_DATA.sankalpaNoteHeading,
-      sankalpaNoteContent: guide.sankalpaNoteContent || EXACT_DEMO_DATA.sankalpaNoteContent,
-      sankalpaImage: guide.sankalpaImage || EXACT_DEMO_DATA.sankalpaImage,
+      sankalpaNoteHeading: guide.sankalpaNoteHeading || '',
+      sankalpaNoteContent: guide.sankalpaNoteContent || '',
+      sankalpaImage: guide.sankalpaImage || '',
 
       vidhiDays: parsedVidhiDays,
 
       // Vrat Katha Section
-      kathaTitle: guide.kathaTitle || EXACT_DEMO_DATA.kathaTitle,
-      kathaSubtitle: guide.kathaSubtitle || EXACT_DEMO_DATA.kathaSubtitle,
-      kathaScripturalReference: guide.kathaScripturalReference || EXACT_DEMO_DATA.kathaScripturalReference,
-      kathaHeadline: guide.kathaHeadline || EXACT_DEMO_DATA.kathaHeadline,
-      kathaIntroduction: guide.kathaIntroduction || EXACT_DEMO_DATA.kathaIntroduction,
+      kathaTitle: guide.kathaTitle || '',
+      kathaSubtitle: guide.kathaSubtitle || '',
+      kathaScripturalReference: guide.kathaScripturalReference || '',
+      kathaHeadline: guide.kathaHeadline || '',
+      kathaIntroduction: guide.kathaIntroduction || '',
       kathaCards: parsedKathaCards,
-      kathaSupportingExplanation: guide.kathaSupportingExplanation || EXACT_DEMO_DATA.kathaSupportingExplanation,
-      kathaAudio: guide.kathaAudio || EXACT_DEMO_DATA.kathaAudio,
-      kathaAudioButtonText: guide.kathaAudioButtonText || EXACT_DEMO_DATA.kathaAudioButtonText,
-      kathaAudioDuration: guide.kathaAudioDuration || EXACT_DEMO_DATA.kathaAudioDuration,
-      kathaFullKathaButtonText: guide.kathaFullKathaButtonText || EXACT_DEMO_DATA.kathaFullKathaButtonText,
-      kathaFullKathaLink: guide.kathaFullKathaLink || EXACT_DEMO_DATA.kathaFullKathaLink,
-      kathaImage: guide.kathaImage || EXACT_DEMO_DATA.kathaImage,
-      kathaImageAltText: guide.kathaImageAltText || EXACT_DEMO_DATA.kathaImageAltText,
-      kathaImageCaption: guide.kathaImageCaption || EXACT_DEMO_DATA.kathaImageCaption,
+      kathaSupportingExplanation: guide.kathaSupportingExplanation || '',
+      kathaAudio: guide.kathaAudio || '',
+      kathaAudioButtonText: guide.kathaAudioButtonText || '',
+      kathaAudioDuration: guide.kathaAudioDuration || '',
+      kathaFullKathaButtonText: guide.kathaFullKathaButtonText || '',
+      kathaFullKathaLink: guide.kathaFullKathaLink || '',
+      kathaImage: guide.kathaImage || '',
+      kathaImageAltText: guide.kathaImageAltText || '',
+      kathaImageCaption: guide.kathaImageCaption || '',
 
       // Durga Ashtami and Maha Navami Context
-      festivalContextTitle: guide.festivalContextTitle || EXACT_DEMO_DATA.festivalContextTitle,
-      festivalContextIntroduction: guide.festivalContextIntroduction || EXACT_DEMO_DATA.festivalContextIntroduction,
-      festivalContextDetails: guide.festivalContextDetails || EXACT_DEMO_DATA.festivalContextDetails,
-      festivalPracticeCategory: guide.festivalPracticeCategory || EXACT_DEMO_DATA.festivalPracticeCategory,
-      festivalPracticeRating: guide.festivalPracticeRating || EXACT_DEMO_DATA.festivalPracticeRating,
-      festivalClassification: guide.festivalClassification || EXACT_DEMO_DATA.festivalClassification,
-      sandhiPujaInformation: guide.sandhiPujaInformation || EXACT_DEMO_DATA.sandhiPujaInformation,
+      festivalContextTitle: guide.festivalContextTitle || '',
+      festivalContextIntroduction: guide.festivalContextIntroduction || '',
+      festivalContextDetails: guide.festivalContextDetails || '',
+      festivalPracticeCategory: guide.festivalPracticeCategory || '',
+      festivalPracticeRating: guide.festivalPracticeRating || '',
+      festivalClassification: guide.festivalClassification || '',
+      sandhiPujaInformation: guide.sandhiPujaInformation || '',
 
       // Samagri Section
-      samagriTitle: guide.samagriTitle || EXACT_DEMO_DATA.samagriTitle,
-      samagriSubtitle: guide.samagriSubtitle || EXACT_DEMO_DATA.samagriSubtitle,
+      samagriTitle: guide.samagriTitle || '',
+      samagriSubtitle: guide.samagriSubtitle || '',
       samagriItems: parsedSamagriItems,
-      samagriAudio: guide.samagriAudio || EXACT_DEMO_DATA.samagriAudio,
-      samagriAudioButtonText: guide.samagriAudioButtonText || EXACT_DEMO_DATA.samagriAudioButtonText,
-      samagriAudioDuration: guide.samagriAudioDuration || EXACT_DEMO_DATA.samagriAudioDuration,
+      samagriAudio: guide.samagriAudio || '',
+      samagriAudioButtonText: guide.samagriAudioButtonText || '',
+      samagriAudioDuration: guide.samagriAudioDuration || '',
 
       // Fasting Section
-      fastingTitle: guide.fastingTitle || EXACT_DEMO_DATA.fastingTitle,
-      fastingSubtitle: guide.fastingSubtitle || EXACT_DEMO_DATA.fastingSubtitle,
+      fastingTitle: guide.fastingTitle || '',
+      fastingSubtitle: guide.fastingSubtitle || '',
       fastingOptions: parsedFastingOptions,
-      fastingGuidanceHeading: guide.fastingGuidanceHeading || EXACT_DEMO_DATA.fastingGuidanceHeading,
-      fastingGuidanceContent: guide.fastingGuidanceContent || EXACT_DEMO_DATA.fastingGuidanceContent,
+      fastingGuidanceHeading: guide.fastingGuidanceHeading || '',
+      fastingGuidanceContent: guide.fastingGuidanceContent || '',
 
       // Myths & Corrections Section
-      mythsTitle: guide.mythsTitle || EXACT_DEMO_DATA.mythsTitle,
-      mythsSubtitle: guide.mythsSubtitle || EXACT_DEMO_DATA.mythsSubtitle,
+      mythsTitle: guide.mythsTitle || '',
+      mythsSubtitle: guide.mythsSubtitle || '',
       mythsItems: parsedMythsItems,
     });
     setActiveVidhiDayIndex(0);
@@ -1193,41 +914,133 @@ function RitualGuidesCmsContent() {
     setIsModalOpen(true);
   };
 
-  // Save (Create or Update) Ritual Guide
+  // Save (Create or Update) Ritual Guide.
+  //
+  // IMPORTANT:
+  // The CMS form is section-based and all section fields are intentionally optional.
+  // The database still contains a few legacy non-null RitualGuide columns
+  // (introText, sankalpaBody, sankalpaQuote, fastOptions, fastNote, kathaTitle,
+  // kathaBody, etc.). We always provide safe compatibility values for those
+  // columns here so an empty section can never cause a 400/500 save failure.
   const handleSaveGuide = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
 
-    // Banner Required Validations
-    if (!formData.sectionLabel.trim()) { setFormError('Please enter the Section Label in Basic Info.'); setActiveTab('basic'); return; }
-    if (!formData.category.trim()) { setFormError('Please enter the Category in Basic Info.'); setActiveTab('basic'); return; }
-    if (!formData.rating.trim()) { setFormError('Please enter the Rating in Basic Info.'); setActiveTab('basic'); return; }
-    if (!formData.classification.trim()) { setFormError('Please enter the Classification in Basic Info.'); setActiveTab('basic'); return; }
-    if (!formData.guideTitle.trim()) { setFormError('Please enter the Guide Title in Basic Info.'); setActiveTab('basic'); return; }
-    if (!formData.guideSubtitle.trim()) { setFormError('Please enter the Guide Subtitle in Basic Info.'); setActiveTab('basic'); return; }
-    if (!formData.festivalName.trim()) { setFormError('Please enter the Festival Name in Basic Info.'); setActiveTab('basic'); return; }
-    if (!formData.panchangLocation.trim()) { setFormError('Please enter the Panchang Location in Basic Info.'); setActiveTab('basic'); return; }
+    // Never allow an invalid/empty core record to reach the API.
+    const clean = (value: unknown, fallback = ''): string => {
+      if (typeof value !== 'string') return fallback;
+      const trimmed = value.trim();
+      return trimmed || fallback;
+    };
 
-    // Myths & Corrections Section Validations
-    if (!formData.mythsTitle.trim()) { setFormError('Please enter the Myths Section Title.'); setActiveTab('myths'); return; }
-    if (!formData.mythsSubtitle.trim()) { setFormError('Please enter the Myths Section Subtitle.'); setActiveTab('myths'); return; }
+    const toJson = (value: unknown): string => {
+      try {
+        return JSON.stringify(value ?? []);
+      } catch {
+        return '[]';
+      }
+    };
+
+    const title = clean(
+      formData.title || formData.guideTitle,
+      'Untitled Ritual Guide'
+    );
+
+    const slugBase = clean(
+      formData.slug || formData.guideTitle || formData.title,
+      'untitled-ritual-guide'
+    )
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '');
+
+    const slug = slugBase || 'untitled-ritual-guide';
+
+    // Prisma ContentStatus only supports DRAFT/PUBLISHED.
+    const status =
+      formData.status === 'PUBLISHED' ? 'PUBLISHED' : 'DRAFT';
+
+    // Legacy DB compatibility fields.
+    // These are NOT additional CMS requirements; they are derived from the
+    // corresponding section content when available, otherwise safe defaults.
+    const introText = clean(
+      formData.storyIntroduction ||
+      formData.storyContent ||
+      formData.guideSubtitle ||
+      formData.guideTitle ||
+      formData.title,
+      'Ritual Guide'
+    );
+
+    const sankalpaBody = clean(
+      formData.sankalpaText ||
+      formData.sankalpaExplanation ||
+      formData.sankalpaMeaning ||
+      formData.sankalpaInstruction,
+      'Sankalpa is performed with a sincere intention.'
+    );
+
+    const sankalpaQuote = clean(
+      formData.sankalpaNoteContent ||
+      formData.sankalpaNoteHeading ||
+      formData.sankalpaInstruction,
+      'Perform the sankalpa with sincere intention.'
+    );
+
+    const fastNote = clean(
+      formData.fastingGuidanceContent ||
+      formData.fastingGuidanceHeading ||
+      formData.fastingSubtitle,
+      'Choose a fasting practice according to your capacity and tradition.'
+    );
+
+    const kathaTitle = clean(formData.kathaTitle, 'Vrat Katha');
+
+    const kathaBody = clean(
+      formData.kathaIntroduction ||
+      formData.kathaSupportingExplanation ||
+      formData.kathaSubtitle,
+      'Vrat Katha content.'
+    );
+
+    const payload = {
+      // Core fields
+      ...formData,
+      title,
+      slug,
+      status,
+
+      // Never send an invalid/blank category to the required DB column.
+      category: clean(formData.category, 'General'),
+
+      // Legacy required DB columns kept compatible with the new section-based CMS.
+      introText,
+      sankalpaBody,
+      sankalpaQuote,
+      fastOptions: formData.fastingOptions || [],
+      fastNote,
+      kathaTitle,
+      kathaBody,
+
+      // Section JSON fields.
+      sankalpaDetailsJson: toJson(formData.sankalpaCards),
+      kathaCardsJson: toJson(formData.kathaCards),
+      samagriItemsJson: toJson(formData.samagriItems),
+      fastingOptionsJson: toJson(formData.fastingOptions),
+      mythsItemsJson: toJson(formData.mythsItems),
+      vidhiDaysJson: toJson(formData.vidhiDays),
+    };
 
     setFormLoading(true);
+
     try {
       const url = editingId
         ? `/api/admin/ritual-guides/${editingId}`
         : '/api/admin/ritual-guides';
       const method = editingId ? 'PUT' : 'POST';
-
-      const payload = {
-        ...formData,
-        sankalpaDetailsJson: JSON.stringify(formData.sankalpaCards || []),
-        kathaCardsJson: JSON.stringify(formData.kathaCards || []),
-        samagriItemsJson: JSON.stringify(formData.samagriItems || []),
-        fastingOptionsJson: JSON.stringify(formData.fastingOptions || []),
-        mythsItemsJson: JSON.stringify(formData.mythsItems || []),
-        vidhiDaysJson: JSON.stringify(formData.vidhiDays || []),
-      };
 
       const res = await fetch(url, {
         method,
@@ -1235,21 +1048,43 @@ function RitualGuidesCmsContent() {
         body: JSON.stringify(payload),
       });
 
-      const data = await res.json();
+      const contentType = res.headers.get('content-type') || '';
+      const data = contentType.includes('application/json')
+        ? await res.json()
+        : { success: false, error: await res.text() };
+
       if (!res.ok || !data.success) {
-        setFormError(data.error || 'Failed to save Ritual Guide.');
-      } else {
-        setSuccessMessage(
-          editingId
-            ? 'Ritual Guide updated successfully!'
-            : 'New Ritual Guide created successfully!'
-        );
-        setIsModalOpen(false);
-        fetchGuides();
-        setTimeout(() => setSuccessMessage(null), 4000);
+        const apiError =
+          data?.error ||
+          data?.message ||
+          `Failed to save Ritual Guide (${res.status}).`;
+
+        console.error('Ritual Guide save failed:', {
+          status: res.status,
+          method,
+          url,
+          error: apiError,
+        });
+
+        setFormError(apiError);
+        return;
       }
-    } catch (err: any) {
-      setFormError(err.message || 'An error occurred.');
+
+      setSuccessMessage(
+        editingId
+          ? 'Ritual Guide updated successfully!'
+          : 'New Ritual Guide created successfully!'
+      );
+      setIsModalOpen(false);
+      fetchGuides();
+      setTimeout(() => setSuccessMessage(null), 4000);
+    } catch (err: unknown) {
+      console.error('Ritual Guide save error:', err);
+      setFormError(
+        err instanceof Error
+          ? err.message
+          : 'Unable to save Ritual Guide. Please try again.'
+      );
     } finally {
       setFormLoading(false);
     }
@@ -1324,182 +1159,7 @@ function RitualGuidesCmsContent() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#FBF9F5', color: '#111827', fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", display: 'flex' }}>
-      {/* LEFT SIDEBAR */}
-      <aside
-        style={{
-          width: '240px',
-          background: '#FFFFFF',
-          borderRight: '1px solid #EAEAEA',
-          padding: '24px 16px',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          flexShrink: 0,
-        }}
-      >
-        <div>
-          {/* Logo Brand Header */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingLeft: '8px', marginBottom: '28px' }}>
-            <span style={{ fontFamily: "'Tiro Devanagari Hindi', Georgia, serif", fontSize: '26px', fontWeight: 900, color: '#DE1B59' }}>
-              तप
-            </span>
-            <div>
-              <div style={{ fontSize: '13px', fontWeight: 700, color: '#111827', lineHeight: 1.1 }}>The Tapa Co.</div>
-              <div style={{ fontSize: '9px', fontWeight: 700, color: '#DE1B59', letterSpacing: '0.5px' }}>CMS CONSOLE</div>
-            </div>
-          </div>
-
-          {/* User Account Banner */}
-          <div style={{ paddingLeft: '8px', paddingRight: '8px', marginBottom: '24px' }}>
-            <div style={{ fontSize: '9px', fontWeight: 700, color: '#9CA3AF', letterSpacing: '0.8px', marginBottom: '4px' }}>
-              LOGGED IN AS
-            </div>
-            <div style={{ fontSize: '13px', fontWeight: 700, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {userEmail}
-            </div>
-            <div style={{ marginTop: '4px' }}>
-              <span style={{ background: '#FDF2F5', color: '#DE1B59', fontSize: '9px', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', display: 'inline-block' }}>
-                SUPER_ADMIN
-              </span>
-            </div>
-          </div>
-
-          {/* Navigation Links */}
-          <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <Link
-              href="/admin/dashboard"
-              style={{
-                color: '#4B5563',
-                borderRadius: '12px',
-                padding: '11px 14px',
-                fontSize: '13px',
-                fontWeight: 600,
-                textDecoration: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-              }}
-            >
-              <span>🩼</span> Dashboard
-            </Link>
-
-            <Link
-              href="/admin/dashboard/ritual-guides"
-              style={{
-                background: '#DE1B59',
-                color: '#FFFFFF',
-                borderRadius: '12px',
-                padding: '11px 14px',
-                fontSize: '13px',
-                fontWeight: 700,
-                textDecoration: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-              }}
-            >
-              <span>📖</span> Ritual Guides
-            </Link>
-
-            <Link
-              href="/admin/dashboard/dharmic-concepts"
-              style={{
-                color: '#4B5563',
-                borderRadius: '12px',
-                padding: '11px 14px',
-                fontSize: '13px',
-                fontWeight: 600,
-                textDecoration: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-              }}
-            >
-              <span>🧭</span> Dharmic Concepts
-            </Link>
-
-            <Link
-              href="/admin/dashboard/beginner-guides"
-              style={{
-                color: '#4B5563',
-                borderRadius: '12px',
-                padding: '11px 14px',
-                fontSize: '13px',
-                fontWeight: 600,
-                textDecoration: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-              }}
-            >
-              <span>🌱</span> Beginner Guides
-            </Link>
-
-            <Link
-              href="/admin/dashboard/panchang"
-              style={{
-                color: '#4B5563',
-                borderRadius: '12px',
-                padding: '11px 14px',
-                fontSize: '13px',
-                fontWeight: 600,
-                textDecoration: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-              }}
-            >
-              <span>📅</span> Panchang &amp; Vrats
-            </Link>
-
-            <Link
-              href="/admin/dashboard/user-directory"
-              style={{
-                color: '#4B5563',
-                borderRadius: '12px',
-                padding: '11px 14px',
-                fontSize: '13px',
-                fontWeight: 600,
-                textDecoration: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-              }}
-            >
-              <span>👥</span> User Directory
-            </Link>
-          </nav>
-        </div>
-
-        {/* Sidebar Footer */}
-        <div style={{ paddingTop: '20px', borderTop: '1px solid #F3F4F6' }}>
-          <button
-            type="button"
-            onClick={() => signOut({ callbackUrl: '/admin/login' })}
-            style={{
-              width: '100%',
-              background: '#FFFFFF',
-              color: '#DE1B59',
-              border: '1px solid #DE1B59',
-              borderRadius: '9999px',
-              padding: '10px 16px',
-              fontSize: '12px',
-              fontWeight: 700,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px',
-              marginBottom: '12px',
-            }}
-          >
-            ↳ Sign Out
-          </button>
-          <div style={{ fontSize: '10px', color: '#9CA3AF', textAlign: 'center' }}>
-            Legal Entity: Tale Scale Networks
-          </div>
-        </div>
-      </aside>
+      <AdminSidebar userEmail={userEmail} userRole="SUPER_ADMIN" />
 
       {/* MAIN CMS CONTENT */}
       <main style={{ flex: 1, padding: '36px 40px', maxWidth: '1200px' }}>
@@ -1553,7 +1213,7 @@ function RitualGuidesCmsContent() {
               <option value="ALL">All Statuses</option>
               <option value="PUBLISHED">PUBLISHED</option>
               <option value="DRAFT">DRAFT</option>
-              <option value="ARCHIVED">ARCHIVED</option>
+              {/* ARCHIVED is not supported by the current RitualGuide ContentStatus enum. */}
             </select>
           </div>
         </div>
@@ -1612,7 +1272,7 @@ function RitualGuidesCmsContent() {
                       </div>
                     </td>
                     <td style={{ padding: '16px 20px', color: '#4B5563', fontSize: '13px' }}>
-                      <strong>{guide.category || 'Dharma'}</strong> · {guide.rating || '4/5'}
+                      <strong>{guide.category || '—'}</strong> · {guide.rating || '—'}
                     </td>
                     <td style={{ padding: '16px 20px' }}>
                       {guide.status === 'PUBLISHED' ? (
@@ -1684,7 +1344,7 @@ function RitualGuidesCmsContent() {
                 >
                   <option value="DRAFT">DRAFT</option>
                   <option value="PUBLISHED">PUBLISHED</option>
-                  <option value="ARCHIVED">ARCHIVED</option>
+                  {/* ARCHIVED is not supported by the current RitualGuide ContentStatus enum. */}
                 </select>
 
                 <button
@@ -1745,7 +1405,7 @@ function RitualGuidesCmsContent() {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px', background: '#FAFAFA', padding: '16px', borderRadius: '14px', border: '1px solid #F3F4F6' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#374151', marginBottom: '4px' }}>Publication Status *</label>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#374151', marginBottom: '4px' }}>Publication Status</label>
                     <select
                       value={formData.status}
                       onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
@@ -1753,14 +1413,14 @@ function RitualGuidesCmsContent() {
                     >
                       <option value="DRAFT">DRAFT (Unpublished)</option>
                       <option value="PUBLISHED">PUBLISHED (Visible)</option>
-                      <option value="ARCHIVED">ARCHIVED</option>
+                      {/* ARCHIVED is not supported by the current RitualGuide ContentStatus enum. */}
                     </select>
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#374151', marginBottom: '4px' }}>Slug Identifier *</label>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#374151', marginBottom: '4px' }}>Slug Identifier</label>
                     <input
                       type="text"
-                      placeholder="hartalika-teej-guide"
+                      placeholder="my-ritual-guide-slug"
                       value={formData.slug}
                       onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
                       style={{ width: '100%', background: '#FFFFFF', border: '1px solid #D1D5DB', color: '#111827', padding: '10px 12px', borderRadius: '10px', fontSize: '13px', fontFamily: 'monospace', outline: 'none' }}
@@ -1769,7 +1429,7 @@ function RitualGuidesCmsContent() {
                 </div>
 
                 <div style={{ marginBottom: '16px' }}>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Section Label *</label>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Section Label</label>
                   <input
                     type="text"
                     value={formData.sectionLabel}
@@ -1780,7 +1440,7 @@ function RitualGuidesCmsContent() {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px', marginBottom: '16px' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Category *</label>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Category</label>
                     <select
                       value={formData.category}
                       onChange={(e) =>
@@ -1798,6 +1458,7 @@ function RitualGuidesCmsContent() {
                         outline: 'none'
                       }}
                     >
+                      <option value="">Select category…</option>
                       <option value="Beginner's Guides">Beginner's Guides</option>
                       <option value="Festive Pujans">Festive Pujans</option>
                       <option value="All-Year Pujans">All-Year Pujans</option>
@@ -1805,7 +1466,7 @@ function RitualGuidesCmsContent() {
                     </select>
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Rating *</label>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Rating</label>
                     <input
                       type="text"
                       value={formData.rating}
@@ -1814,7 +1475,7 @@ function RitualGuidesCmsContent() {
                     />
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Classification *</label>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Classification</label>
                     <input
                       type="text"
                       value={formData.classification}
@@ -1825,7 +1486,7 @@ function RitualGuidesCmsContent() {
                 </div>
 
                 <div style={{ marginBottom: '16px' }}>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Guide Title *</label>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Guide Title</label>
                   <textarea
                     rows={2}
                     value={formData.guideTitle}
@@ -1835,7 +1496,7 @@ function RitualGuidesCmsContent() {
                 </div>
 
                 <div style={{ marginBottom: '16px' }}>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Guide Subtitle *</label>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Guide Subtitle</label>
                   <textarea
                     rows={2}
                     value={formData.guideSubtitle}
@@ -1851,7 +1512,7 @@ function RitualGuidesCmsContent() {
                   </h4>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
                     <div>
-                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Festival Name *</label>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Festival Name</label>
                       <input
                         type="text"
                         value={formData.festivalName}
@@ -1860,7 +1521,7 @@ function RitualGuidesCmsContent() {
                       />
                     </div>
                     <div>
-                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Panchang Location *</label>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Panchang Location</label>
                       <input
                         type="text"
                         value={formData.panchangLocation}
@@ -1900,7 +1561,7 @@ function RitualGuidesCmsContent() {
                 </h3>
 
                 <div style={{ marginBottom: '16px' }}>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Section Heading *</label>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Section Heading</label>
                   <input
                     type="text"
                     value={formData.sotSectionHeading}
@@ -1911,7 +1572,7 @@ function RitualGuidesCmsContent() {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px', marginBottom: '16px' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Source Button Text *</label>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Source Button Text</label>
                     <input
                       type="text"
                       value={formData.sotButtonText}
@@ -1920,7 +1581,7 @@ function RitualGuidesCmsContent() {
                     />
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Source Button Action *</label>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Source Button Action</label>
                     <input
                       type="text"
                       value={formData.sotButtonAction}
@@ -1929,7 +1590,7 @@ function RitualGuidesCmsContent() {
                     />
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Source Button Target *</label>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Source Button Target</label>
                     <input
                       type="text"
                       value={formData.sotButtonTarget}
@@ -1940,7 +1601,7 @@ function RitualGuidesCmsContent() {
                 </div>
 
                 <div style={{ marginBottom: '16px' }}>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Practice Title *</label>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Practice Title</label>
                   <textarea
                     rows={2}
                     value={formData.sotPracticeTitle}
@@ -1951,7 +1612,7 @@ function RitualGuidesCmsContent() {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '16px' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Scriptural Source *</label>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Scriptural Source</label>
                     <input
                       type="text"
                       value={formData.sotScripturalSource}
@@ -1960,7 +1621,7 @@ function RitualGuidesCmsContent() {
                     />
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Parent Scripture *</label>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Parent Scripture</label>
                     <input
                       type="text"
                       value={formData.sotParentScripture}
@@ -2025,7 +1686,7 @@ function RitualGuidesCmsContent() {
                 </h3>
 
                 <div style={{ marginBottom: '16px' }}>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Story Title *</label>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Story Title</label>
                   <input
                     type="text"
                     value={formData.storyTitle}
@@ -2035,14 +1696,14 @@ function RitualGuidesCmsContent() {
                 </div>
 
                 <RichTextEditor
-                  label="Story Introduction *"
+                  label="Story Introduction"
                   value={formData.storyIntroduction}
                   onChange={(html) => setFormData({ ...formData, storyIntroduction: html })}
                   minHeight="80px"
                 />
 
                 <div style={{ marginBottom: '16px' }}>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Story Subsection Title *</label>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Story Subsection Title</label>
                   <input
                     type="text"
                     value={formData.storySubsectionTitle}
@@ -2052,7 +1713,7 @@ function RitualGuidesCmsContent() {
                 </div>
 
                 <RichTextEditor
-                  label="Story Content *"
+                  label="Story Content"
                   value={formData.storyContent}
                   onChange={(html) => setFormData({ ...formData, storyContent: html })}
                   minHeight="120px"
@@ -2060,7 +1721,7 @@ function RitualGuidesCmsContent() {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '14px', marginBottom: '16px' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Practice Category *</label>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Practice Category</label>
                     <input
                       type="text"
                       value={formData.storyPracticeCategory}
@@ -2069,7 +1730,7 @@ function RitualGuidesCmsContent() {
                     />
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Practice Rating *</label>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Practice Rating</label>
                     <input
                       type="text"
                       value={formData.storyPracticeRating}
@@ -2078,7 +1739,7 @@ function RitualGuidesCmsContent() {
                     />
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Practice Classification *</label>
+                    <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Practice Classification</label>
                     <input
                       type="text"
                       value={formData.storyPracticeClassification}
@@ -2089,7 +1750,7 @@ function RitualGuidesCmsContent() {
                 </div>
 
                 <RichTextEditor
-                  label="Story Continuation *"
+                  label="Story Continuation"
                   value={formData.storyContinuation}
                   onChange={(html) => setFormData({ ...formData, storyContinuation: html })}
                   minHeight="90px"
@@ -2103,7 +1764,7 @@ function RitualGuidesCmsContent() {
                       {formData.storyImage && <img src={formData.storyImage} alt="Story Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
                     </div>
                     <div>
-                      <input type="file" accept="image/*" onChange={handleStoryImageUpload} style={{ marginBottom: '6px', fontSize: '12px' }} />
+                      <input type="file" accept="image/*" onChange={(e) => handleImageUpload('storyImage', e)} style={{ marginBottom: '6px', fontSize: '12px' }} />
                       <input type="text" value={formData.storyImage} onChange={(e) => setFormData({ ...formData, storyImage: e.target.value })} style={{ width: '100%', border: '1px solid #D1D5DB', padding: '8px 12px', borderRadius: '8px', fontSize: '12px' }} />
                     </div>
                   </div>
@@ -2121,7 +1782,7 @@ function RitualGuidesCmsContent() {
                 </h3>
 
                 <div style={{ marginBottom: '16px' }}>
-                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Sankalpa Title *</label>
+                  <label style={{ display: 'block', fontSize: '13px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Sankalpa Title</label>
                   <input
                     type="text"
                     value={formData.sankalpaTitle}
@@ -2131,35 +1792,35 @@ function RitualGuidesCmsContent() {
                 </div>
 
                 <RichTextEditor
-                  label="Sankalpa Subtitle *"
+                  label="Sankalpa Subtitle"
                   value={formData.sankalpaSubtitle}
                   onChange={(html) => setFormData({ ...formData, sankalpaSubtitle: html })}
                   minHeight="60px"
                 />
 
                 <RichTextEditor
-                  label="Sankalpa Instruction *"
+                  label="Sankalpa Instruction"
                   value={formData.sankalpaInstruction}
                   onChange={(html) => setFormData({ ...formData, sankalpaInstruction: html })}
                   minHeight="60px"
                 />
 
                 <RichTextEditor
-                  label="Sankalpa Text (Sanskrit) *"
+                  label="Sankalpa Text (Sanskrit)"
                   value={formData.sankalpaText}
                   onChange={(html) => setFormData({ ...formData, sankalpaText: html })}
                   minHeight="80px"
                 />
 
                 <RichTextEditor
-                  label="Sankalpa Meaning *"
+                  label="Sankalpa Meaning"
                   value={formData.sankalpaMeaning}
                   onChange={(html) => setFormData({ ...formData, sankalpaMeaning: html })}
                   minHeight="60px"
                 />
 
                 <RichTextEditor
-                  label="Sankalpa Explanation *"
+                  label="Sankalpa Explanation"
                   value={formData.sankalpaExplanation}
                   onChange={(html) => setFormData({ ...formData, sankalpaExplanation: html })}
                   minHeight="80px"
@@ -2188,14 +1849,14 @@ function RitualGuidesCmsContent() {
                 </div>
 
                 <RichTextEditor
-                  label="Sankalpa Note Heading *"
+                  label="Sankalpa Note Heading"
                   value={formData.sankalpaNoteHeading}
                   onChange={(html) => setFormData({ ...formData, sankalpaNoteHeading: html })}
                   minHeight="60px"
                 />
 
                 <RichTextEditor
-                  label="Sankalpa Note Content *"
+                  label="Sankalpa Note Content"
                   value={formData.sankalpaNoteContent}
                   onChange={(html) => setFormData({ ...formData, sankalpaNoteContent: html })}
                   minHeight="70px"
@@ -2259,7 +1920,7 @@ function RitualGuidesCmsContent() {
                   <div style={{ background: '#FAFAFA', border: '1px solid #E5E7EB', borderRadius: '16px', padding: '20px' }}>
                     <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: '16px', marginBottom: '16px' }}>
                       <div>
-                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#374151', marginBottom: '4px' }}>Day Number *</label>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#374151', marginBottom: '4px' }}>Day Number</label>
                         <input
                           type="number"
                           value={activeDay.dayNumber}
@@ -2268,10 +1929,10 @@ function RitualGuidesCmsContent() {
                         />
                       </div>
                       <div>
-                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#374151', marginBottom: '4px' }}>Day Title *</label>
+                        <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#374151', marginBottom: '4px' }}>Day Title</label>
                         <input
                           type="text"
-                          placeholder="Ghatasthapana"
+                          placeholder="e.g. Ghatasthapana"
                           value={activeDay.dayTitle}
                           onChange={(e) => updateActiveVidhiDay('dayTitle', e.target.value)}
                           style={{ width: '100%', background: '#FFFFFF', border: '1px solid #D1D5DB', color: '#111827', padding: '10px 12px', borderRadius: '10px', fontSize: '13px', fontWeight: 700 }}
@@ -2280,7 +1941,7 @@ function RitualGuidesCmsContent() {
                     </div>
 
                     <RichTextEditor
-                      label="Day Description *"
+                      label="Day Description"
                       value={activeDay.dayDescription}
                       onChange={(html) => updateActiveVidhiDay('dayDescription', html)}
                       minHeight="70px"
@@ -2298,7 +1959,7 @@ function RitualGuidesCmsContent() {
                         style={{ width: '100%', border: '1px solid #D1D5DB', padding: '8px 12px', borderRadius: '8px', fontSize: '12px', marginBottom: '8px' }}
                       />
                       <RichTextEditor
-                        label="Muhurat Details *"
+                        label="Muhurat Details"
                         value={activeDay.muhuratInformation}
                         onChange={(html) => updateActiveVidhiDay('muhuratInformation', html)}
                         minHeight="70px"
@@ -2331,7 +1992,7 @@ function RitualGuidesCmsContent() {
                                 <button type="button" onClick={() => removeVidhiStep(sIdx)} style={{ color: '#991B1B', border: 'none', background: 'none', cursor: 'pointer', fontSize: '10px', fontWeight: 700 }}>✕</button>
                               </div>
                             </div>
-                            <RichTextEditor label={`Step ${step.stepNumber} Description *`} value={step.stepDescription} onChange={(html) => updateVidhiStep(sIdx, 'stepDescription', html)} minHeight="60px" />
+                            <RichTextEditor label={`Step ${step.stepNumber} Description`} value={step.stepDescription} onChange={(html) => updateVidhiStep(sIdx, 'stepDescription', html)} minHeight="60px" />
                             <input
                               type="text"
                               placeholder="Labels (e.g. PRATHA, SHASTRA)..."
@@ -2351,15 +2012,39 @@ function RitualGuidesCmsContent() {
                     <div style={{ background: '#111827', color: '#FFFFFF', borderRadius: '14px', padding: '16px', marginBottom: '16px' }}>
                       <h4 style={{ fontSize: '12px', fontWeight: 700, color: '#DE1B59', margin: '0 0 10px', textTransform: 'uppercase' }}>Day Mantra &amp; Audio</h4>
                       <input type="text" value={activeDay.mantraLabel} onChange={(e) => updateActiveVidhiDay('mantraLabel', e.target.value)} style={{ width: '100%', background: '#1F2937', border: '1px solid #374151', color: '#FFFFFF', padding: '6px 10px', borderRadius: '6px', fontSize: '12px', marginBottom: '8px' }} />
-                      <RichTextEditor label="Mantra Text (Sanskrit) *" value={activeDay.mantraText} onChange={(html) => updateActiveVidhiDay('mantraText', html)} minHeight="60px" />
-                      <RichTextEditor label="Transliteration *" value={activeDay.mantraTransliteration} onChange={(html) => updateActiveVidhiDay('mantraTransliteration', html)} minHeight="50px" />
-                      <input type="text" placeholder="Mantra audio URL..." value={activeDay.mantraAudio || ''} onChange={(e) => updateActiveVidhiDay('mantraAudio', e.target.value)} style={{ width: '100%', background: '#1F2937', border: '1px solid #374151', color: '#FFFFFF', padding: '6px 10px', borderRadius: '6px', fontSize: '12px', marginTop: '8px' }} />
+                      <RichTextEditor label="Mantra Text (Sanskrit)" value={activeDay.mantraText} onChange={(html) => updateActiveVidhiDay('mantraText', html)} minHeight="60px" />
+                      <RichTextEditor label="Transliteration" value={activeDay.mantraTransliteration} onChange={(html) => updateActiveVidhiDay('mantraTransliteration', html)} minHeight="50px" />
+
+                      {/* Mantra Audio — file upload (stored as base64, saved to DB on Save) */}
+                      <div style={{ marginTop: '10px' }}>
+                        <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#D1D5DB', marginBottom: '4px' }}>Mantra Audio (Upload File)</label>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                          <input
+                            type="file"
+                            accept="audio/*"
+                            onChange={handleMantraAudioUpload}
+                            style={{ fontSize: '12px', color: '#FFFFFF' }}
+                          />
+                          {activeDay.mantraAudio && (
+                            <button
+                              type="button"
+                              onClick={removeMantraAudio}
+                              style={{ background: '#FEE2E2', color: '#991B1B', border: '1px solid #FCA5A5', borderRadius: '6px', padding: '4px 10px', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}
+                            >
+                              ✕ Remove Audio
+                            </button>
+                          )}
+                        </div>
+                        {activeDay.mantraAudio && (
+                          <audio controls src={activeDay.mantraAudio} style={{ width: '100%', marginTop: '8px', height: '34px' }} />
+                        )}
+                      </div>
                     </div>
 
                     {/* Japa Audio */}
                     <div style={{ marginBottom: '16px' }}>
                       <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Japa Audio URL</label>
-                      <input type="text" placeholder="https://tapa.co/audio/japa-108.mp3" value={activeDay.japaAudio || ''} onChange={(e) => updateActiveVidhiDay('japaAudio', e.target.value)} style={{ width: '100%', border: '1px solid #D1D5DB', padding: '8px 12px', borderRadius: '8px', fontSize: '12px' }} />
+                      <input type="text" placeholder="https://example.com/audio/japa-108.mp3" value={activeDay.japaAudio || ''} onChange={(e) => updateActiveVidhiDay('japaAudio', e.target.value)} style={{ width: '100%', border: '1px solid #D1D5DB', padding: '8px 12px', borderRadius: '8px', fontSize: '12px' }} />
                     </div>
 
                     {/* Day Explanation */}
@@ -2381,23 +2066,23 @@ function RitualGuidesCmsContent() {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '16px' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#374151', marginBottom: '4px' }}>Vrat Katha Title *</label>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#374151', marginBottom: '4px' }}>Vrat Katha Title</label>
                     <input type="text" value={formData.kathaTitle} onChange={(e) => setFormData({ ...formData, kathaTitle: e.target.value })} style={{ width: '100%', border: '1px solid #D1D5DB', padding: '10px 12px', borderRadius: '10px', fontSize: '13px', fontWeight: 700 }} />
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#374151', marginBottom: '4px' }}>Scriptural Reference *</label>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#374151', marginBottom: '4px' }}>Scriptural Reference</label>
                     <input type="text" value={formData.kathaScripturalReference} onChange={(e) => setFormData({ ...formData, kathaScripturalReference: e.target.value })} style={{ width: '100%', border: '1px solid #D1D5DB', padding: '10px 12px', borderRadius: '10px', fontSize: '13px' }} />
                   </div>
                 </div>
 
-                <RichTextEditor label="Vrat Katha Subtitle (Rich Editor) *" value={formData.kathaSubtitle} onChange={(html) => setFormData({ ...formData, kathaSubtitle: html })} minHeight="60px" />
+                <RichTextEditor label="Vrat Katha Subtitle" value={formData.kathaSubtitle} onChange={(html) => setFormData({ ...formData, kathaSubtitle: html })} minHeight="60px" />
 
                 <div style={{ marginBottom: '16px' }}>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#374151', marginBottom: '4px' }}>Katha Headline *</label>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#374151', marginBottom: '4px' }}>Katha Headline</label>
                   <input type="text" value={formData.kathaHeadline} onChange={(e) => setFormData({ ...formData, kathaHeadline: e.target.value })} style={{ width: '100%', border: '1px solid #D1D5DB', padding: '10px 12px', borderRadius: '10px', fontSize: '13px', fontWeight: 700 }} />
                 </div>
 
-                <RichTextEditor label="Katha Introduction (Rich Editor) *" value={formData.kathaIntroduction} onChange={(html) => setFormData({ ...formData, kathaIntroduction: html })} minHeight="80px" />
+                <RichTextEditor label="Katha Introduction" value={formData.kathaIntroduction} onChange={(html) => setFormData({ ...formData, kathaIntroduction: html })} minHeight="80px" />
 
                 {/* Repeatable Story Cards Manager */}
                 <div style={{ background: '#FAFAFA', border: '1px solid #E5E7EB', borderRadius: '16px', padding: '18px', marginBottom: '20px' }}>
@@ -2435,13 +2120,13 @@ function RitualGuidesCmsContent() {
                           </div>
                         </div>
 
-                        <RichTextEditor label="Card Description (Rich Editor) *" value={card.cardDescription} onChange={(html) => updateKathaCard(cIdx, 'cardDescription', html)} minHeight="60px" />
+                        <RichTextEditor label="Card Description" value={card.cardDescription} onChange={(html) => updateKathaCard(cIdx, 'cardDescription', html)} minHeight="60px" />
                       </div>
                     ))}
                   </div>
                 </div>
 
-                <RichTextEditor label="Katha Supporting Explanation (Rich Editor) *" value={formData.kathaSupportingExplanation} onChange={(html) => setFormData({ ...formData, kathaSupportingExplanation: html })} minHeight="80px" />
+                <RichTextEditor label="Katha Supporting Explanation" value={formData.kathaSupportingExplanation} onChange={(html) => setFormData({ ...formData, kathaSupportingExplanation: html })} minHeight="80px" />
 
                 {/* Katha Audio Section */}
                 <div style={{ background: '#FFFDF9', border: '1px solid #F3EAD8', borderRadius: '14px', padding: '16px', marginBottom: '16px' }}>
@@ -2449,7 +2134,7 @@ function RitualGuidesCmsContent() {
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px 120px', gap: '10px' }}>
                     <div>
                       <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#6B7280', marginBottom: '2px' }}>Audio URL / Upload</label>
-                      <input type="text" placeholder="https://tapa.co/audio/katha.mp3" value={formData.kathaAudio || ''} onChange={(e) => setFormData({ ...formData, kathaAudio: e.target.value })} style={{ width: '100%', border: '1px solid #D1D5DB', padding: '8px 10px', borderRadius: '8px', fontSize: '12px' }} />
+                      <input type="text" placeholder="https://example.com/audio/katha.mp3" value={formData.kathaAudio || ''} onChange={(e) => setFormData({ ...formData, kathaAudio: e.target.value })} style={{ width: '100%', border: '1px solid #D1D5DB', padding: '8px 10px', borderRadius: '8px', fontSize: '12px' }} />
                     </div>
                     <div>
                       <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#6B7280', marginBottom: '2px' }}>Audio Button Text</label>
@@ -2482,7 +2167,7 @@ function RitualGuidesCmsContent() {
                       {formData.kathaImage && <img src={formData.kathaImage} alt="Katha Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />}
                     </div>
                     <div>
-                      <input type="file" accept="image/*" onChange={handleKathaImageUpload} style={{ marginBottom: '6px', fontSize: '12px' }} />
+                      <input type="file" accept="image/*" onChange={(e) => handleImageUpload('kathaImage', e)} style={{ marginBottom: '6px', fontSize: '12px' }} />
                       <input type="text" value={formData.kathaImage} onChange={(e) => setFormData({ ...formData, kathaImage: e.target.value })} style={{ width: '100%', border: '1px solid #D1D5DB', padding: '8px 12px', borderRadius: '8px', fontSize: '12px' }} />
                     </div>
                   </div>
@@ -2493,16 +2178,16 @@ function RitualGuidesCmsContent() {
                 {/* Durga Ashtami & Maha Navami Context Subsection */}
                 <div style={{ background: '#FDF2F5', border: '1px solid #FCE7F3', borderRadius: '16px', padding: '20px' }}>
                   <h4 style={{ fontSize: '14px', fontWeight: 700, color: '#DE1B59', margin: '0 0 12px', fontFamily: 'Georgia, serif' }}>
-                    🌸 Durga Ashtami and Maha Navami Context
+                    🌸 Festival Context (e.g. Durga Ashtami / Maha Navami)
                   </h4>
 
                   <div style={{ marginBottom: '12px' }}>
-                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#374151', marginBottom: '4px' }}>Festival Context Title *</label>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#374151', marginBottom: '4px' }}>Festival Context Title</label>
                     <input type="text" value={formData.festivalContextTitle} onChange={(e) => setFormData({ ...formData, festivalContextTitle: e.target.value })} style={{ width: '100%', background: '#FFFFFF', border: '1px solid #D1D5DB', padding: '8px 12px', borderRadius: '8px', fontSize: '13px', fontWeight: 700 }} />
                   </div>
 
-                  <RichTextEditor label="Festival Context Introduction (Rich Editor) *" value={formData.festivalContextIntroduction} onChange={(html) => setFormData({ ...formData, festivalContextIntroduction: html })} minHeight="70px" />
-                  <RichTextEditor label="Festival Context Details (Rich Editor) *" value={formData.festivalContextDetails} onChange={(html) => setFormData({ ...formData, festivalContextDetails: html })} minHeight="80px" />
+                  <RichTextEditor label="Festival Context Introduction" value={formData.festivalContextIntroduction} onChange={(html) => setFormData({ ...formData, festivalContextIntroduction: html })} minHeight="70px" />
+                  <RichTextEditor label="Festival Context Details" value={formData.festivalContextDetails} onChange={(html) => setFormData({ ...formData, festivalContextDetails: html })} minHeight="80px" />
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', margin: '12px 0' }}>
                     <div>
@@ -2519,7 +2204,7 @@ function RitualGuidesCmsContent() {
                     </div>
                   </div>
 
-                  <RichTextEditor label="Sandhi Puja Information (Rich Editor) *" value={formData.sandhiPujaInformation} onChange={(html) => setFormData({ ...formData, sandhiPujaInformation: html })} minHeight="70px" />
+                  <RichTextEditor label="Sandhi Puja Information" value={formData.sandhiPujaInformation} onChange={(html) => setFormData({ ...formData, sandhiPujaInformation: html })} minHeight="70px" />
                 </div>
               </div>
 
@@ -2532,11 +2217,11 @@ function RitualGuidesCmsContent() {
                 </h3>
 
                 <div style={{ marginBottom: '16px' }}>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#374151', marginBottom: '4px' }}>Samagri Title *</label>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#374151', marginBottom: '4px' }}>Samagri Title</label>
                   <input type="text" value={formData.samagriTitle} onChange={(e) => setFormData({ ...formData, samagriTitle: e.target.value })} style={{ width: '100%', border: '1px solid #D1D5DB', padding: '10px 12px', borderRadius: '10px', fontSize: '14px', fontWeight: 700 }} />
                 </div>
 
-                <RichTextEditor label="Samagri Subtitle (Rich Editor) *" value={formData.samagriSubtitle} onChange={(html) => setFormData({ ...formData, samagriSubtitle: html })} minHeight="60px" />
+                <RichTextEditor label="Samagri Subtitle" value={formData.samagriSubtitle} onChange={(html) => setFormData({ ...formData, samagriSubtitle: html })} minHeight="60px" />
 
                 {/* Repeatable Samagri Items Manager */}
                 <div style={{ background: '#FAFAFA', border: '1px solid #E5E7EB', borderRadius: '16px', padding: '18px', marginBottom: '20px' }}>
@@ -2564,11 +2249,11 @@ function RitualGuidesCmsContent() {
                         </div>
 
                         <div style={{ marginBottom: '8px' }}>
-                          <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#6B7280', marginBottom: '2px' }}>Item Name *</label>
+                          <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#6B7280', marginBottom: '2px' }}>Item Name</label>
                           <input type="text" value={item.itemName} onChange={(e) => updateSamagriItem(sIdx, 'itemName', e.target.value)} style={{ width: '100%', border: '1px solid #D1D5DB', padding: '6px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 700 }} />
                         </div>
 
-                        <RichTextEditor label="Item Details (Rich Editor)" value={item.itemDetails} onChange={(html) => updateSamagriItem(sIdx, 'itemDetails', html)} minHeight="50px" />
+                        <RichTextEditor label="Item Details" value={item.itemDetails} onChange={(html) => updateSamagriItem(sIdx, 'itemDetails', html)} minHeight="50px" />
                       </div>
                     ))}
                   </div>
@@ -2580,7 +2265,7 @@ function RitualGuidesCmsContent() {
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 140px 120px', gap: '10px' }}>
                     <div>
                       <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#6B7280', marginBottom: '2px' }}>Audio URL / Upload</label>
-                      <input type="text" placeholder="https://tapa.co/audio/samagri.mp3" value={formData.samagriAudio || ''} onChange={(e) => setFormData({ ...formData, samagriAudio: e.target.value })} style={{ width: '100%', border: '1px solid #D1D5DB', padding: '8px 10px', borderRadius: '8px', fontSize: '12px' }} />
+                      <input type="text" placeholder="https://example.com/audio/samagri.mp3" value={formData.samagriAudio || ''} onChange={(e) => setFormData({ ...formData, samagriAudio: e.target.value })} style={{ width: '100%', border: '1px solid #D1D5DB', padding: '8px 10px', borderRadius: '8px', fontSize: '12px' }} />
                     </div>
                     <div>
                       <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#6B7280', marginBottom: '2px' }}>Audio Button Text</label>
@@ -2603,11 +2288,11 @@ function RitualGuidesCmsContent() {
                 </h3>
 
                 <div style={{ marginBottom: '16px' }}>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#374151', marginBottom: '4px' }}>Fasting Title *</label>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#374151', marginBottom: '4px' }}>Fasting Title</label>
                   <input type="text" value={formData.fastingTitle} onChange={(e) => setFormData({ ...formData, fastingTitle: e.target.value })} style={{ width: '100%', border: '1px solid #D1D5DB', padding: '10px 12px', borderRadius: '10px', fontSize: '14px', fontWeight: 700 }} />
                 </div>
 
-                <RichTextEditor label="Fasting Subtitle (Rich Editor) *" value={formData.fastingSubtitle} onChange={(html) => setFormData({ ...formData, fastingSubtitle: html })} minHeight="60px" />
+                <RichTextEditor label="Fasting Subtitle" value={formData.fastingSubtitle} onChange={(html) => setFormData({ ...formData, fastingSubtitle: html })} minHeight="60px" />
 
                 {/* Repeatable Fasting Options Manager */}
                 <div style={{ background: '#FAFAFA', border: '1px solid #E5E7EB', borderRadius: '16px', padding: '18px', marginBottom: '20px' }}>
@@ -2635,11 +2320,11 @@ function RitualGuidesCmsContent() {
                         </div>
 
                         <div style={{ marginBottom: '8px' }}>
-                          <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#6B7280', marginBottom: '2px' }}>Option Title *</label>
+                          <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#6B7280', marginBottom: '2px' }}>Option Title</label>
                           <input type="text" value={opt.title} onChange={(e) => updateFastingOption(fIdx, 'title', e.target.value)} style={{ width: '100%', border: '1px solid #D1D5DB', padding: '6px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 700 }} />
                         </div>
 
-                        <RichTextEditor label="Option Description (Rich Editor) *" value={opt.description} onChange={(html) => updateFastingOption(fIdx, 'description', html)} minHeight="60px" />
+                        <RichTextEditor label="Option Description" value={opt.description} onChange={(html) => updateFastingOption(fIdx, 'description', html)} minHeight="60px" />
                       </div>
                     ))}
                   </div>
@@ -2651,8 +2336,8 @@ function RitualGuidesCmsContent() {
                     🥗 Fasting Guidance Block
                   </h4>
 
-                  <RichTextEditor label="Fasting Guidance Heading (Rich Editor) *" value={formData.fastingGuidanceHeading} onChange={(html) => setFormData({ ...formData, fastingGuidanceHeading: html })} minHeight="60px" />
-                  <RichTextEditor label="Fasting Guidance Content (Rich Editor) *" value={formData.fastingGuidanceContent} onChange={(html) => setFormData({ ...formData, fastingGuidanceContent: html })} minHeight="70px" />
+                  <RichTextEditor label="Fasting Guidance Heading" value={formData.fastingGuidanceHeading} onChange={(html) => setFormData({ ...formData, fastingGuidanceHeading: html })} minHeight="60px" />
+                  <RichTextEditor label="Fasting Guidance Content" value={formData.fastingGuidanceContent} onChange={(html) => setFormData({ ...formData, fastingGuidanceContent: html })} minHeight="70px" />
                 </div>
               </div>
 
@@ -2665,11 +2350,11 @@ function RitualGuidesCmsContent() {
                 </h3>
 
                 <div style={{ marginBottom: '16px' }}>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#374151', marginBottom: '4px' }}>Section Title *</label>
+                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#374151', marginBottom: '4px' }}>Section Title</label>
                   <input type="text" value={formData.mythsTitle} onChange={(e) => setFormData({ ...formData, mythsTitle: e.target.value })} style={{ width: '100%', border: '1px solid #D1D5DB', padding: '10px 12px', borderRadius: '10px', fontSize: '14px', fontWeight: 700 }} />
                 </div>
 
-                <RichTextEditor label="Section Subtitle (Rich Editor) *" value={formData.mythsSubtitle} onChange={(html) => setFormData({ ...formData, mythsSubtitle: html })} minHeight="60px" />
+                <RichTextEditor label="Section Subtitle" value={formData.mythsSubtitle} onChange={(html) => setFormData({ ...formData, mythsSubtitle: html })} minHeight="60px" />
 
                 {/* Repeatable Myths & Facts Manager */}
                 <div style={{ background: '#FAFAFA', border: '1px solid #E5E7EB', borderRadius: '16px', padding: '18px', marginBottom: '20px' }}>
@@ -2696,22 +2381,16 @@ function RitualGuidesCmsContent() {
                           </div>
                         </div>
 
-                        <RichTextEditor label="Myth Statement (Rich Editor) *" value={mItem.mythStatement} onChange={(html) => updateMythItem(mIdx, 'mythStatement', html)} minHeight="60px" />
+                        <RichTextEditor label="Myth Statement" value={mItem.mythStatement} onChange={(html) => updateMythItem(mIdx, 'mythStatement', html)} minHeight="60px" />
 
                         <div style={{ marginBottom: '10px' }}>
-                          <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#6B7280', marginBottom: '2px' }}>Correction Label *</label>
+                          <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#6B7280', marginBottom: '2px' }}>Correction Label</label>
                           <input type="text" value={mItem.correctionLabel} onChange={(e) => updateMythItem(mIdx, 'correctionLabel', e.target.value)} style={{ width: '100%', border: '1px solid #D1D5DB', padding: '6px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 700 }} />
                         </div>
 
-                        <RichTextEditor label="Correction Content (Rich Editor) *" value={mItem.correctionContent} onChange={(html) => updateMythItem(mIdx, 'correctionContent', html)} minHeight="80px" />
+                        <RichTextEditor label="Correction Content" value={mItem.correctionContent} onChange={(html) => updateMythItem(mIdx, 'correctionContent', html)} minHeight="80px" />
                       </div>
                     ))}
-                  </div>
-
-                  <div style={{ marginTop: '14px', textAlign: 'center' }}>
-                    <button type="button" onClick={addMythItem} style={{ background: '#FFFFFF', color: '#DE1B59', border: '1px dashed #DE1B59', padding: '8px 16px', borderRadius: '8px', fontSize: '12px', fontWeight: 700, cursor: 'pointer' }}>
-                      + Add Myth &amp; Fact
-                    </button>
                   </div>
                 </div>
               </div>
@@ -2734,7 +2413,7 @@ function RitualGuidesCmsContent() {
                   <input type="text" value={formData.relatedSubtitle} onChange={(e) => setFormData({ ...formData, relatedSubtitle: e.target.value })} style={{ width: '100%', border: '1px solid #D1D5DB', padding: '10px 12px', borderRadius: '10px', fontSize: '13px' }} />
                 </div>
 
-                <RichTextEditor label="Related Guides &amp; Concepts (Rich Editor)" value={formData.relatedLinksText} onChange={(html) => setFormData({ ...formData, relatedLinksText: html })} minHeight="100px" />
+                <RichTextEditor label="Related Guides &amp; Concepts" value={formData.relatedLinksText} onChange={(html) => setFormData({ ...formData, relatedLinksText: html })} minHeight="100px" />
               </div>
 
               {/* ======================================================== */}
@@ -2742,7 +2421,7 @@ function RitualGuidesCmsContent() {
               {/* ======================================================== */}
               <div style={{ display: activeTab === 'services' ? 'block' : 'none' }}>
                 <h3 style={{ fontFamily: 'Georgia, serif', fontSize: '18px', fontWeight: 700, color: '#111827', margin: '0 0 16px', paddingBottom: '8px', borderBottom: '1px solid #EFEAE4' }}>
-                  # Prefer To Have It All Taken Care Of?
+                  # Services &amp; CTAs
                 </h3>
 
                 <div style={{ marginBottom: '16px' }}>

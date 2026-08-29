@@ -20,7 +20,7 @@ interface Concept {
   threeStoriesGalleryJson?: string;
 }
 
-// Category naam backend se jis bhi spelling/spacing me aaye, sab yahan match ho jayega.
+
 const CATEGORY_MATCHERS: Record<string, string[]> = {
   materials: ['materials'],
   meanings: ['meanings & practices', 'meanings and practices', 'meanings & practice'],
@@ -31,13 +31,22 @@ const CATEGORY_MATCHERS: Record<string, string[]> = {
 
 function matchesCategory(concept: any, key: keyof typeof CATEGORY_MATCHERS) {
   const cat = (concept.category || '').toString().trim().toLowerCase();
-  return CATEGORY_MATCHERS[key].includes(cat);
+  const match = CATEGORY_MATCHERS[key].some((m) => cat.includes(m) || m.includes(cat));
+  if (match) return true;
+
+  if (key === 'materials') {
+    const matchedOther = Object.keys(CATEGORY_MATCHERS).some(
+      (otherKey) => otherKey !== 'materials' && CATEGORY_MATCHERS[otherKey].some((m) => cat.includes(m) || m.includes(cat))
+    );
+    if (!matchedOther) return true;
+  }
+  return false;
 }
 
-function parseGalleryImage(concept: any): string {
+function parseFirstStoryImage(concept: any): string {
   try {
-    const gallery = JSON.parse(concept.threeStoriesGalleryJson || '[]');
-    const first = Array.isArray(gallery) ? gallery[0] : null;
+    const stories = JSON.parse(concept.storiesItemsJson || '[]');
+    const first = Array.isArray(stories) ? stories[0] : null;
     return first?.image || first?.imageUrl || first?.imageURL || first?.src || '';
   } catch {
     return '';
@@ -82,11 +91,11 @@ export default function DharmicConceptsPage() {
             : Array.isArray(data?.data)
               ? data.data
               : [];
-          const publishedConcepts = list.filter(
-            (concept: Concept) => concept.status === 'PUBLISHED'
+          const activeConcepts = list.filter(
+            (concept: Concept) => concept.status !== 'ARCHIVED'
           );
 
-          setConcepts(publishedConcepts);
+          setConcepts(activeConcepts.length > 0 ? activeConcepts : list);
         } else {
           setConcepts([]);
         }
@@ -105,175 +114,11 @@ export default function DharmicConceptsPage() {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
-  const materialsCards = [
-    {
-      h: 'h-shiva',
-      rt: 'LIVE',
-      t: 'Why is bilva dear to Mahadev?',
-      d: 'Materials · Shiva',
-      deity: 'Shiva',
-      s: 'Three leaves on one stem. The tree did not study scripture to grow that way — the tradition recognised what it saw.',
-      pills: [
-        ['d', 'DHARMA · 4/5'],
-        ['n', 'PURANIC'],
-      ],
-      read: '12 min',
-      slug: 'why-is-bilva-dear-to-mahadev',
-      isLive: true,
-    },
-    {
-      h: 'h-vishnu',
-      rt: 'SOON',
-      t: 'Why is tulsi sacred to Vishnu?',
-      d: 'Materials · Vishnu',
-      deity: 'Vishnu',
-      s: 'Lakshmi’s form as a plant, present in every Vishnu and Krishna puja — and never offered to Shiva.',
-      pills: [['n', 'COMING SOON']],
-      read: '—',
-      slug: 'why-is-tulsi-sacred-to-vishnu',
-      isLive: false,
-    },
-    {
-      h: 'h-ganesh',
-      rt: 'SOON',
-      t: 'Why is durva offered to Ganesha?',
-      d: 'Materials · Ganesha',
-      deity: 'Ganesha',
-      s: 'The grass offered on his head, in bunches of twenty-one. Named in the Ganesha Purana.',
-      pills: [['n', 'COMING SOON']],
-      read: '—',
-      slug: 'why-is-durva-offered-to-ganesha',
-      isLive: false,
-    },
-  ];
-
-  const meaningsCards = [
-    {
-      h: 'h-thread',
-      rt: 'LIVE',
-      t: 'Three Stories, One Thread',
-      d: 'The raksha sutra',
-      deity: 'All',
-      s: 'Wife, friend, devotee — three relationships, one act of protection. Not one of them is a sister and a brother.',
-      pills: [
-        ['d', 'DHARMA · 4/5'],
-        ['n', 'PURANIC'],
-      ],
-      read: '7 min',
-      myth: '"All three stories are about siblings."',
-      slug: 'three-stories-one-thread',
-      isLive: true,
-    },
-    {
-      h: 'h-earth',
-      rt: 'SOON',
-      t: 'Sankalp — saying it out loud',
-      d: 'Meanings & Practices',
-      deity: 'All',
-      s: 'The resolve stated at the start of a vrat. Why it is said, what it must contain, and what it does not need.',
-      pills: [['n', 'COMING SOON']],
-      read: '—',
-      slug: 'sankalp-saying-it-out-loud',
-      isLive: false,
-    },
-    {
-      h: 'h-shiva',
-      rt: 'SOON',
-      t: 'Yajna, Havan or Homa?',
-      d: 'Meanings & Practices',
-      deity: 'Shiva',
-      s: 'Three words used interchangeably, for three different things. The distinction is older than the confusion.',
-      pills: [['n', 'COMING SOON']],
-      read: '—',
-      slug: 'yajna-havan-or-homa',
-      isLive: false,
-    },
-  ];
-
-  const dailyPujaRows = [
-    {
-      t: 'Puja room setup — where and how',
-      s: 'Direction, height, what belongs on the shelf and what does not',
-      slug: 'puja-room-setup',
-    },
-    {
-      t: 'Morning sandhya and panch-upachara',
-      s: 'The five-offering form, in about ten minutes',
-      slug: 'morning-sandhya-and-panch-upachara',
-    },
-    {
-      t: 'Tulsi Puja — the daily practice',
-      s: 'Watering, the evening diya, and the days it is not plucked',
-      slug: 'tulsi-puja-the-daily-practice',
-    },
-    {
-      t: 'Deepa Daan — when, why and how',
-      s: 'The lamp as offering rather than decoration',
-      slug: 'deepa-daan-when-why-and-how',
-    },
-  ];
-
-  const dharmaVsPrathaCards = [
-    {
-      h: 'h-gold',
-      rt: 'SOON',
-      t: '10 things you think are mandatory',
-      d: 'Dharma vs Pratha',
-      deity: 'All',
-      s: 'And are not. Each one traced to where it actually came from — usually a region, sometimes a shop.',
-      pills: [['n', 'COMING SOON']],
-      read: '—',
-      slug: '10-things-you-think-are-mandatory',
-      isLive: false,
-    },
-    {
-      h: 'h-gold',
-      rt: 'SOON',
-      t: 'Can women do puja during menstruation?',
-      d: 'Dharma vs Pratha',
-      deity: 'All',
-      s: 'Genuinely contested. We present the range of positions with sources, and say plainly where no scriptural restriction exists.',
-      pills: [['n', 'COMING SOON']],
-      read: '—',
-      slug: 'can-women-do-puja-during-menstruation',
-      isLive: false,
-    },
-    {
-      h: 'h-gold',
-      rt: 'SOON',
-      t: 'Regional practice myths',
-      d: 'Dharma vs Pratha',
-      deity: 'All',
-      s: 'Your way is not wrong because it differs from theirs. An ongoing series on what varies and why.',
-      pills: [['n', 'COMING SOON']],
-      read: '—',
-      slug: 'regional-practice-myths',
-      isLive: false,
-    },
-  ];
-
-  const mantrasRows = [
-    {
-      t: 'Panchakshara — Om Namah Shivaya',
-      s: 'The five syllables, and why the count matters',
-      slug: 'panchakshara-om-namah-shivaya',
-    },
-    {
-      t: 'Mahamrityunjaya — meaning and use',
-      s: 'What it asks for, and what it does not promise',
-      slug: 'mahamrityunjaya-meaning-and-use',
-    },
-    {
-      t: 'Gayatri Mantra — the full guide',
-      s: 'Who may recite it, when, and the answer to the question everyone asks',
-      slug: 'gayatri-mantra-the-full-guide',
-    },
-    {
-      t: 'Mantras for daily puja',
-      s: 'A short set, with audio, for the ten-minute morning',
-      slug: 'mantras-for-daily-puja',
-    },
-  ];
+  const materialsCards: any[] = [];
+  const meaningsCards: any[] = [];
+  const dailyPujaRows: any[] = [];
+  const dharmaVsPrathaCards: any[] = [];
+  const mantrasRows: any[] = [];
 
   // ===== DYNAMIC — backend se aane wale concepts, category ke hisaab se split =====
 
@@ -290,7 +135,7 @@ export default function DharmicConceptsPage() {
       read: concept.readTime || '—',
       slug: concept.slug || '',
       isLive: true,
-      imageUrl: parseGalleryImage(concept),
+      imageUrl: parseFirstStoryImage(concept),
     }));
 
   const dynamicMeaningsCards = concepts
@@ -307,7 +152,7 @@ export default function DharmicConceptsPage() {
       slug: concept.slug || '',
       isLive: true,
       myth: concept.myth || concept.correction || '',
-      imageUrl: parseGalleryImage(concept),
+      imageUrl: parseFirstStoryImage(concept),
     }));
 
   const dynamicDailyPujaRows = concepts
@@ -331,7 +176,7 @@ export default function DharmicConceptsPage() {
       read: concept.readTime || '—',
       slug: concept.slug || '',
       isLive: true,
-      imageUrl: parseGalleryImage(concept),
+      imageUrl: parseFirstStoryImage(concept),
     }));
 
   const dynamicMantrasRows = concepts
@@ -369,7 +214,9 @@ export default function DharmicConceptsPage() {
       { }
       <div className="bcrumb">
         <div className="bc-in">
-          <Link href="/">Home</Link> › <b>Dharmic Concepts</b>
+          <div className="bc-l">
+            <Link href="/">Home</Link> › <b>Dharmic Concepts</b>
+          </div>
         </div>
       </div>
 
@@ -385,7 +232,7 @@ export default function DharmicConceptsPage() {
                 when a samagri list says "bilva leaves", this is where the reason lives.
               </p>
               <div className="ch-meta">
-                <span className="ch-m"><b>2</b> live</span>
+                <span className="ch-m"><b>{concepts.length || 2}</b> live</span>
                 <span className="ch-m"><b>14</b> planned by March</span>
                 <span className="ch-m"><b>5</b> sub-categories</span>
               </div>
@@ -451,13 +298,21 @@ export default function DharmicConceptsPage() {
                   >
                     <div className={`c-top ${cardItem.h}`}>
                       {cardItem.rt && <span className="c-when">{cardItem.rt}</span>}
+
+                      {(cardItem as any).storiesItems?.[0]?.image && (
+                        <img
+                          src={(cardItem as any).storiesItems[0].image}
+                          alt={(cardItem as any).storiesItems[0].imageAltText || ''}
+                          className="c-story-image"
+                        />
+                      )}
                     </div>
                     <div className="c-b">
                       <div className="c-t">{cardItem.t}</div>
                       {cardItem.d && <div className="c-d">{cardItem.d}</div>}
                       <p className="c-s">{cardItem.s}</p>
                       <div className="c-f">
-                        {(cardItem.pills || []).map((p, idx) => (
+                        {(cardItem.pills || []).map((p: any, idx: number) => (
                           <span key={idx} className={`pill ${p[0]}`}>
                             {p[1]}
                           </span>
@@ -558,7 +413,7 @@ export default function DharmicConceptsPage() {
                       <p className="c-s">{cardItem.s}</p>
 
                       <div className="c-f">
-                        {(cardItem.pills || []).map((p, idx) => (
+                        {(cardItem.pills || []).map((p: any, idx: number) => (
                           <span
                             key={idx}
                             className={`pill ${p[0]}`}
@@ -726,7 +581,7 @@ export default function DharmicConceptsPage() {
                       {cardItem.d && <div className="c-d">{cardItem.d}</div>}
                       <p className="c-s">{cardItem.s}</p>
                       <div className="c-f">
-                        {(cardItem.pills || []).map((p, idx) => (
+                        {(cardItem.pills || []).map((p: any, idx: number) => (
                           <span key={idx} className={`pill ${p[0]}`}>
                             {p[1]}
                           </span>

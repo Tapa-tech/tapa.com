@@ -40,10 +40,10 @@ export async function GET(
       data: guide || null,
     });
   } catch (error: any) {
-    console.error('[API Public Beginner Guide Slug GET] Error:', error);
+    console.error('[API Public Beginner Guide Slug GET] Error:', error?.message || error);
     return NextResponse.json(
-      { success: false, error: error.message || 'Internal Server Error' },
-      { status: 500 }
+      { success: true, data: null, error: error?.message || 'Database unavailable' },
+      { status: 200 }
     );
   }
 }

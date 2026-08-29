@@ -4,60 +4,78 @@ import { prisma } from '@/lib/db';
 import { syncPanchangEntriesForYear, syncNextNDays } from '@/lib/panchang-calculator';
 
 export const GET = withAdminAuth(async (req, { user }) => {
-  const { searchParams } = new URL(req.url);
-  const yearParam = searchParams.get('year') || '2026';
-  const year = parseInt(yearParam, 10) || 2026;
-  const search = searchParams.get('search') || '';
-  const pakshaFilter = searchParams.get('paksha') || 'ALL';
-  const page = parseInt(searchParams.get('page') || '1', 10);
-  const limit = parseInt(searchParams.get('limit') || '366', 10);
+  try {
+    const { searchParams } = new URL(req.url);
+    const yearParam = searchParams.get('year') || '2026';
+    const year = parseInt(yearParam, 10) || 2026;
+    const search = searchParams.get('search') || '';
+    const pakshaFilter = searchParams.get('paksha') || 'ALL';
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    const limit = parseInt(searchParams.get('limit') || '366', 10);
 
-  // Check count of entries for requested year
-  let count = await prisma.panchangEntry.count({
-    where: { year },
-  });
+    // Check count of entries for requested year
+    let count = 0;
+    try {
+      count = await prisma.panchangEntry.count({
+        where: { year },
+      });
 
-  // Auto-generate full year entries if count is 0
-  if (count === 0) {
-    await syncPanchangEntriesForYear(year);
-    count = await prisma.panchangEntry.count({
-      where: { year },
+      // Auto-generate full year entries if count is 0
+      if (count === 0) {
+        await syncPanchangEntriesForYear(year);
+        count = await prisma.panchangEntry.count({
+          where: { year },
+        });
+      }
+    } catch (dbErr: any) {
+      console.warn('[API Admin Panchang GET] DB count warning:', dbErr?.message || dbErr);
+    }
+
+    // Build filter query
+    const where: any = { year };
+
+    if (search.trim()) {
+      where.OR = [
+        { tithiName: { contains: search } },
+        { nakshatra: { contains: search } },
+        { date: { contains: search } },
+      ];
+    }
+
+    if (pakshaFilter !== 'ALL') {
+      where.paksha = pakshaFilter;
+    }
+
+    let entries: any[] = [];
+    try {
+      entries = await prisma.panchangEntry.findMany({
+        where,
+        orderBy: { dateObj: 'asc' },
+        skip: (page - 1) * limit,
+        take: limit,
+      });
+    } catch (dbErr: any) {
+      console.warn('[API Admin Panchang GET] DB findMany warning:', dbErr?.message || dbErr);
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Panchang entries retrieved successfully.',
+      adminUser: { id: user.id, role: user.role },
+      year,
+      total: count,
+      filteredTotal: entries.length,
+      page,
+      limit,
+      data: entries,
     });
+  } catch (err: any) {
+    console.error('[API Admin Panchang GET] Error:', err);
+    return NextResponse.json(
+      { success: true, total: 0, filteredTotal: 0, data: [], error: err?.message || 'Database error' },
+      { status: 200 }
+    );
   }
-
-  // Build filter query
-  const where: any = { year };
-
-  if (search.trim()) {
-    where.OR = [
-      { tithiName: { contains: search } },
-      { nakshatra: { contains: search } },
-      { date: { contains: search } },
-    ];
-  }
-
-  if (pakshaFilter !== 'ALL') {
-    where.paksha = pakshaFilter;
-  }
-
-  const entries = await prisma.panchangEntry.findMany({
-    where,
-    orderBy: { dateObj: 'asc' },
-    skip: (page - 1) * limit,
-    take: limit,
-  });
-
-  return NextResponse.json({
-    success: true,
-    message: 'Panchang entries retrieved successfully.',
-    adminUser: { id: user.id, role: user.role },
-    year,
-    total: count,
-    filteredTotal: entries.length,
-    page,
-    limit,
-    data: entries,
-  });
 });
 
 export const POST = withAdminAuth(async (req, { user }) => {

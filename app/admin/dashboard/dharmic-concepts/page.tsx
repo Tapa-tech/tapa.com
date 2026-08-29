@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { SessionProvider, signOut, useSession } from 'next-auth/react';
 import Link from 'next/link';
+import { AdminSidebar } from '@/components/admin/AdminSidebar';
+import { readFileAsDataUrl } from '@/lib/utils';
 
 interface StoryItem {
   id: string;
@@ -285,7 +287,7 @@ const DEFAULT_STORIES_DEMO: StoryItem[] = [
     title: 'Wife',
     description: 'A story of protection within a marriage, where the sacred thread represents a bond of care and protection.',
     content: 'In the Bhavishya Purana, Sachi (Indrani) prepared a sacred thread woven with protective mantras and tied it around Lord Indra\'s right wrist before he went to battle Vritrasura.',
-    image: 'https://images.unsplash.com/photo-1605371924599-2d0365da1ae0?auto=format&fit=crop&w=800&q=80',
+    image: '',
     imageAltText: 'Rakhi thread on traditional puja plate',
     imageCaption: 'Sachi tying the protective thread to Indra',
     displayOrder: 1,
@@ -295,7 +297,7 @@ const DEFAULT_STORIES_DEMO: StoryItem[] = [
     title: 'Friend',
     description: 'A story of friendship and protection, showing that the sacred thread can represent a bond beyond family relationships.',
     content: 'During the Rajasuya Yajna, Lord Krishna cut his finger. Draupadi immediately tore a strip from her silk sari to bind Krishna\'s wound, forging an eternal bond of protection.',
-    image: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80',
+    image: '',
     imageAltText: 'Sacred thread bound to a sword',
     imageCaption: 'Draupadi binding Krishna\'s hand in devotion',
     displayOrder: 2,
@@ -305,7 +307,7 @@ const DEFAULT_STORIES_DEMO: StoryItem[] = [
     title: 'Devotee',
     description: 'A story of devotion and protection, where the thread becomes a symbol of a sacred relationship.',
     content: 'Goddess Lakshmi tied a sacred thread to King Bali\'s wrist during Shravana Purnima, seeking Lord Vishnu\'s return to Vaikuntha as a gift of protection.',
-    image: 'https://images.unsplash.com/photo-1621849400072-f58442787131?auto=format&fit=crop&w=800&q=80',
+    image: '',
     imageAltText: 'Sacred thread resting on a lotus leaf',
     imageCaption: 'Lakshmi declaring King Bali as her brother in dharma',
     displayOrder: 3,
@@ -315,21 +317,21 @@ const DEFAULT_STORIES_DEMO: StoryItem[] = [
 const DEFAULT_GALLERY_DEMO: GalleryItem[] = [
   {
     id: 'gal-1',
-    image: 'https://images.unsplash.com/photo-1605371924599-2d0365da1ae0?auto=format&fit=crop&w=800&q=80',
+    image: '',
     altText: 'Traditional rakhi thread on golden plate',
     caption: 'Story 1: Thread of protection in marriage',
     displayOrder: 1,
   },
   {
     id: 'gal-2',
-    image: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=800&q=80',
+    image: '',
     altText: 'Sacred thread bound to warrior sword',
     caption: 'Story 2: Friendship and spiritual bond',
     displayOrder: 2,
   },
   {
     id: 'gal-3',
-    image: 'https://images.unsplash.com/photo-1621849400072-f58442787131?auto=format&fit=crop&w=800&q=80',
+    image: '',
     altText: 'Sacred thread on lotus leaf',
     caption: 'Story 3: Devotion and divine promise',
     displayOrder: 3,
@@ -496,8 +498,13 @@ function DharmicConceptsCmsContent() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const userRole = (session?.user as { role?: string })?.role?.toUpperCase() || 'USER';
-  const isAuthorized = ['ADMIN', 'EDITOR', 'SUPER_ADMIN'].includes(userRole);
+  const isAuthorized = ['ADMIN', 'EDITOR', 'SUPER_ADMIN', 'SUPER_USER'].includes(userRole);
   const userEmail = session?.user?.email || (session?.user as any)?.phone || 'admin@tapa.co';
+
+  const uploadMedia = async (file: File): Promise<string> => {
+    return readFileAsDataUrl(file);
+  };
+
 
   // Fetch concepts from backend API
   const fetchConcepts = useCallback(async () => {
@@ -550,7 +557,7 @@ function DharmicConceptsCmsContent() {
       title: 'New Story',
       description: 'Concise description of this protective relationship story.',
       content: '',
-      image: 'https://images.unsplash.com/photo-1605371924599-2d0365da1ae0?auto=format&fit=crop&w=800&q=80',
+      image: '',
       imageAltText: 'Dharmic story illustration',
       imageCaption: 'Story caption',
       displayOrder: formData.storiesItems.length + 1,
@@ -589,7 +596,7 @@ function DharmicConceptsCmsContent() {
   const addGalleryItem = () => {
     const newGal: GalleryItem = {
       id: 'gal-' + Date.now(),
-      image: 'https://images.unsplash.com/photo-1605371924599-2d0365da1ae0?auto=format&fit=crop&w=800&q=80',
+      image: '',
       altText: 'Gallery image',
       caption: 'Image caption',
       displayOrder: formData.threeStoriesGallery.length + 1,
@@ -1009,182 +1016,7 @@ function DharmicConceptsCmsContent() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#FBF9F5', color: '#111827', fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", display: 'flex' }}>
-      {/* LEFT SIDEBAR */}
-      <aside
-        style={{
-          width: '240px',
-          background: '#FFFFFF',
-          borderRight: '1px solid #EAEAEA',
-          padding: '24px 16px',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          flexShrink: 0,
-        }}
-      >
-        <div>
-          {/* Logo Brand Header */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingLeft: '8px', marginBottom: '28px' }}>
-            <span style={{ fontFamily: "'Tiro Devanagari Hindi', Georgia, serif", fontSize: '26px', fontWeight: 900, color: '#DE1B59' }}>
-              तप
-            </span>
-            <div>
-              <div style={{ fontSize: '13px', fontWeight: 700, color: '#111827', lineHeight: 1.1 }}>The Tapa Co.</div>
-              <div style={{ fontSize: '9px', fontWeight: 700, color: '#DE1B59', letterSpacing: '0.5px' }}>CMS CONSOLE</div>
-            </div>
-          </div>
-
-          {/* User Account Banner */}
-          <div style={{ paddingLeft: '8px', paddingRight: '8px', marginBottom: '24px' }}>
-            <div style={{ fontSize: '9px', fontWeight: 700, color: '#9CA3AF', letterSpacing: '0.8px', marginBottom: '4px' }}>
-              LOGGED IN AS
-            </div>
-            <div style={{ fontSize: '13px', fontWeight: 700, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {userEmail}
-            </div>
-            <div style={{ marginTop: '4px' }}>
-              <span style={{ background: '#FDF2F5', color: '#DE1B59', fontSize: '9px', fontWeight: 700, padding: '2px 8px', borderRadius: '4px', display: 'inline-block' }}>
-                SUPER_ADMIN
-              </span>
-            </div>
-          </div>
-
-          {/* Navigation Links */}
-          <nav style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-            <Link
-              href="/admin/dashboard"
-              style={{
-                color: '#4B5563',
-                borderRadius: '12px',
-                padding: '11px 14px',
-                fontSize: '13px',
-                fontWeight: 600,
-                textDecoration: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-              }}
-            >
-              <span>🩼</span> Dashboard
-            </Link>
-
-            <Link
-              href="/admin/dashboard/ritual-guides"
-              style={{
-                color: '#4B5563',
-                borderRadius: '12px',
-                padding: '11px 14px',
-                fontSize: '13px',
-                fontWeight: 600,
-                textDecoration: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-              }}
-            >
-              <span>📖</span> Ritual Guides
-            </Link>
-
-            <Link
-              href="/admin/dashboard/dharmic-concepts"
-              style={{
-                background: '#DE1B59',
-                color: '#FFFFFF',
-                borderRadius: '12px',
-                padding: '11px 14px',
-                fontSize: '13px',
-                fontWeight: 700,
-                textDecoration: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-              }}
-            >
-              <span>🧭</span> Dharmic Concepts
-            </Link>
-
-            <Link
-              href="/admin/dashboard/beginner-guides"
-              style={{
-                color: '#4B5563',
-                borderRadius: '12px',
-                padding: '11px 14px',
-                fontSize: '13px',
-                fontWeight: 600,
-                textDecoration: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-              }}
-            >
-              <span>🌱</span> Beginner Guides
-            </Link>
-
-            <Link
-              href="/admin/dashboard/panchang"
-              style={{
-                color: '#4B5563',
-                borderRadius: '12px',
-                padding: '11px 14px',
-                fontSize: '13px',
-                fontWeight: 600,
-                textDecoration: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-              }}
-            >
-              <span>📅</span> Panchang &amp; Vrats
-            </Link>
-
-            <Link
-              href="/admin/dashboard/user-directory"
-              style={{
-                color: '#4B5563',
-                borderRadius: '12px',
-                padding: '11px 14px',
-                fontSize: '13px',
-                fontWeight: 600,
-                textDecoration: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-              }}
-            >
-              <span>👥</span> User Directory
-            </Link>
-          </nav>
-        </div>
-
-        {/* Sidebar Footer */}
-        <div style={{ paddingTop: '20px', borderTop: '1px solid #F3F4F6' }}>
-          <button
-            type="button"
-            onClick={() => signOut({ callbackUrl: '/admin/login' })}
-            style={{
-              width: '100%',
-              background: '#FFFFFF',
-              color: '#DE1B59',
-              border: '1px solid #DE1B59',
-              borderRadius: '9999px',
-              padding: '10px 16px',
-              fontSize: '12px',
-              fontWeight: 700,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '6px',
-              marginBottom: '12px',
-            }}
-          >
-            ↳ Sign Out
-          </button>
-          <div style={{ fontSize: '10px', color: '#9CA3AF', textAlign: 'center' }}>
-            Legal Entity: Tale Scale Networks
-          </div>
-        </div>
-      </aside>
+      <AdminSidebar userEmail={userEmail} userRole="SUPER_ADMIN" />
 
       {/* MAIN CMS CONTENT */}
       <main style={{ flex: 1, padding: '36px 40px', maxWidth: '1200px' }}>
@@ -1803,12 +1635,21 @@ function DharmicConceptsCmsContent() {
 
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
                           <div>
-                            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Story Image URL</label>
+                            <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>Story Image</label>
                             <input
-                              type="text"
-                              placeholder="https://..."
-                              value={story.image || ''}
-                              onChange={(e) => updateStoryItem(story.id, 'image', e.target.value)}
+                              type="file"
+                              accept="image/*"
+                              onChange={async (e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                try {
+                                  setFormError(null);
+                                  const url = await uploadMedia(file);
+                                  updateStoryItem(story.id, 'image', url);
+                                } catch (error) {
+                                  setFormError(error instanceof Error ? error.message : 'Image upload failed');
+                                }
+                              }}
                               style={{ width: '100%', background: '#FFFFFF', border: '1px solid #D1D5DB', color: '#111827', padding: '9px 12px', borderRadius: '8px', fontSize: '12px', boxSizing: 'border-box', outline: 'none' }}
                             />
                           </div>
@@ -1915,10 +1756,22 @@ function DharmicConceptsCmsContent() {
 
                           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '8px' }}>
                             <input
-                              type="text"
-                              placeholder="Image URL (https://...)"
-                              value={gal.image}
-                              onChange={(e) => updateGalleryItem(gal.id, 'image', e.target.value)}
+                              type="file"
+                              accept="image/*"
+                              onChange={async (e) => {
+                                const target = e.currentTarget;
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                try {
+                                  setFormError(null);
+                                  const url = await uploadMedia(file);
+                                  updateGalleryItem(gal.id, 'image', url);
+                                } catch (error) {
+                                  setFormError(error instanceof Error ? error.message : 'Image upload failed');
+                                } finally {
+                                  if (target) target.value = '';
+                                }
+                              }}
                               style={{ width: '100%', background: '#FFFFFF', border: '1px solid #D1D5DB', padding: '7px 10px', borderRadius: '6px', fontSize: '12px', outline: 'none' }}
                             />
                             <input

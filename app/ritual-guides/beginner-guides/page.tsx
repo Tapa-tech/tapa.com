@@ -124,7 +124,9 @@ export default function BeginnerGuidesListingPage() {
       {/* BREADCRUMB */}
       <div className="bcrumb">
         <div className="bc-in">
-          <Link href="/">Home</Link> › <Link href="/ritual-guides">Ritual Guides</Link> › <b>Beginner's Guides</b>
+          <div className="bc-l">
+            <Link href="/">Home</Link> › <Link href="/ritual-guides">Ritual Guides</Link> › <b>Beginner's Guides</b>
+          </div>
         </div>
       </div>
 
