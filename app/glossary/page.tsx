@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import "./glossary.css"
 
@@ -35,7 +35,6 @@ const TERMS: Term[] = [
   { t: 'Tithi', lang: 'SANSKRIT', d: 'तिथि', s: 'ti-thi', ty: 'tim', def: 'The lunar day, and the thing that fixes almost every festival date. A tithi can start and end at any hour, which is why dates shift each year.', in: ["Today's Panchang", 'Vrat Calendar', 'Navratri Panchang'], c: 'How to read a Panchang' },
   { t: 'Vrat', lang: 'SANSKRIT', d: 'व्रत', s: 'vrat', ty: 'pra', def: 'A vow kept for a day. Fasting is often part of it and is rarely the whole of it — the vow is the observance, the food rule is one expression.', in: ['What is a vrat?', 'Vrat Calendar'], c: 'Vrat — what a vow is' },
 ];
-
 const TYPE = {
   mat: 'MATERIAL',
   pra: 'PRACTICE',

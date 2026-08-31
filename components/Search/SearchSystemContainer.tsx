@@ -111,7 +111,7 @@ export const SearchSystemContainer: React.FC<SearchSystemContainerProps> = ({
   const [conceptsResults, setConceptsResults] = useState<SearchResultItem[]>([]);
   const [kitsResults, setKitsResults] = useState<SearchResultItem[]>([]);
 
-  // Glossary Definition Matching
+
   const [matchedDefinition, setMatchedDefinition] = useState<GlossaryDefinition | null>(GLOSSARY_DICTIONARY['ekadashi']);
 
   const executeSearch = useCallback((searchQuery: string) => {
@@ -168,12 +168,12 @@ export const SearchSystemContainer: React.FC<SearchSystemContainerProps> = ({
               r.category === 'KITS'
                 ? 'h-vishnu'
                 : r.category === 'FESTIVALS'
-                ? 'h-data'
-                : r.tag?.includes('Shiva')
-                ? 'h-shiva'
-                : r.tag?.includes('Devi')
-                ? 'h-devi'
-                : 'h-vishnu',
+                  ? 'h-data'
+                  : r.tag?.includes('Shiva')
+                    ? 'h-shiva'
+                    : r.tag?.includes('Devi')
+                      ? 'h-devi'
+                      : 'h-vishnu',
             pills: [
               { text: r.tag || 'GUIDE', variant: r.category === 'KITS' ? 'n' : 'd' },
               ...(r.badge ? [{ text: r.badge, variant: 'n' as const }] : []),

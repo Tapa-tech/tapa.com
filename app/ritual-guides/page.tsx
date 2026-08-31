@@ -1,18 +1,39 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
-const defaultBeginnerGuides = [
-  { slug: 'what-is-a-vrat', title: 'What is a vrat?', subtitle: '6 min read' },
-  { slug: 'first-puja', title: 'Your first puja at home', subtitle: '8 min · under ₹300 to start' },
-  { slug: 'ganesh-chaturthi', title: 'Ganesh Chaturthi for beginners', subtitle: '9 min · for 14 September' },
-  { slug: 'diwali-beginners', title: 'Diwali for beginners', subtitle: '9 min · for November' },
-  { slug: 'seven-kandas', title: 'The seven kandas', subtitle: '6 min · no Sanskrit required' },
-];
+interface RitualGuide {
+  id?: string | number;
+  slug?: string;
+  title?: string;
+  guideTitle?: string;
+  bannerTitle?: string;
+  subtitle?: string;
+  guideSubtitle?: string;
+  bannerSubtitle?: string;
+  bannerEyebrow?: string;
+  category?: string;
+  description?: string;
+  festivalName?: string;
+  bannerDate?: string;
+  date?: string;
+  badge?: string;
+  readTime?: string;
+  correction?: string;
+  imageClass?: string;
+  kathaImage?: string;
+  status?: string;
+}
 
+interface ApiResponse {
+  success?: boolean;
+  data?: RitualGuide[];
+}
 
-const CATEGORY_MATCHERS: Record<string, string[]> = {
+type CategoryKey = keyof typeof CATEGORY_MATCHERS;
+
+const CATEGORY_MATCHERS = {
   beginner: [
     "beginner's guides",
     'beginners guides',
@@ -20,110 +41,259 @@ const CATEGORY_MATCHERS: Record<string, string[]> = {
     "beginner's guide",
   ],
   festive: ['festive pujans', 'festive pujan'],
-  allYear: ['all-year pujans', 'all year pujans', 'all-year pujan', 'all year pujan'],
+  allYear: [
+    'all-year pujans',
+    'all year pujans',
+    'all-year pujan',
+    'all year pujan',
+  ],
   sanskar: [
     'sanskar & life events',
     'sanskar and life events',
     'sanskar life events',
     'sanskar & life event',
   ],
+} as const;
+
+const filters = [
+  'Coming up',
+  'This month',
+  'Shiva',
+  'Vishnu',
+  'Devi',
+  'Ganesha',
+];
+
+const getGuideTitle = (guide: RitualGuide) =>
+  guide.title || guide.guideTitle || guide.bannerTitle || '';
+
+const getGuideSubtitle = (guide: RitualGuide) =>
+  guide.guideSubtitle ||
+  guide.description ||
+  guide.bannerSubtitle ||
+  '';
+
+const getGuideDate = (guide: RitualGuide) =>
+  guide.festivalName || guide.bannerDate || guide.date || '';
+
+const getGuideWhen = (guide: RitualGuide) =>
+  guide.date || guide.festivalName || '';
+
+const matchesCategory = (
+  guide: RitualGuide,
+  key: CategoryKey,
+) => {
+  const category = String(guide.category || '')
+    .trim()
+    .toLowerCase();
+
+  return (CATEGORY_MATCHERS[key] as readonly string[]).includes(category);
 };
 
-function matchesCategory(guide: any, key: keyof typeof CATEGORY_MATCHERS) {
-  const cat = (guide.category || '').toString().trim().toLowerCase();
-  return CATEGORY_MATCHERS[key].includes(cat);
+const getApiData = (response: ApiResponse | null): RitualGuide[] =>
+  response?.success && Array.isArray(response.data)
+    ? response.data
+    : [];
+
+const getImageStyle = (image?: string): React.CSSProperties | undefined =>
+  image
+    ? {
+      backgroundImage: `url("${image}")`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
+      backgroundRepeat: 'no-repeat',
+    }
+    : undefined;
+
+interface RitualCardProps {
+  guide: RitualGuide;
+  fallbackClass: string;
+  index: number;
+  variant: 'festive' | 'allYear' | 'sanskar';
+}
+
+function RitualCard({
+  guide,
+  fallbackClass,
+  index,
+  variant,
+}: RitualCardProps) {
+  const cardClass =
+    guide.imageClass ||
+    (variant === 'sanskar'
+      ? fallbackClass
+      : variant === 'festive'
+        ? index % 3 === 0
+          ? 'h-teej'
+          : index % 3 === 1
+            ? 'h-ganesh'
+            : 'h-devi'
+        : index % 3 === 0
+          ? 'h-shiva'
+          : index % 3 === 1
+            ? 'h-earth'
+            : 'h-vishnu');
+
+  return (
+    <Link
+      className="c"
+      href={`/ritual-guides/${guide.slug}`}
+      key={guide.id || guide.slug || `${variant}-${index}`}
+    >
+      <div
+        className={`c-top ${cardClass}`}
+        style={getImageStyle(guide.kathaImage)}
+      >
+        <span className="c-when">{getGuideWhen(guide)}</span>
+      </div>
+
+      <div className="c-b">
+        <div className="c-t">{getGuideTitle(guide)}</div>
+
+        <div className="c-d">{getGuideDate(guide)}</div>
+
+        <p className="c-s">{getGuideSubtitle(guide)}</p>
+
+        <div className="c-f">
+          <span className="pill d">
+            {guide.badge || 'DHARMA · 4/5'}
+          </span>
+
+          <span className="c-read">
+            {guide.readTime || '9 min'}
+          </span>
+        </div>
+      </div>
+
+      {guide.correction && (
+        <div className="myth">
+          <b>Corrects:</b> "{guide.correction}"
+        </div>
+      )}
+    </Link>
+  );
+}
+
+interface SectionHeaderProps {
+  eyebrow: string;
+  title: string;
+  description: string;
+  count: number;
+  href: string;
+}
+
+function SectionHeader({
+  eyebrow,
+  title,
+  description,
+  count,
+  href,
+}: SectionHeaderProps) {
+  return (
+    <div className="sec-h">
+      <div>
+        <div className="sec-ey">{eyebrow}</div>
+        <div className="sec-t">{title}</div>
+        <p className="sec-s">{description}</p>
+      </div>
+
+      <Link className="sec-a" href={href}>
+        <span>{count} guides</span>
+        View all ›
+      </Link>
+    </div>
+  );
 }
 
 export default function RitualGuidesPage() {
-  const [activeFilter, setActiveFilter] = useState<number>(0);
-  const [beginnerGuides, setBeginnerGuides] = useState<any[]>([]);
-  const [festivePujans, setFestivePujans] = useState<any[]>([]);
-  const [allYearPujans, setAllYearPujans] = useState<any[]>([]);
-  const [sanskarEvents, setSanskarEvents] = useState<any[]>([]);
+  const [activeFilter, setActiveFilter] = useState(0);
+  const [beginnerGuides, setBeginnerGuides] = useState<RitualGuide[]>([]);
+  const [festivePujans, setFestivePujans] = useState<RitualGuide[]>([]);
+  const [allYearPujans, setAllYearPujans] = useState<RitualGuide[]>([]);
+  const [sanskarEvents, setSanskarEvents] = useState<RitualGuide[]>([]);
 
   useEffect(() => {
-    async function loadGuides() {
+    const loadGuides = async () => {
       try {
-        const beginnerRes = await fetch('/api/public/beginner-guides', {
-          cache: 'no-store',
-        });
+        const [beginnerRes, ritualRes] = await Promise.all([
+          fetch('/api/public/beginner-guides', {
+            cache: 'no-store',
+          }),
+          fetch('/api/public/ritual-guides', {
+            cache: 'no-store',
+          }),
+        ]);
 
-        const ritualRes = await fetch('/api/public/ritual-guides', {
-          cache: 'no-store',
-        });
+        const [beginnerJson, ritualJson] = await Promise.all([
+          beginnerRes.ok
+            ? beginnerRes.json()
+            : Promise.resolve(null),
+          ritualRes.ok
+            ? ritualRes.json()
+            : Promise.resolve(null),
+        ]);
 
-        const beginnerJson = beginnerRes.ok
-          ? await beginnerRes.json()
-          : null;
-
-        const ritualJson = ritualRes.ok
-          ? await ritualRes.json()
-          : null;
-
-        const beginnerData =
-          beginnerJson?.success && Array.isArray(beginnerJson.data)
-            ? beginnerJson.data
-            : [];
-
-        const ritualData =
-          ritualJson?.success && Array.isArray(ritualJson.data)
-            ? ritualJson.data
-            : [];
+        const beginnerData = getApiData(beginnerJson);
+        const ritualData = getApiData(ritualJson);
 
         const publishedBeginners = beginnerData.filter(
-          (guide: any) => guide.status === 'PUBLISHED'
+          (guide) => guide.status === 'PUBLISHED',
         );
 
         const publishedRitualGuides = ritualData.filter(
-          (guide: any) => guide.status === 'PUBLISHED'
+          (guide) => guide.status === 'PUBLISHED',
         );
 
-        // Ritual Guides table me bhi jo entries category = "Beginner's Guides"
-        // rakhi gayi hon, unhe bhi beginner guides list me merge kar do
-        const publishedBeginnersFromRitual = publishedRitualGuides.filter(
-          (guide: any) => matchesCategory(guide, 'beginner')
+        const beginnerFromRitual = publishedRitualGuides.filter(
+          (guide) => matchesCategory(guide, 'beginner'),
         );
 
-        const mergedBeginnerGuides = [
+        setBeginnerGuides([
           ...publishedBeginners,
-          ...publishedBeginnersFromRitual,
-        ];
+          ...beginnerFromRitual,
+        ]);
 
-        const publishedFestive = publishedRitualGuides.filter((guide: any) =>
-          matchesCategory(guide, 'festive')
+        setFestivePujans(
+          publishedRitualGuides.filter((guide) =>
+            matchesCategory(guide, 'festive'),
+          ),
         );
 
-        const publishedAllYear = publishedRitualGuides.filter((guide: any) =>
-          matchesCategory(guide, 'allYear')
+        setAllYearPujans(
+          publishedRitualGuides.filter((guide) =>
+            matchesCategory(guide, 'allYear'),
+          ),
         );
 
-        const publishedSanskar = publishedRitualGuides.filter((guide: any) =>
-          matchesCategory(guide, 'sanskar')
+        setSanskarEvents(
+          publishedRitualGuides.filter((guide) =>
+            matchesCategory(guide, 'sanskar'),
+          ),
         );
-
-        setBeginnerGuides(mergedBeginnerGuides);
-        setFestivePujans(publishedFestive);
-        setAllYearPujans(publishedAllYear);
-        setSanskarEvents(publishedSanskar);
-      } catch (err) {
-        console.error('Failed to load ritual guides:', err);
+      } catch (error) {
+        console.error('Failed to load ritual guides:', error);
 
         setBeginnerGuides([]);
         setFestivePujans([]);
         setAllYearPujans([]);
         setSanskarEvents([]);
       }
-    }
+    };
 
     loadGuides();
   }, []);
 
-  const filters = ['Coming up', 'This month', 'Shiva', 'Vishnu', 'Devi', 'Ganesha'];
-  const firstGuideSlug = beginnerGuides[0]?.slug || 'what-is-a-vrat';
+  const firstGuideSlug =
+    beginnerGuides[0]?.slug || 'what-is-a-vrat';
+
+  const scrollToBeginners = () => {
+    document
+      .getElementById('beginners-guides')
+      ?.scrollIntoView({ behavior: 'smooth' });
+  };
 
   return (
     <div className="plp-page">
-      {/* Breadcrumb */}
       <div className="bcrumb">
         <div className="bc-in">
           <div className="bc-l">
@@ -132,34 +302,55 @@ export default function RitualGuidesPage() {
         </div>
       </div>
 
-      {/* Hero Section */}
       <section className="chero rg">
         <div className="wrap max-w-[1280px] mx-auto px-4 md:px-10 w-full overflow-x-hidden">
           <div className="chero-in">
             <div>
               <p className="ch-ey">RITUAL GUIDES</p>
-              <h1 className="ch-h1">Every ritual, the right way</h1>
+
+              <h1 className="ch-h1">
+                Every ritual, the right way
+              </h1>
+
               <p className="ch-p">
-                The complete vidhi for festivals, vrats and life events — the steps, the story behind them, and a clear line between what scripture says and what your family does. Free, always.
+                The complete vidhi for festivals, vrats and life
+                events — the steps, the story behind them, and a
+                clear line between what scripture says and what your
+                family does. Free, always.
               </p>
+
               <div className="ch-meta">
-                <span className="ch-m"><b>34</b> guides live</span>
-                <span className="ch-m"><b>21</b> more by December</span>
-                <span className="ch-m"><b>4</b> sub-categories</span>
+                <span className="ch-m">
+                  <b>34</b> guides live
+                </span>
+
+                <span className="ch-m">
+                  <b>21</b> more by December
+                </span>
+
+                <span className="ch-m">
+                  <b>4</b> sub-categories
+                </span>
               </div>
             </div>
+
             <div className="ch-side">
-              <div className="chs-l">◔ NEW TO ALL OF THIS?</div>
-              <div className="chs-t">Start with Beginner's Guides</div>
+              <div className="chs-l">
+                ◔ NEW TO ALL OF THIS?
+              </div>
+
+              <div className="chs-t">
+                Start with Beginner's Guides
+              </div>
+
               <p className="chs-d">
-                No tags, no citations, no Sanskrit you have to look up. Just what to do.
+                No tags, no citations, no Sanskrit you have to look
+                up. Just what to do.
               </p>
+
               <button
                 className="chs-c"
-                onClick={() => {
-                  const beginnersSection = document.getElementById('beginners-guides');
-                  beginnersSection?.scrollIntoView({ behavior: 'smooth' });
-                }}
+                onClick={scrollToBeginners}
               >
                 Start here ›
               </button>
@@ -168,65 +359,87 @@ export default function RitualGuidesPage() {
         </div>
       </section>
 
-      {/* Filter Bar */}
       <div className="filters">
         <div className="f-in">
           <span className="f-l">FILTER</span>
-          {filters.map((f, i) => (
+
+          {filters.map((filter, index) => (
             <button
-              key={i}
-              className={`fc ${activeFilter === i ? 'on' : ''}`}
-              onClick={() => setActiveFilter(i)}
+              key={filter}
+              className={`fc ${activeFilter === index ? 'on' : ''}`}
+              onClick={() => setActiveFilter(index)}
             >
-              {f}
+              {filter}
             </button>
           ))}
+
           <span className="f-sort">
             Sort — <b>Date — soonest first</b> ▾
           </span>
         </div>
       </div>
 
-      {/* Main Content Stage */}
       <div className="wrap">
         <div className="pagepad">
-          {/* Beginner's Guides Section */}
           <div className="sec" id="beginners-guides">
-            <div className="sec-h">
-              <div>
-                <div className="sec-ey">START HERE</div>
-                <div className="sec-t">Beginner's Guides</div>
-                <p className="sec-s">
-                  Plain language, no citations, no Sanskrit to look up. Read in order — it takes about half an hour.
-                </p>
-              </div>
-              <Link className="sec-a" href="/ritual-guides/beginner-guides">
-                <span>{beginnerGuides.length} guides</span>View all ›
-              </Link>
-            </div>
+            <SectionHeader
+              eyebrow="START HERE"
+              title="Beginner's Guides"
+              description="Plain language, no citations, no Sanskrit to look up. Read in order — it takes about half an hour."
+              count={beginnerGuides.length}
+              href="/ritual-guides/beginner-guides"
+            />
 
             <div className="fcard">
               <div className="fc-l beg">
-                <span className="fc-tag">READ IN THIS ORDER</span>
-                <div className="fc-t">Nobody is born knowing the vidhi</div>
+                <span className="fc-tag">
+                  READ IN THIS ORDER
+                </span>
+
+                <div className="fc-t">
+                  Nobody is born knowing the vidhi
+                </div>
+
                 <p className="fc-d">
-                  {beginnerGuides.length} guides that assume nothing. What to buy, what to say, how long it takes, and what genuinely does not matter as much as you have been told.
+                  {beginnerGuides.length} guides that assume
+                  nothing. What to buy, what to say, how long it
+                  takes, and what genuinely does not matter as much
+                  as you have been told.
                 </p>
-                <Link className="fc-c" href={`/ritual-guides/${firstGuideSlug}`}>
+
+                <Link
+                  className="fc-c"
+                  href={`/ritual-guides/${firstGuideSlug}`}
+                >
                   Start at step 1 ›
                 </Link>
               </div>
+
               <div className="fc-r">
-                {beginnerGuides.map((guide, idx) => (
+                {beginnerGuides.map((guide, index) => (
                   <Link
                     className="fc-i"
                     href={`/ritual-guides/${guide.slug}`}
-                    key={guide.id || guide.slug || idx}
+                    key={
+                      guide.id ||
+                      guide.slug ||
+                      `beginner-${index}`
+                    }
                   >
                     <span>
-                      <span className="fc-in">{idx + 1} · {guide.title || guide.guideTitle || guide.bannerTitle}</span>
-                      <span className="fc-is">{guide.subtitle || guide.guideSubtitle || guide.bannerEyebrow || guide.category || 'Guide'}</span>
+                      <span className="fc-in">
+                        {index + 1} · {getGuideTitle(guide)}
+                      </span>
+
+                      <span className="fc-is">
+                        {guide.subtitle ||
+                          guide.guideSubtitle ||
+                          guide.bannerEyebrow ||
+                          guide.category ||
+                          'Guide'}
+                      </span>
                     </span>
+
                     <span className="fc-ia">›</span>
                   </Link>
                 ))}
@@ -234,425 +447,317 @@ export default function RitualGuidesPage() {
             </div>
           </div>
 
-          {/* Festive Pujans Section */}
           <div className="sec" id="festive-pujans">
-            <div className="sec-h">
-              <div>
-                <div className="sec-ey">FIXED TO A TITHI</div>
-
-                <div className="sec-t">Festive Pujans</div>
-
-                <p className="sec-s">
-                  The date moves each year because it follows the lunar calendar, not the Gregorian one. Every guide states both.
-                </p>
-              </div>
-
-              <Link
-                className="sec-a"
-                href="/ritual-guides/articles?tab=rg"
-              >
-                <span>{festivePujans.length} guides</span>View all ›
-              </Link>
-            </div>
+            <SectionHeader
+              eyebrow="FIXED TO A TITHI"
+              title="Festive Pujans"
+              description="The date moves each year because it follows the lunar calendar, not the Gregorian one. Every guide states both."
+              count={festivePujans.length}
+              href="/ritual-guides/articles?tab=rg"
+            />
 
             <div className="grid">
-              {/* <Link className="c" href="/ritual-guides/hartalika-teej">
-                <div className="c-top h-teej">
-                  <span className="c-when now">IN 6 DAYS</span>
-                </div>
-
-                <div className="c-b">
-                  <div className="c-t">Hartalika Teej</div>
-                  <div className="c-d">13 September</div>
-
-                  <p className="c-s">
-                    The sand Shivalinga, the night vigil, and why this is a different vrat from Hariyali Teej.
-                  </p>
-
-                  <div className="c-f">
-                    <span className="pill d">DHARMA · 4/5</span>
-                    <span className="c-read">9 min</span>
-                  </div>
-                </div>
-
-                <div className="myth">
-                  <b>Corrects:</b> "Nirjala or the vrat doesn’t count."
-                </div>
-              </Link>
-
-
-              <Link className="c" href="/ritual-guides/ganesh-chaturthi">
-                <div className="c-top h-ganesh">
-                  <span className="c-when now">IN 7 DAYS</span>
-                </div>
-
-                <div className="c-b">
-                  <div className="c-t">Ganesh Chaturthi</div>
-                  <div className="c-d">14 September</div>
-
-                  <p className="c-s">
-                    Prana pratishtha at the Madhyahna muhurat, and what a pandit is genuinely for.
-                  </p>
-
-                  <div className="c-f">
-                    <span className="pill d">DHARMA · 4/5</span>
-                    <span className="c-read">11 min</span>
-                  </div>
-                </div>
-
-                <div className="myth">
-                  <b>Corrects:</b> "Only a pandit can perform this."
-                </div>
-              </Link> */}
-              {festivePujans.map((guide: any, idx: number) => (
-                <Link
-                  className="c"
-                  href={`/ritual-guides/${guide.slug}`}
-                  key={guide.id || guide.slug || `festive-${idx}`}
-                >
-                  <div
-                    className={`c-top ${guide.imageClass ||
-                      (idx % 3 === 0
-                        ? 'h-teej'
-                        : idx % 3 === 1
-                          ? 'h-ganesh'
-                          : 'h-devi')
-                      }`}
-                    style={
-                      guide.kathaImage
-                        ? {
-                          backgroundImage: `url("${guide.kathaImage}")`,
-                          backgroundSize: 'cover',
-                          backgroundPosition: 'center',
-                          backgroundRepeat: 'no-repeat',
-                        }
-                        : undefined
-                    }
-                  >
-                    <span className="c-when">
-                      {guide.date || guide.festivalName || ''}
-                    </span>
-                  </div>
-
-                  <div className="c-b">
-                    <div className="c-t">
-                      {guide.title || guide.bannerTitle || ''}
-                    </div>
-
-                    <div className="c-d">
-                      {guide.festivalName || guide.bannerDate || guide.date || ''}
-                    </div>
-
-                    <p className="c-s">
-                      {guide.guideSubtitle ||
-                        guide.description ||
-                        guide.bannerSubtitle ||
-                        ''}
-                    </p>
-
-                    <div className="c-f">
-                      <span className="pill d">
-                        {guide.badge || 'DHARMA · 4/5'}
-                      </span>
-
-                      <span className="c-read">
-                        {guide.readTime || '9 min'}
-                      </span>
-                    </div>
-                  </div>
-
-                  {guide.correction && (
-                    <div className="myth">
-                      <b>Corrects:</b> "{guide.correction}"
-                    </div>
-                  )}
-                </Link>
+              {festivePujans.map((guide, index) => (
+                <RitualCard
+                  key={
+                    guide.id ||
+                    guide.slug ||
+                    `festive-${index}`
+                  }
+                  guide={guide}
+                  fallbackClass="h-teej"
+                  index={index}
+                  variant="festive"
+                />
               ))}
-
             </div>
           </div>
 
-
-          {/* All-Year Pujans Section */}
           <div className="sec" id="all-year-pujans">
-            <div className="sec-h">
-              <div>
-                <div className="sec-ey">NOT TIED TO ONE DATE</div>
-                <div className="sec-t">All-Year Pujans</div>
-                <p className="sec-s">
-                  Recurring observances and household rituals. Kept when the household needs them, not when the calendar says so.
-                </p>
-              </div>
-              <Link className="sec-a" href="/ritual-guides/articles?tab=rg">
-                <span>{allYearPujans.length} guides</span>View all ›
-              </Link>
-            </div>
+            <SectionHeader
+              eyebrow="NOT TIED TO ONE DATE"
+              title="All-Year Pujans"
+              description="Recurring observances and household rituals. Kept when the household needs them, not when the calendar says so."
+              count={allYearPujans.length}
+              href="/ritual-guides/articles?tab=rg"
+            />
 
             <div className="grid">
-              <Link className="c" href="/ritual-guides/sawan-somwar">
+              <Link
+                className="c"
+                href="/ritual-guides/sawan-somwar"
+              >
                 <div className="c-top h-shiva"></div>
+
                 <div className="c-b">
-                  <div className="c-t">Sawan Somwar Vrat</div>
-                  <div className="c-d">Every Monday of Shravan</div>
+                  <div className="c-t">
+                    Sawan Somwar Vrat
+                  </div>
+
+                  <div className="c-d">
+                    Every Monday of Shravan
+                  </div>
+
                   <p className="c-s">
-                    Jalabhishek, the bilva offering, and the fasting forms that are genuinely accepted.
+                    Jalabhishek, the bilva offering, and the
+                    fasting forms that are genuinely accepted.
                   </p>
+
                   <div className="c-f">
-                    <span className="pill d">DHARMA · 4/5</span>
+                    <span className="pill d">
+                      DHARMA · 4/5
+                    </span>
+
                     <span className="c-read">12 min</span>
                   </div>
                 </div>
+
                 <div className="myth">
-                  <b>Corrects:</b> "Missing one Monday invalidates all of them."
+                  <b>Corrects:</b> "Missing one Monday
+                  invalidates all of them."
                 </div>
               </Link>
 
-              <Link className="c" href="/ritual-guides/sundarkand-path">
+              <Link
+                className="c"
+                href="/ritual-guides/sundarkand-path"
+              >
                 <div className="c-top h-earth"></div>
+
                 <div className="c-b">
-                  <div className="c-t">Sundarkand Path</div>
-                  <div className="c-d">Most often on Tuesday</div>
+                  <div className="c-t">
+                    Sundarkand Path
+                  </div>
+
+                  <div className="c-d">
+                    Most often on Tuesday
+                  </div>
+
                   <p className="c-s">
-                    The fifth kanda, recited at home. What you need, how long it takes, and the parts people skip.
+                    The fifth kanda, recited at home. What you
+                    need, how long it takes, and the parts people
+                    skip.
                   </p>
+
                   <div className="c-f">
-                    <span className="pill d">DHARMA · 4/5</span>
+                    <span className="pill d">
+                      DHARMA · 4/5
+                    </span>
+
                     <span className="c-read">13 min</span>
                   </div>
                 </div>
               </Link>
 
-              <Link className="c" href="/ritual-guides/satyanarayan-katha">
+              <Link
+                className="c"
+                href="/ritual-guides/satyanarayan-katha"
+              >
                 <div className="c-top h-vishnu"></div>
+
                 <div className="c-b">
-                  <div className="c-t">Satyanarayan Katha</div>
-                  <div className="c-d">Purnima, or any auspicious day</div>
+                  <div className="c-t">
+                    Satyanarayan Katha
+                  </div>
+
+                  <div className="c-d">
+                    Purnima, or any auspicious day
+                  </div>
+
                   <p className="c-s">
-                    The five-chapter katha, the prasad, and why this is the most performed household puja in North India.
+                    The five-chapter katha, the prasad, and why
+                    this is the most performed household puja in
+                    North India.
                   </p>
+
                   <div className="c-f">
-                    <span className="pill d">DHARMA · 4/5</span>
+                    <span className="pill d">
+                      DHARMA · 4/5
+                    </span>
+
                     <span className="c-read">14 min</span>
                   </div>
                 </div>
               </Link>
 
-              {allYearPujans.map((guide: any, idx: number) => (
-                <Link
-                  className="c"
-                  href={`/ritual-guides/${guide.slug}`}
-                  key={guide.id || guide.slug || `allyear-${idx}`}
-                >
-                  <div
-                    className={`c-top ${guide.imageClass ||
-                      (idx % 3 === 0
-                        ? 'h-shiva'
-                        : idx % 3 === 1
-                          ? 'h-earth'
-                          : 'h-vishnu')
-                      }`}
-                    style={
-                      guide.kathaImage
-                        ? {
-                          backgroundImage: `url("${guide.kathaImage}")`,
-                          backgroundSize: 'cover',
-                          backgroundPosition: 'center',
-                          backgroundRepeat: 'no-repeat',
-                        }
-                        : undefined
-                    }
-                  >
-                    <span className="c-when">
-                      {guide.date || guide.festivalName || ''}
-                    </span>
-                  </div>
-
-                  <div className="c-b">
-                    <div className="c-t">
-                      {guide.title || guide.bannerTitle || ''}
-                    </div>
-
-                    <div className="c-d">
-                      {guide.festivalName || guide.bannerDate || guide.date || ''}
-                    </div>
-
-                    <p className="c-s">
-                      {guide.guideSubtitle ||
-                        guide.description ||
-                        guide.bannerSubtitle ||
-                        ''}
-                    </p>
-
-                    <div className="c-f">
-                      <span className="pill d">
-                        {guide.badge || 'DHARMA · 4/5'}
-                      </span>
-
-                      <span className="c-read">
-                        {guide.readTime || '9 min'}
-                      </span>
-                    </div>
-                  </div>
-
-                  {guide.correction && (
-                    <div className="myth">
-                      <b>Corrects:</b> "{guide.correction}"
-                    </div>
-                  )}
-                </Link>
+              {allYearPujans.map((guide, index) => (
+                <RitualCard
+                  key={
+                    guide.id ||
+                    guide.slug ||
+                    `allyear-${index}`
+                  }
+                  guide={guide}
+                  fallbackClass="h-shiva"
+                  index={index}
+                  variant="allYear"
+                />
               ))}
             </div>
           </div>
 
-          {/* Sanskar & Life Events Section */}
           <div className="sec" id="sanskar-life-events">
-            <div className="sec-h">
-              <div>
-                <div className="sec-ey">ONCE IN A LIFE</div>
-                <div className="sec-t">Sanskar &amp; Life Events</div>
-                <p className="sec-s">
-                  The sixteen sacraments, from before birth to after death. Written with care, and without fear.
-                </p>
-              </div>
-              <Link className="sec-a" href="/ritual-guides/articles?tab=rg">
-                <span>{sanskarEvents.length} guides</span>View all ›
-              </Link>
-            </div>
+            <SectionHeader
+              eyebrow="ONCE IN A LIFE"
+              title="Sanskar & Life Events"
+              description="The sixteen sacraments, from before birth to after death. Written with care, and without fear."
+              count={sanskarEvents.length}
+              href="/ritual-guides/articles?tab=rg"
+            />
 
             <div className="grid">
-              <Link className="c" href="/ritual-guides/naamkaran">
+              <Link
+                className="c"
+                href="/ritual-guides/naamkaran"
+              >
                 <div className="c-top h-sanskar"></div>
+
                 <div className="c-b">
                   <div className="c-t">Naamkaran</div>
-                  <div className="c-d">Birth &amp; childhood</div>
+
+                  <div className="c-d">
+                    Birth &amp; childhood
+                  </div>
+
                   <p className="c-s">
-                    Naming the child. When it is done, who does it, and what the ceremony actually requires.
+                    Naming the child. When it is done, who does
+                    it, and what the ceremony actually requires.
                   </p>
+
                   <div className="c-f">
-                    <span className="pill d">DHARMA · 5/5</span>
+                    <span className="pill d">
+                      DHARMA · 5/5
+                    </span>
+
                     <span className="c-read">10 min</span>
                   </div>
                 </div>
               </Link>
 
-              <Link className="c" href="/ritual-guides/griha-pravesh">
+              <Link
+                className="c"
+                href="/ritual-guides/griha-pravesh"
+              >
                 <div className="c-top h-sanskar"></div>
+
                 <div className="c-b">
                   <div className="c-t">Griha Pravesh</div>
-                  <div className="c-d">Home &amp; space</div>
+
+                  <div className="c-d">
+                    Home &amp; space
+                  </div>
+
                   <p className="c-s">
-                    Entering a new home. The kalash, the boiling of milk, and the muhurat that matters.
+                    Entering a new home. The kalash, the boiling
+                    of milk, and the muhurat that matters.
                   </p>
+
                   <div className="c-f">
-                    <span className="pill d">DHARMA · 4/5</span>
+                    <span className="pill d">
+                      DHARMA · 4/5
+                    </span>
+
                     <span className="c-read">12 min</span>
                   </div>
                 </div>
               </Link>
 
-              <Link className="c" href="/ritual-guides/shraddha">
+              <Link
+                className="c"
+                href="/ritual-guides/shraddha"
+              >
                 <div className="c-top h-sanskar"></div>
+
                 <div className="c-b">
-                  <div className="c-t">Shraddha &amp; Pitru Karma</div>
-                  <div className="c-d">End of life</div>
+                  <div className="c-t">
+                    Shraddha &amp; Pitru Karma
+                  </div>
+
+                  <div className="c-d">
+                    End of life
+                  </div>
+
                   <p className="c-s">
-                    Tarpan, the sixteen days of Pitru Paksha, and what is asked of the one performing it.
+                    Tarpan, the sixteen days of Pitru Paksha,
+                    and what is asked of the one performing it.
                   </p>
+
                   <div className="c-f">
-                    <span className="pill d">DHARMA · 5/5</span>
+                    <span className="pill d">
+                      DHARMA · 5/5
+                    </span>
+
                     <span className="c-read">16 min</span>
                   </div>
                 </div>
+
                 <div className="myth">
-                  <b>Corrects:</b> "Skipping shraddha harms the departed."
+                  <b>Corrects:</b> "Skipping shraddha harms the
+                  departed."
                 </div>
               </Link>
 
-              {sanskarEvents.map((guide: any, idx: number) => (
-                <Link
-                  className="c"
-                  href={`/ritual-guides/${guide.slug}`}
-                  key={guide.id || guide.slug || `sanskar-${idx}`}
-                >
-                  <div
-                    className={`c-top ${guide.imageClass || 'h-sanskar'}`}
-                    style={
-                      guide.kathaImage
-                        ? {
-                          backgroundImage: `url("${guide.kathaImage}")`,
-                          backgroundSize: 'cover',
-                          backgroundPosition: 'center',
-                          backgroundRepeat: 'no-repeat',
-                        }
-                        : undefined
-                    }
-                  >
-                    <span className="c-when">
-                      {guide.date || guide.festivalName || ''}
-                    </span>
-                  </div>
-
-                  <div className="c-b">
-                    <div className="c-t">
-                      {guide.title || guide.bannerTitle || ''}
-                    </div>
-
-                    <div className="c-d">
-                      {guide.festivalName || guide.bannerDate || guide.date || ''}
-                    </div>
-
-                    <p className="c-s">
-                      {guide.guideSubtitle ||
-                        guide.description ||
-                        guide.bannerSubtitle ||
-                        ''}
-                    </p>
-
-                    <div className="c-f">
-                      <span className="pill d">
-                        {guide.badge || 'DHARMA · 4/5'}
-                      </span>
-
-                      <span className="c-read">
-                        {guide.readTime || '9 min'}
-                      </span>
-                    </div>
-                  </div>
-
-                  {guide.correction && (
-                    <div className="myth">
-                      <b>Corrects:</b> "{guide.correction}"
-                    </div>
-                  )}
-                </Link>
+              {sanskarEvents.map((guide, index) => (
+                <RitualCard
+                  key={
+                    guide.id ||
+                    guide.slug ||
+                    `sanskar-${index}`
+                  }
+                  guide={guide}
+                  fallbackClass="h-sanskar"
+                  index={index}
+                  variant="sanskar"
+                />
               ))}
             </div>
           </div>
 
-          {/* Editorial Method Band */}
           <div className="methodband">
             <div>
-              <div className="mb-ey">HOW WE DECIDE WHAT IS TRUE</div>
-              <div className="mb-t">Every badge on this page means something specific</div>
+              <div className="mb-ey">
+                HOW WE DECIDE WHAT IS TRUE
+              </div>
+
+              <div className="mb-t">
+                Every badge on this page means something specific
+              </div>
+
               <p className="mb-p">
-                Dharma, Pratha or Bhranti — with a confidence score you can check. If we cannot name the text a reader could open, we do not make the claim.
+                Dharma, Pratha or Bhranti — with a confidence score
+                you can check. If we cannot name the text a reader
+                could open, we do not make the claim.
               </p>
-              <Link className="mb-c" href="/editorial-method">
+
+              <Link
+                className="mb-c"
+                href="/editorial-method"
+              >
                 Read our editorial method ›
               </Link>
             </div>
+
             <div className="mb-r">
               <div className="mbr d">
                 <div className="mbr-k">DHARMA</div>
-                <div className="mbr-v">Named in a text you could open yourself.</div>
+                <div className="mbr-v">
+                  Named in a text you could open yourself.
+                </div>
               </div>
+
               <div className="mbr p">
                 <div className="mbr-k">PRATHA</div>
-                <div className="mbr-v">Regional or family custom. Real — not scripture.</div>
+                <div className="mbr-v">
+                  Regional or family custom. Real — not scripture.
+                </div>
               </div>
+
               <div className="mbr b">
                 <div className="mbr-k">BHRANTI</div>
-                <div className="mbr-v">A misconception. Corrected in every guide it appears in.</div>
+                <div className="mbr-v">
+                  A misconception. Corrected in every guide it
+                  appears in.
+                </div>
               </div>
             </div>
           </div>

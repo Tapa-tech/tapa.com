@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import './concepts.css';
@@ -10,7 +10,7 @@ interface Concept {
   title?: string;
   slug?: string;
   category?: string;
-  body?: any;
+  body?: unknown;
   status?: string;
   summary?: string;
   deity?: string;
@@ -18,8 +18,12 @@ interface Concept {
   myth?: string;
   correction?: string;
   threeStoriesGalleryJson?: string;
+  storiesItemsJson?: string;
+  bannerRating?: string;
+  rating?: string;
+  bannerClassification?: string;
+  classification?: string;
 }
-
 
 const CATEGORY_MATCHERS: Record<string, string[]> = {
   materials: ['materials'],
@@ -29,7 +33,7 @@ const CATEGORY_MATCHERS: Record<string, string[]> = {
   mantras: ['mantras', 'mantra'],
 };
 
-function matchesCategory(concept: any, key: keyof typeof CATEGORY_MATCHERS) {
+function matchesCategory(concept: Concept, key: keyof typeof CATEGORY_MATCHERS) {
   const cat = (concept.category || '').toString().trim().toLowerCase();
   const match = CATEGORY_MATCHERS[key].some((m) => cat.includes(m) || m.includes(cat));
   if (match) return true;
@@ -43,7 +47,7 @@ function matchesCategory(concept: any, key: keyof typeof CATEGORY_MATCHERS) {
   return false;
 }
 
-function parseFirstStoryImage(concept: any): string {
+function parseFirstStoryImage(concept: Concept): string {
   try {
     const stories = JSON.parse(concept.storiesItemsJson || '[]');
     const first = Array.isArray(stories) ? stories[0] : null;
@@ -53,9 +57,7 @@ function parseFirstStoryImage(concept: any): string {
   }
 }
 
-// DHARMA rating pill + Classification pill (PURANIC, SHASTRA, etc.) — dono
-// backend field se dynamically banaye jaate hain, jaisa static cards me hai.
-function buildPills(concept: any): [string, string][] {
+function buildPills(concept: Concept): [string, string][] {
   const pills: [string, string][] = [];
 
   const rating = concept.bannerRating || concept.rating || '4/5';
@@ -211,7 +213,7 @@ export default function DharmicConceptsPage() {
 
   return (
     <div className="concepts-page min-h-screen w-full max-w-full overflow-x-hidden">
-      { }
+
       <div className="bcrumb">
         <div className="bc-in">
           <div className="bc-l">
@@ -220,7 +222,7 @@ export default function DharmicConceptsPage() {
         </div>
       </div>
 
-      { }
+
       <section className="chero dc">
         <div className="wrap max-w-[1280px] mx-auto px-4 md:px-10 w-full overflow-x-hidden">
           <div className="chero-in">
@@ -251,7 +253,7 @@ export default function DharmicConceptsPage() {
         </div>
       </section>
 
-      { }
+
       <div className="filters">
         <div className="f-in">
           <span className="f-l">FILTER</span>
@@ -270,10 +272,10 @@ export default function DharmicConceptsPage() {
         </div>
       </div>
 
-      { }
+
       <div className="wrap max-w-[1280px] mx-auto px-4 md:px-10 w-full overflow-x-hidden">
         <div className="pagepad">
-          { }
+    
           <div className="sec">
             <div className="sec-h">
               <div>
@@ -374,7 +376,7 @@ export default function DharmicConceptsPage() {
             </div>
           </div>
 
-          { }
+    
           <div className="sec">
             <div className="sec-h">
               <div>
@@ -505,7 +507,7 @@ export default function DharmicConceptsPage() {
             </div>
           </div>
 
-          { }
+    
           <div className="sec">
             <div className="sec-h">
               <div>
@@ -550,7 +552,7 @@ export default function DharmicConceptsPage() {
             </div>
           </div>
 
-          { }
+    
           <div className="sec">
             <div className="sec-h">
               <div>
@@ -633,7 +635,7 @@ export default function DharmicConceptsPage() {
             </div>
           </div>
 
-          { }
+    
           <div className="sec">
             <div className="sec-h">
               <div>
@@ -680,7 +682,7 @@ export default function DharmicConceptsPage() {
         </div>
       </div>
 
-      { }
+
       <div className="wrap max-w-[1280px] mx-auto px-4 md:px-10 w-full overflow-x-hidden">
         <div className="methodband">
           <div>

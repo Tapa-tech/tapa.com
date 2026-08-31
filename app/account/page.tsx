@@ -37,14 +37,14 @@ function AccountDashboardContent() {
   const { data: session, status } = useSession();
   const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'profile'>('overview');
 
-  // Profile State
+
   const [profile, setProfile] = useState<{ name: string; email: string; phone: string; role: string } | null>(null);
   const [editingProfile, setEditingProfile] = useState(false);
   const [nameInput, setNameInput] = useState('');
   const [profileMessage, setProfileMessage] = useState<string | null>(null);
   const [profileLoading, setProfileLoading] = useState(false);
 
-  // Orders State
+
   const [orders, setOrders] = useState<Order[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -104,8 +104,8 @@ function AccountDashboardContent() {
       } else {
         setProfileMessage(data.error || 'Failed to update profile.');
       }
-    } catch (err: any) {
-      setProfileMessage(err.message || 'Error updating profile.');
+    } catch (err: unknown) {
+      setProfileMessage(err instanceof Error ? err.message : 'Error updating profile.');
     } finally {
       setProfileLoading(false);
     }
@@ -129,8 +129,8 @@ function AccountDashboardContent() {
       } else {
         setActionMessage(data.error || 'Failed to cancel order.');
       }
-    } catch (err: any) {
-      setActionMessage(err.message || 'Error cancelling order.');
+    } catch (err: unknown) {
+      setActionMessage(err instanceof Error ? err.message : 'Error cancelling order.');
     } finally {
       setCancellingOrderId(null);
     }
@@ -172,31 +172,28 @@ function AccountDashboardContent() {
         Manage your account details, track live Ritual Kit orders, and update personal preferences.
       </p>
 
-      {/* NAVIGATION TABS */}
+
       <div className="flex border-b border-[var(--border)] mb-8 gap-6 overflow-x-auto">
         <button
           type="button"
-          className={`pb-3 text-xs font-bold cursor-pointer border-b-2 whitespace-nowrap transition-colors ${
-            activeTab === 'overview' ? 'border-[var(--pink)] text-[var(--pink)]' : 'border-transparent text-[var(--sub-text)] hover:text-[var(--text)]'
-          }`}
+          className={`pb-3 text-xs font-bold cursor-pointer border-b-2 whitespace-nowrap transition-colors ${activeTab === 'overview' ? 'border-[var(--pink)] text-[var(--pink)]' : 'border-transparent text-[var(--sub-text)] hover:text-[var(--text)]'
+            }`}
           onClick={() => { setActiveTab('overview'); setSelectedOrder(null); }}
         >
           📊 Dashboard Overview
         </button>
         <button
           type="button"
-          className={`pb-3 text-xs font-bold cursor-pointer border-b-2 whitespace-nowrap transition-colors ${
-            activeTab === 'orders' ? 'border-[var(--pink)] text-[var(--pink)]' : 'border-transparent text-[var(--sub-text)] hover:text-[var(--text)]'
-          }`}
+          className={`pb-3 text-xs font-bold cursor-pointer border-b-2 whitespace-nowrap transition-colors ${activeTab === 'orders' ? 'border-[var(--pink)] text-[var(--pink)]' : 'border-transparent text-[var(--sub-text)] hover:text-[var(--text)]'
+            }`}
           onClick={() => { setActiveTab('orders'); setSelectedOrder(null); }}
         >
           📦 My Orders ({orders.length})
         </button>
         <button
           type="button"
-          className={`pb-3 text-xs font-bold cursor-pointer border-b-2 whitespace-nowrap transition-colors ${
-            activeTab === 'profile' ? 'border-[var(--pink)] text-[var(--pink)]' : 'border-transparent text-[var(--sub-text)] hover:text-[var(--text)]'
-          }`}
+          className={`pb-3 text-xs font-bold cursor-pointer border-b-2 whitespace-nowrap transition-colors ${activeTab === 'profile' ? 'border-[var(--pink)] text-[var(--pink)]' : 'border-transparent text-[var(--sub-text)] hover:text-[var(--text)]'
+            }`}
           onClick={() => setActiveTab('profile')}
         >
           👤 My Profile
@@ -216,10 +213,10 @@ function AccountDashboardContent() {
         </div>
       )}
 
-      {/* TAB 1: OVERVIEW */}
+
       {activeTab === 'overview' && (
         <div className="space-y-8">
-          {/* STATS CARDS */}
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-white border border-[var(--border)] rounded-2xl p-6 shadow-sm">
               <div className="text-[10px] font-bold text-[var(--sub-text)] uppercase tracking-wider mb-1">TOTAL ORDERS</div>
@@ -257,7 +254,7 @@ function AccountDashboardContent() {
             </div>
           </div>
 
-          {/* RECENT ORDERS QUICK PREVIEW */}
+
           <div className="bg-white border border-[var(--border)] rounded-2xl p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4 pb-3 border-b border-[var(--border)]">
               <h3 className="font-serif text-lg font-bold text-[var(--text)]">Recent Orders</h3>
@@ -292,11 +289,10 @@ function AccountDashboardContent() {
                       </div>
                     </div>
                     <div>
-                      <span className={`inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
-                        order.orderStatus === 'CANCELLED' || order.orderStatus === 'CANCELLATION_REQUESTED'
-                          ? 'bg-amber-100 text-amber-800'
-                          : 'bg-emerald-100 text-emerald-800'
-                      }`}>
+                      <span className={`inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-full ${order.orderStatus === 'CANCELLED' || order.orderStatus === 'CANCELLATION_REQUESTED'
+                        ? 'bg-amber-100 text-amber-800'
+                        : 'bg-emerald-100 text-emerald-800'
+                        }`}>
                         {order.orderStatus}
                       </span>
                     </div>
@@ -316,7 +312,7 @@ function AccountDashboardContent() {
         </div>
       )}
 
-      {/* TAB 2: MY ORDERS & ORDER DETAILS */}
+
       {activeTab === 'orders' && (
         <div>
           {selectedOrder ? (
@@ -338,17 +334,16 @@ function AccountDashboardContent() {
                   </span>
                 </div>
                 <div className="text-right">
-                  <span className={`inline-block text-[11px] font-bold px-3 py-1 rounded-full ${
-                    selectedOrder.orderStatus === 'CANCELLED' || selectedOrder.orderStatus === 'CANCELLATION_REQUESTED'
-                      ? 'bg-amber-100 text-amber-800'
-                      : 'bg-emerald-100 text-emerald-800'
-                  }`}>
+                  <span className={`inline-block text-[11px] font-bold px-3 py-1 rounded-full ${selectedOrder.orderStatus === 'CANCELLED' || selectedOrder.orderStatus === 'CANCELLATION_REQUESTED'
+                    ? 'bg-amber-100 text-amber-800'
+                    : 'bg-emerald-100 text-emerald-800'
+                    }`}>
                     STATUS: {selectedOrder.orderStatus}
                   </span>
                 </div>
               </div>
 
-              {/* ITEMS */}
+
               <h3 className="text-xs font-bold text-[var(--text)] uppercase tracking-wider mb-3">Order Items</h3>
               <div className="divide-y divide-[var(--border)] mb-6 border border-[var(--border)] rounded-xl overflow-hidden">
                 {selectedOrder.items?.map((item) => (
@@ -362,7 +357,7 @@ function AccountDashboardContent() {
                 ))}
               </div>
 
-              {/* SUMMARY */}
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-[var(--bg)] p-4 rounded-xl text-xs mb-6 border border-[var(--border)]">
                 <div>
                   <div className="font-bold text-[var(--text)] mb-1">Delivery Address</div>
@@ -381,7 +376,7 @@ function AccountDashboardContent() {
                 </div>
               </div>
 
-              {/* CANCELLATION ACTION */}
+
               {['PLACED', 'CONFIRMED', 'PENDING'].includes(selectedOrder.orderStatus) && (
                 <div className="pt-2">
                   <button
@@ -418,11 +413,10 @@ function AccountDashboardContent() {
                     </div>
                   </div>
                   <div>
-                    <span className={`inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
-                      order.orderStatus === 'CANCELLED' || order.orderStatus === 'CANCELLATION_REQUESTED'
-                        ? 'bg-amber-100 text-amber-800'
-                        : 'bg-emerald-100 text-emerald-800'
-                    }`}>
+                    <span className={`inline-block text-[10px] font-bold px-2.5 py-0.5 rounded-full ${order.orderStatus === 'CANCELLED' || order.orderStatus === 'CANCELLATION_REQUESTED'
+                      ? 'bg-amber-100 text-amber-800'
+                      : 'bg-emerald-100 text-emerald-800'
+                      }`}>
                       {order.orderStatus}
                     </span>
                   </div>
@@ -455,7 +449,7 @@ function AccountDashboardContent() {
         </div>
       )}
 
-      {/* TAB 3: MY PROFILE */}
+
       {activeTab === 'profile' && (
         <div className="max-w-xl bg-white border border-[var(--border)] rounded-2xl p-6 shadow-sm">
           <h3 className="font-serif text-lg font-bold text-[var(--text)] mb-4">Personal Details</h3>
@@ -490,7 +484,7 @@ function AccountDashboardContent() {
               <label className="block font-bold text-[var(--text)] mb-1">Account Role</label>
               <input
                 type="text"
-                value={profile?.role || (session?.user as any)?.role || 'CUSTOMER'}
+                value={profile?.role || (session?.user as Record<string, unknown>)?.role as string || 'CUSTOMER'}
                 disabled
                 className="w-full p-2.5 bg-[var(--bg)] border border-[var(--border)] rounded-xl outline-none opacity-60 cursor-not-allowed font-bold"
               />

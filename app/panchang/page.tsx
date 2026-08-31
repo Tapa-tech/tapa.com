@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { MONTH_NAMES, getCountdownStatus, type ObservanceItem } from '@/lib/vrat-calendar-data';
 import './panchang.css';
@@ -53,7 +53,7 @@ export default function PanchangPage() {
         setLivePanchang(today);
         setVratCalendar(calendar);
       })
-      .catch((err) => console.error('Panchang fetch failed', err))
+      .catch((err: unknown) => console.error('Panchang fetch failed', err))
       .finally(() => setLoading(false));
   }, []);
 

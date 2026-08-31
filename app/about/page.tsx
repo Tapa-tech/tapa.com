@@ -1,163 +1,94 @@
-import React from 'react';
 import WorkWithUsForms from '@/components/WorkWithUs/WorkWithUsForms';
+import './about.css';
+
 
 const komalImg = 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=80';
 const whyImg = 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=1200&q=80';
-
-const ABOUT_STYLES = `
-.ahero { background: var(--darkbar); position: relative; overflow: hidden; }
-.ahero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 60% 85% at 80% 35%, rgba(232,160,32,.10) 0%, transparent 64%); }
-.film { position: relative; height: 300px; border-bottom: 1px solid rgba(255,255,255,.08); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
-.film video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.film-logo { height: 168px; width: auto; display: block; }
-.film-spec { font-size: 9.5px; letter-spacing: 1.2px; color: var(--dimmer); }
-.ahero-in { position: relative; padding: 34px 0 36px; max-width: 720px; }
-.ah-ey { font-size: 10px; color: #E3B567; letter-spacing: 1px; margin-bottom: 11px; }
-.ah-h1 { font-size: 40px; font-weight: 700; color: var(--hero-text); line-height: 1.1; letter-spacing: -.9px; margin-bottom: 13px; }
-.ah-stand { font-size: 17px; font-weight: 600; color: var(--hero-text); line-height: 1.6; margin-bottom: 14px; }
-.ah-p { font-size: 15px; color: #C4A882; line-height: 1.85; margin-bottom: 11px; }
-.ah-pull { font-size: 19px; font-weight: 700; color: var(--pink); line-height: 1.45; margin-top: 20px; }
-
-.sec { padding: 34px 0 6px; }
-.sec-h { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
-.sec-n { font-size: 10.5px; font-weight: 700; color: var(--gold); letter-spacing: .7px; background: var(--p-bg); border: 1px solid var(--p-bd); border-radius: 6px; padding: 4px 9px; flex-shrink: 0; }
-.sec-t { font-size: 26px; font-weight: 700; color: var(--dark); line-height: 1.25; letter-spacing: -.5px; }
-.sec-t .chip { font-size: 11px; font-weight: 700; letter-spacing: .5px; padding: 4px 10px; border-radius: 6px; background: var(--pink); color: #fff; vertical-align: middle; margin-left: 9px; }
-.sec-t .chip.soon { background: var(--b-bg); color: var(--b-tx); border: 1px solid var(--b-bd); }
-.sec-r { flex: 1; height: 1px; background: var(--border); }
-
-.col { max-width: 860px; }
-.pane { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px 26px; }
-.pane p { font-size: 14.5px; line-height: 1.85; color: var(--body-text); margin-bottom: 12px; }
-.pane p:last-child { margin-bottom: 0; }
-.pane .stand { font-size: 16px; font-weight: 600; color: var(--dark); line-height: 1.6; margin-bottom: 14px; }
-.pane h3 { font-size: 15px; font-weight: 700; color: var(--dark); margin: 20px 0 10px; }
-.pane h3:first-child { margin-top: 0; }
-.dev { font-family: 'Tiro Devanagari Hindi', 'Noto Sans Devanagari', serif; }
-
-.tray { background: var(--card); border: 1px solid var(--border); border-radius: 16px; margin-top: 12px; overflow: hidden; }
-.tray > summary { list-style: none; cursor: pointer; padding: 16px 20px; display: flex; align-items: center; gap: 14px; font-size: 15px; font-weight: 700; color: var(--dark); }
-.tray > summary::-webkit-details-marker { display: none; }
-.tray > summary:hover { background: var(--p-bg); }
-.tr-av { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; object-position: 50% 22%; flex-shrink: 0; border: 1.5px solid var(--p-bd); }
-.tr-sub { display: block; font-size: 11.5px; font-weight: 500; color: var(--sub-text); margin-top: 2px; }
-.tr-x { margin-left: auto; width: 28px; height: 28px; border-radius: 8px; border: 1.5px solid var(--p-bd); color: var(--gold); display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; transition: transform .2s; }
-.tray[open] .tr-x { transform: rotate(180deg); }
-.tr-body { padding: 4px 20px 24px; border-top: 1px solid var(--border-light); }
-.letter { padding-top: 18px; max-width: 660px; }
-.lt-head { display: flex; align-items: center; gap: 15px; padding-bottom: 16px; margin-bottom: 18px; border-bottom: 1px solid var(--border-light); }
-.lt-port { width: 66px; height: 66px; border-radius: 50%; object-fit: cover; object-position: 50% 20%; flex-shrink: 0; border: 2px solid var(--p-bd); }
-.lt-who b { display: block; font-size: 15.5px; color: var(--dark); line-height: 1.3; }
-.lt-who span { font-size: 12.5px; color: var(--sub-text); }
-.lt { max-width: none; }
-.lt h3 { font-size: 17px; font-weight: 700; color: var(--dark); margin: 22px 0 10px; }
-.lt h3:first-child { margin-top: 0; }
-.lt p { font-size: 14.5px; line-height: 1.85; margin-bottom: 12px; color: var(--body-text); }
-.lt figure { margin: 18px 0; }
-.lt figure img { width: 100%; border-radius: 13px; display: block; }
-.lt figcaption { margin-top: 8px; font-size: 12px; color: var(--sub-text); font-style: italic; }
-.lt-pull { background: var(--d-bg); border: 1px solid var(--d-bd); border-left: 3px solid var(--amber); border-radius: 11px; padding: 14px 17px; font-size: 15px; font-weight: 700; color: var(--d-tx); line-height: 1.55; margin: 18px 0; }
-.sig { border-top: 1px solid var(--border-light); padding-top: 14px; margin-top: 18px; }
-.sig b { font-size: 14.5px; color: var(--dark); }
-.sig span { display: block; font-size: 12.5px; color: var(--sub-text); }
-.sig i { display: block; font-size: 12.5px; color: var(--pink); margin-top: 7px; font-style: normal; }
-
-.vals { margin-top: 20px; background: var(--bg); border: 1px solid var(--border); border-radius: 13px; padding: 18px 20px; }
-.vals-h { font-size: 10px; font-weight: 700; color: var(--gold); letter-spacing: .7px; margin-bottom: 10px; }
-.vrow { display: flex; gap: 12px; padding: 11px 0; border-bottom: .5px solid var(--border-light); }
-.vrow:last-child { border-bottom: none; padding-bottom: 0; }
-.vn { font-size: 10.5px; font-weight: 700; color: var(--pink); flex-shrink: 0; width: 18px; padding-top: 2px; }
-.vrow b { display: block; font-size: 13.5px; color: var(--dark); margin-bottom: 2px; }
-.vrow p { font-size: 13px; color: var(--sub-text); line-height: 1.7; margin: 0; }
-
-.dpb { display: grid; grid-template-columns: repeat(3, 1fr); gap: 11px; margin: 16px 0; }
-.dpb div { border-radius: 13px; padding: 15px 16px; border: 1px solid; }
-.dpb .d { background: var(--d-bg); border-color: var(--d-bd); }
-.dpb .p { background: var(--p-bg); border-color: var(--p-bd); }
-.dpb .b { background: var(--b-bg); border-color: var(--b-bd); }
-.dpb b { display: block; font-size: 15px; margin-bottom: 2px; }
-.dpb .d b { color: var(--d-tx); }
-.dpb .p b { color: var(--p-tx); }
-.dpb .b b { color: var(--b-tx); }
-.dpb i { display: block; font-size: 9.5px; font-weight: 700; letter-spacing: .5px; font-style: normal; opacity: .7; margin-bottom: 7px; }
-.dpb p { font-size: 12.5px; line-height: 1.7; margin: 0; color: var(--body-text); }
-
-.stab { width: 100%; border-collapse: collapse; margin: 12px 0 14px; font-size: 13.5px; }
-.stab th { text-align: left; font-size: 9.5px; letter-spacing: .6px; color: var(--gold); font-weight: 700; padding-bottom: 9px; border-bottom: 1px solid var(--border); }
-.stab th:last-child, .stab td:last-child { text-align: right; white-space: nowrap; }
-.stab td { padding: 10px 0; border-bottom: .5px solid var(--border-light); line-height: 1.5; }
-.stab tr:last-child td { border-bottom: none; }
-.stab .sc { font-weight: 700; color: var(--pink); }
-
-.pts { margin-top: 6px; }
-.pt { display: flex; gap: 11px; padding: 11px 0; border-bottom: .5px solid var(--border-light); }
-.pt:last-child { border-bottom: none; }
-.pt-k { width: 6px; height: 6px; border-radius: 50%; background: var(--amber); flex-shrink: 0; margin-top: 8px; }
-.pt b { display: block; font-size: 13.5px; color: var(--dark); margin-bottom: 2px; }
-.pt p { font-size: 13px; color: var(--sub-text); line-height: 1.72; margin: 0; }
-
-.steps { counter-reset: s; margin-top: 6px; }
-.st { counter-increment: s; display: flex; gap: 12px; padding: 11px 0; border-bottom: .5px solid var(--border-light); }
-.st:last-of-type { border-bottom: none; }
-.st::before { content: counter(s); width: 22px; height: 22px; border-radius: 7px; background: var(--p-bg); border: 1px solid var(--p-bd); color: var(--p-tx); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
-.st b { display: block; font-size: 13.5px; color: var(--dark); margin-bottom: 2px; }
-.st p { font-size: 13px; color: var(--sub-text); line-height: 1.72; margin: 0; }
-
-.rulebox { background: var(--darkbar); border-radius: 13px; padding: 17px 19px; margin: 14px 0; }
-.rulebox p { font-size: 14px; line-height: 1.8; color: #C4A882; margin: 0; }
-.rulebox b { color: var(--amber); }
-.rulebox span { display: block; font-size: 12px; color: var(--dim); margin-top: 7px; }
-
-.btn { display: inline-block; border: none; border-radius: 11px; padding: 12px 22px; font-size: 13.5px; font-weight: 700; background: var(--pink); color: #fff; margin-top: 14px; text-decoration: none; }
-.btn.gh { background: transparent; border: 1.5px solid var(--p-bd); color: var(--gold); }
-.btn.wa { background: #1F9D52; }
-.note { font-size: 13px; color: var(--mid-text); background: var(--p-bg); border: 1px solid var(--p-bd); border-radius: 10px; padding: 11px 14px; margin-top: 14px; line-height: 1.7; }
-
-.work { display: grid; grid-template-columns: repeat(3, 1fr); gap: 13px; }
-.wc { background: var(--card); border: 1px solid var(--border); border-radius: 15px; padding: 20px 20px 18px; display: flex; flex-direction: column; }
-.wc b { font-size: 16px; color: var(--dark); margin-bottom: 6px; }
-.wc p { font-size: 12.5px; line-height: 1.72; color: var(--sub-text); flex: 1; margin: 0; }
-.wc .btn { margin-top: 15px; align-self: flex-start; padding: 10px 16px; font-size: 12.5px; }
-
-.close { background: var(--darkbar); border-radius: 18px; padding: 34px 36px; margin: 30px 0 0; position: relative; overflow: hidden; }
-.close::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 50% 80% at 88% 50%, rgba(232,160,32,.10) 0%, transparent 60%); }
-.close-in { position: relative; }
-.close-l { font-size: 9.5px; font-weight: 700; color: #E3B567; letter-spacing: .8px; margin-bottom: 13px; }
-.close-t { font-size: 23px; font-weight: 700; color: var(--hero-text); line-height: 1.5; max-width: 760px; }
-.close-t b { color: var(--amber); }
-.close-logo { margin-top: 28px; height: 112px; width: auto; display: block; }
-
-.vals-sub { font-size: 13.5px; font-weight: 700; color: var(--dark); margin-bottom: 8px; }
-.vals-p { font-size: 13px; color: var(--sub-text); line-height: 1.75; margin-bottom: 12px; }
-.close-pre { font-size: 14px; color: #C4A882; margin-bottom: 12px; }
-
-@media (max-width: 900px) {
-  .film { height: 220px; }
-  .film-logo { height: 118px; }
-  .close-logo { height: 88px; }
-  .ahero-in { padding: 26px 0 28px; }
-  .ah-h1 { font-size: 28px; }
-  .ah-stand { font-size: 15.5px; }
-  .ah-p { font-size: 14px; }
-  .ah-pull { font-size: 17px; }
-  .pane { padding: 19px 18px; }
-  .sec-t { font-size: 21px; }
-  .dpb { grid-template-columns: 1fr; gap: 9px; }
-  .lt-port { width: 56px; height: 56px; }
-  .work { grid-template-columns: 1fr; }
-  .close { padding: 24px 22px; border-radius: 16px; }
-  .close-t { font-size: 19px; }
-}
-`;
-
 const LOGO_BASE64 = 'data:image/png;base64,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3jfYccULYr3hyiUK1gojjVsNhD0bLnvTGlN4+aEck0MFEIKAxdUC3NxuEhAIeRw3QCW13uSzezq3Pjwmla5M4g++gmAWtxracOVzWsV9YIw+MKcdQQKhTZyUGXatH7zlXmPNbWP0AJjLGhOIqVC1WWxXgcVb2HV1a/q+sUh6JREFa4VQK2oeXn/55kR4o4i4KlTy2hEkKARgDD9BUNYMrvtmScMPW8QJwVx29bIBFn61FH5zOPi/qxVJx0z4lUMUrBVAekHfJ0S/NSKfaZXk9An6YHJKDiWoRVgzyupu02TvSsdMfKQsBrcVYEDkEn8HAAjEHWTFrzWFl+1Z3/OWLbjbx0z4lUMUrBXBednE5h3vW20Kzzucc1GzQLTFWArx1TW/vOkAcI0DABG9/TB97omotSB8mym8f2jDZb8b+8GvHKJgNTiTcauOy7XpXf3A9e8dFmN/c0g2n/46654Nf8f41w+L+90f845D8P//80/bT9c31/b0b5l9/w0l9Z1N/4YfD99144/9v5y+efT+/9f7z60vH76W70t49/9z09v1t3d9v6bve4d36uT+ef5p8P7f8v/3t/z890v/1/c/3d/c1+e2a6d7q+44b+9t6cff55u+eO6J5s5x70p3vj8L1vN3vF/f60b/+t77X/c+f33N/T9//d9/z93f/w77x/81+X3/x38v/8e+f/v93//t3v3f7//j/z/9/x9/7/59//f/9+v/m//f/9v7f9/+/+v+v8v3+/+3+v8vf/32v4/+/+f3t3f//+f397f39/e3+/+f//9+/v//97/3+/+///9+/f7+7u4=';
+
+type SectionHeaderProps = {
+  number: string;
+  title: React.ReactNode;
+};
+
+function SectionHeader({ number, title }: SectionHeaderProps) {
+  return (
+    <div className="sec-h">
+      <span className="sec-n">{number}</span>
+      <h2 className="sec-t">{title}</h2>
+      <span className="sec-r"></span>
+    </div>
+  );
+}
+
+type SourceRowProps = {
+  source: string;
+  score: string;
+};
+
+function SourceRow({ source, score }: SourceRowProps) {
+  return (
+    <tr>
+      <td>{source}</td>
+      <td className="sc">{score}</td>
+    </tr>
+  );
+}
+
+type PointProps = {
+  title: string;
+  description: string;
+};
+
+function Point({ title, description }: PointProps) {
+  return (
+    <div className="pt">
+      <span className="pt-k"></span>
+      <div>
+        <b>{title}</b>
+        <p>{description}</p>
+      </div>
+    </div>
+  );
+}
+
+type ValueRowProps = {
+  number: string;
+  title: string;
+  description: string;
+};
+
+function ValueRow({ number, title, description }: ValueRowProps) {
+  return (
+    <div className="vrow">
+      <span className="vn">{number}</span>
+      <div>
+        <b>{title}</b>
+        <p>{description}</p>
+      </div>
+    </div>
+  );
+}
+
+type CircleStepProps = {
+  title: string;
+  description: string;
+};
+
+function CircleStep({ title, description }: CircleStepProps) {
+  return (
+    <div className="st">
+      <div>
+        <b>{title}</b>
+        <p>{description}</p>
+      </div>
+    </div>
+  );
+}
 
 export default function AboutPage() {
   return (
     <>
-      <style dangerouslySetInnerHTML={{ __html: ABOUT_STYLES }} />
-      
-      {/* ══ HERO ══ */}
       <section className="ahero">
         <div className="film">
           <img className="film-logo" src={LOGO_BASE64} alt="तप्" />
@@ -174,15 +105,9 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
-
       <div className="wrap max-w-[1280px] mx-auto px-4 md:px-10 w-full overflow-x-hidden">
-        {/* ══ 01 · WHY तप् ══ */}
         <section className="sec">
-          <div className="sec-h">
-            <span className="sec-n">3</span>
-            <h2 className="sec-t">Why <span className="dev">तप्</span></h2>
-            <span className="sec-r"></span>
-          </div>
+          <SectionHeader number="3" title={<>Why <span className="dev">तप्</span></>} />
           <div className="col">
             <div>
               <div className="pane">
@@ -245,13 +170,13 @@ export default function AboutPage() {
                         <div className="vals-h">OUR CORE VALUES</div>
                         <div className="vals-sub">What must never change</div>
                         <p className="vals-p">As The Tapa Co. grows, products will evolve, categories will expand, technology will change. But these principles are not features. They are the foundation, and they stay fixed.</p>
-                        <div className="vrow"><span className="vn">01</span><div><b>Dharma before business.</b><p>Revenue can never come at the cost of truth.</p></div></div>
-                        <div className="vrow"><span className="vn">02</span><div><b>Fear will never be our marketing strategy.</b><p>We will never manipulate people with guilt, superstition, or anxiety. Devotion should arise from love and understanding, not fear.</p></div></div>
-                        <div className="vrow"><span className="vn">03</span><div><b>Knowledge comes before products.</b><p>Understanding is our first offering. Commerce is only ever a consequence of it.</p></div></div>
-                        <div className="vrow"><span className="vn">04</span><div><b>Authenticity over convenience.</b><p>When faced with a choice, we choose what is faithful over what is fashionable.</p></div></div>
-                        <div className="vrow"><span className="vn">05</span><div><b>We serve seekers, not customers.</b><p>Every interaction should leave people feeling more informed, more confident, and more connected to their faith.</p></div></div>
-                        <div className="vrow"><span className="vn">06</span><div><b>Humility is non-negotiable.</b><p>No individual, no institution, and no company owns Dharma. We are students before we are builders.</p></div></div>
-                        <div className="vrow"><span className="vn">07</span><div><b>Trust is sacred.</b><p>It takes years to build and moments to lose. We will protect it fiercely.</p></div></div>
+                        <ValueRow number="01" title="Dharma before business." description="Revenue can never come at the cost of truth." />
+                        <ValueRow number="02" title="Fear will never be our marketing strategy." description="We will never manipulate people with guilt, superstition, or anxiety. Devotion should arise from love and understanding, not fear." />
+                        <ValueRow number="03" title="Knowledge comes before products." description="Understanding is our first offering. Commerce is only ever a consequence of it." />
+                        <ValueRow number="04" title="Authenticity over convenience." description="When faced with a choice, we choose what is faithful over what is fashionable." />
+                        <ValueRow number="05" title="We serve seekers, not customers." description="Every interaction should leave people feeling more informed, more confident, and more connected to their faith." />
+                        <ValueRow number="06" title="Humility is non-negotiable." description="No individual, no institution, and no company owns Dharma. We are students before we are builders." />
+                        <ValueRow number="07" title="Trust is sacred." description="It takes years to build and moments to lose. We will protect it fiercely." />
                       </div>
                     </div>
                   </div>
@@ -260,14 +185,8 @@ export default function AboutPage() {
             </div>
           </div>
         </section>
-
-        {/* ══ 02 · EDITORIAL METHOD ══ */}
         <section className="sec">
-          <div className="sec-h">
-            <span className="sec-n">4</span>
-            <h2 className="sec-t">Our Editorial Method</h2>
-            <span className="sec-r"></span>
-          </div>
+          <SectionHeader number="4" title="Our Editorial Method" />
           <div className="col">
             <div className="pane">
               <p className="stand">Every claim we publish is sorted into one of three categories before it is written.</p>
@@ -309,26 +228,11 @@ export default function AboutPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr>
-                      <td>Shruti — Vedas, Upanishads</td>
-                      <td className="sc">5 / 5</td>
-                    </tr>
-                    <tr>
-                      <td>Mahapurana, Itihasa, Dharmashastra, Kalpa, Agama</td>
-                      <td className="sc">4 / 5</td>
-                    </tr>
-                    <tr>
-                      <td>Nibandha, bhashya, commentarial literature</td>
-                      <td className="sc">3 / 5</td>
-                    </tr>
-                    <tr>
-                      <td>Bhakti-period compositions — Ramcharitmanas, the stotras</td>
-                      <td className="sc">3 / 5</td>
-                    </tr>
-                    <tr>
-                      <td>Regional, oral and family custom</td>
-                      <td className="sc">1–2 / 5</td>
-                    </tr>
+                    <SourceRow source="Shruti — Vedas, Upanishads" score="5 / 5" />
+                    <SourceRow source="Mahapurana, Itihasa, Dharmashastra, Kalpa, Agama" score="4 / 5" />
+                    <SourceRow source="Nibandha, bhashya, commentarial literature" score="3 / 5" />
+                    <SourceRow source="Bhakti-period compositions — Ramcharitmanas, the stotras" score="3 / 5" />
+                    <SourceRow source="Regional, oral and family custom" score="1–2 / 5" />
                   </tbody>
                 </table>
               </div>
@@ -338,14 +242,8 @@ export default function AboutPage() {
             </div>
           </div>
         </section>
-
-        {/* ══ 03 · GLOSSARY ══ */}
         <section className="sec">
-          <div className="sec-h">
-            <span className="sec-n">5</span>
-            <h2 className="sec-t">Glossary</h2>
-            <span className="sec-r"></span>
-          </div>
+          <SectionHeader number="5" title="Glossary" />
           <div className="col">
             <div className="pane">
               <p className="stand">Sankalp. Upavasa. Abhishek. Shodashopachara. Tithi and paksha.</p>
@@ -355,14 +253,8 @@ export default function AboutPage() {
             </div>
           </div>
         </section>
-
-        {/* ══ 04 · RITUAL KITS ══ */}
         <section className="sec">
-          <div className="sec-h">
-            <span className="sec-n">7</span>
-            <h2 className="sec-t">Our Ritual Kits Store</h2>
-            <span className="sec-r"></span>
-          </div>
+          <SectionHeader number="7" title="Our Ritual Kits Store" />
           <div className="col">
             <div className="pane">
               <p className="stand" style={{ color: 'var(--pink)' }}>Assembled to the ritual, not to a price point.</p>
@@ -371,41 +263,11 @@ export default function AboutPage() {
 
               <h3>How each kit is built</h3>
               <div className="pts">
-                <div className="pt">
-                  <span className="pt-k"></span>
-                  <div>
-                    <b>Sourced from the guide.</b>
-                    <p>If an item is in the kit, it appears in a step of the vidhi on our site. If it does not appear in the vidhi, it is not in the box.</p>
-                  </div>
-                </div>
-                <div className="pt">
-                  <span className="pt-k"></span>
-                  <div>
-                    <b>Tagged.</b>
-                    <p>The printed vidhi card inside marks which steps are Dharma and which are Pratha. Where we have included something customary — an item your region uses and another does not — it is labelled as custom, so you can use it or set it aside without wondering.</p>
-                  </div>
-                </div>
-                <div className="pt">
-                  <span className="pt-k"></span>
-                  <div>
-                    <b>Complete for the ritual, not for the shelf.</b>
-                    <p>Quantities match one observance of that puja. We would rather you buy the right kit once than a general samagri box four times.</p>
-                  </div>
-                </div>
-                <div className="pt">
-                  <span className="pt-k"></span>
-                  <div>
-                    <b>Fresh items are named, not included.</b>
-                    <p>Flowers, milk, curd, fruit and bhog cannot travel well and should not. Every kit lists exactly what to pick up and how much of it.</p>
-                  </div>
-                </div>
-                <div className="pt">
-                  <span className="pt-k"></span>
-                  <div>
-                    <b>One price. One version.</b>
-                    <p>No premium tier, no economy tier, no deluxe box with the same contents in better packaging. A ritual does not have a budget version.</p>
-                  </div>
-                </div>
+                <Point title="Sourced from the guide." description="If an item is in the kit, it appears in a step of the vidhi on our site. If it does not appear in the vidhi, it is not in the box." />
+                <Point title="Tagged." description="The printed vidhi card inside marks which steps are Dharma and which are Pratha. Where we have included something customary — an item your region uses and another does not — it is labelled as custom, so you can use it or set it aside without wondering." />
+                <Point title="Complete for the ritual, not for the shelf." description="Quantities match one observance of that puja. We would rather you buy the right kit once than a general samagri box four times." />
+                <Point title="Fresh items are named, not included." description="Flowers, milk, curd, fruit and bhog cannot travel well and should not. Every kit lists exactly what to pick up and how much of it." />
+                <Point title="One price. One version." description="No premium tier, no economy tier, no deluxe box with the same contents in better packaging. A ritual does not have a budget version." />
               </div>
 
               <div className="note">Pre-booking opens 1 month before the occasions</div>
@@ -413,52 +275,22 @@ export default function AboutPage() {
             </div>
           </div>
         </section>
-
-        {/* ══ 05 · PUJA WITH PUROHIT ══ */}
         <section className="sec">
-          <div className="sec-h">
-            <span className="sec-n">8</span>
-            <h2 className="sec-t">Puja with Purohit <span className="chip soon">COMING SOON · NOVEMBER 2026</span></h2>
-            <span className="sec-r"></span>
-          </div>
+          <SectionHeader number="8" title={<>Puja with Purohit <span className="chip soon">COMING SOON · NOVEMBER 2026</span></>} />
           <div className="col">
             <div className="pane">
               <p>Some anushthans are better performed with someone who has done them a hundred times. Not because you cannot — you can, and every vidhi on this site is written so that you can, but because on the day, hosting twenty people and leading the mantras at the same time is a lot to hold.</p>
 
               <h3>What the booking includes</h3>
               <div className="pts">
-                <div className="pt">
-                  <span className="pt-k"></span>
-                  <div>
-                    <b>A verified purohit for your chosen anushthan, performed in full.</b>
-                    <p>There is no shortened version and no extended version. One puja, one price.</p>
-                  </div>
-                </div>
-                <div className="pt">
-                  <span className="pt-k"></span>
-                  <div>
-                    <b>The complete puja samagri comes with the purohit.</b>
-                    <p>It is part of your package, carried to your home on the day. You do not shop for it, and you are not asked for it at the door.</p>
-                  </div>
-                </div>
+                <Point title="A verified purohit for your chosen anushthan, performed in full." description="There is no shortened version and no extended version. One puja, one price." />
+                <Point title="The complete puja samagri comes with the purohit." description="It is part of your package, carried to your home on the day. You do not shop for it, and you are not asked for it at the door." />
               </div>
 
               <h3>What you will need to arrange</h3>
               <div className="pts">
-                <div className="pt">
-                  <span className="pt-k"></span>
-                  <div>
-                    <b>Fresh items are not included,</b>
-                    <p>because they should not be sitting in a box overnight. Flowers, milk, curd, and the bhog prasad you intend to offer are yours to arrange.</p>
-                  </div>
-                </div>
-                <div className="pt">
-                  <span className="pt-k"></span>
-                  <div>
-                    <b>You will receive the full list one day before the puja</b>
-                    <p>— every item, with quantities. Not a vague reminder on the morning of. A specific list, the day before, so you can pick it up on your way home.</p>
-                  </div>
-                </div>
+                <Point title="Fresh items are not included," description="because they should not be sitting in a box overnight. Flowers, milk, curd, and the bhog prasad you intend to offer are yours to arrange." />
+                <Point title="You will receive the full list one day before the puja" description="— every item, with quantities. Not a vague reminder on the morning of. A specific list, the day before, so you can pick it up on your way home." />
               </div>
 
               <h3>What will not happen</h3>
@@ -467,14 +299,8 @@ export default function AboutPage() {
             </div>
           </div>
         </section>
-
-        {/* ══ 06 · THE TAPA CIRCLE ══ */}
         <section className="sec">
-          <div className="sec-h">
-            <span className="sec-n">9</span>
-            <h2 className="sec-t">The Tapa Circle <span className="chip">₹499/year</span></h2>
-            <span className="sec-r"></span>
-          </div>
+          <SectionHeader number="9" title={<>The Tapa Circle <span className="chip">₹499/year</span></>} />
           <div className="col">
             <div>
               <div className="pane">
@@ -490,30 +316,10 @@ export default function AboutPage() {
                 </summary>
                 <div className="tr-body">
                   <div className="steps" style={{ paddingTop: '14px' }}>
-                    <div className="st">
-                      <div>
-                        <b>Enter your WhatsApp number</b>
-                        <p>The number you actually use. This is the only detail we ask for.</p>
-                      </div>
-                    </div>
-                    <div className="st">
-                      <div>
-                        <b>Pay ₹499</b>
-                        <p>UPI, card or netbanking. One payment, covering twelve months from the day you join. It does not auto-renew — we will tell you when the year is ending and you can decide then.</p>
-                      </div>
-                    </div>
-                    <div className="st">
-                      <div>
-                        <b>Confirm on WhatsApp</b>
-                        <p>You will receive one message asking you to confirm. Reply to it and you are in. If you do not reply, nothing is sent and we refund you.</p>
-                      </div>
-                    </div>
-                    <div className="st">
-                      <div>
-                        <b>The first message arrives on the next relevant date</b>
-                        <p>Not immediately, and not daily. The welcome note tells you exactly what the next date is and when to expect it.</p>
-                      </div>
-                    </div>
+                    <CircleStep title="Enter your WhatsApp number" description="The number you actually use. This is the only detail we ask for." />
+                    <CircleStep title="Pay ₹499" description="UPI, card or netbanking. One payment, covering twelve months from the day you join. It does not auto-renew — we will tell you when the year is ending and you can decide then." />
+                    <CircleStep title="Confirm on WhatsApp" description="You will receive one message asking you to confirm. Reply to it and you are in. If you do not reply, nothing is sent and we refund you." />
+                    <CircleStep title="The first message arrives on the next relevant date" description="Not immediately, and not daily. The welcome note tells you exactly what the next date is and when to expect it." />
                   </div>
                   <div className="note"><b>Leaving:</b> reply STOP at any time and it ends with that message. No confirmation call, no retention offer.</div>
                 </div>
@@ -523,11 +329,7 @@ export default function AboutPage() {
             </div>
           </div>
         </section>
-
-        {/* ══ 07 · WORK WITH US ══ */}
         <WorkWithUsForms />
-
-        {/* ══ CLOSE ══ */}
         <div className="close">
           <div className="close-in">
             <div className="close-l">THE ONE SENTENCE</div>

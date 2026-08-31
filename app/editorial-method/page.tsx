@@ -1,12 +1,10 @@
 'use client';
 
-import React from 'react';
 import './editorial-method.css';
 
 export default function EditorialMethodPage() {
   return (
     <div className="w-full max-w-full overflow-x-hidden min-h-screen" style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--body-text)' }}>
-      {/* HERO */}
       <section className="hero">
         <div className="wrap max-w-[1280px] mx-auto px-4 md:px-10 w-full overflow-x-hidden">
           <div className="hero-in">
@@ -23,7 +21,6 @@ export default function EditorialMethodPage() {
         </div>
       </section>
 
-      {/* TOC BAR */}
       <div className="toc">
         <div className="toc-in">
           <span className="toc-l">ON THIS PAGE</span>
@@ -39,7 +36,6 @@ export default function EditorialMethodPage() {
         </div>
       </div>
 
-      {/* INTRO SECTION */}
       <section className="sec">
         <div className="wrap max-w-[1280px] mx-auto px-4 md:px-10 w-full overflow-x-hidden">
           <div className="s-n">THE PROBLEM THIS SOLVES</div>

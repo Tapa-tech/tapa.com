@@ -6,7 +6,6 @@ const TAPA_LOGO_BASE64 = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIQAAACM
 export const Logo: React.FC = () => {
   return (
     <Link href="/" className="logo" style={{ textDecoration: 'none', color: 'inherit' }}>
-      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={TAPA_LOGO_BASE64} alt="तप्" style={{ height: '52px', width: 'auto', display: 'block' }} />
       <span className="logo-wm devanagari">the tapa company</span>
     </Link>

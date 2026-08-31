@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
@@ -9,7 +9,6 @@ export default function CheckoutPage() {
   const router = useRouter();
   const { items, totalItems, subtotal, clearCart } = useCart();
 
-  // Form State
   const [fullName, setFullName] = useState('');
   const [mobile, setMobile] = useState('');
   const [email, setEmail] = useState('');
@@ -18,9 +17,8 @@ export default function CheckoutPage() {
   const [state, setState] = useState('');
   const [pincode, setPincode] = useState('');
   const [country] = useState('India');
-  const [paymentMethod] = useState('COD'); // Cash on Delivery only
+  const [paymentMethod] = useState('COD');
 
-  // UI / Validation State
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -100,13 +98,11 @@ export default function CheckoutPage() {
         throw new Error(data.error || 'Failed to place order.');
       }
 
-      // 1. Clear cart ONLY AFTER successful order creation
       clearCart();
 
-      // 2. Navigate to Order Confirmation page
       router.push(`/ritual-kits/order-success/${data.orderId}`);
-    } catch (err: any) {
-      setApiError(err.message || 'Failed to place order. Please try again.');
+    } catch (err: unknown) {
+      setApiError(err instanceof Error ? err.message : 'Failed to place order. Please try again.');
       setIsSubmitting(false);
     }
   };
@@ -141,7 +137,6 @@ export default function CheckoutPage() {
           </div>
         ) : (
           <form onSubmit={handlePlaceOrder} className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            {/* LEFT FORM COLUMN */}
             <div className="lg:col-span-7 space-y-6">
               {apiError && (
                 <div className="bg-red-50 border border-red-200 text-red-700 text-xs p-3.5 rounded-xl font-medium">
@@ -149,7 +144,6 @@ export default function CheckoutPage() {
                 </div>
               )}
 
-              {/* 1. CUSTOMER INFORMATION */}
               <div className="bg-[var(--card,#FFFFFF)] border border-[var(--border,#E8E0D0)] rounded-2xl p-5 md:p-6 shadow-sm">
                 <h2 className="text-base font-bold text-[var(--dark,#1C1712)] border-b border-[var(--border-light,#F0E8D8)] pb-3 mb-4 flex items-center gap-2">
                   <span className="w-6 h-6 rounded-full bg-[var(--pink,#FD066D)] text-white text-xs flex items-center justify-center font-bold">1</span>

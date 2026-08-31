@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 export interface StoryItem {
@@ -87,14 +87,14 @@ export interface DynamicConceptData {
 }
 
 interface PageProps {
-  params?: {
-    slug?: string;
+  params: {
+    slug: string;
   };
   searchParams?: { [key: string]: string | string[] | undefined };
 }
 
-function parseConceptData(raw: any): DynamicConceptData {
-  const parseJson = (val: any) => {
+function parseConceptData(raw: Record<string, unknown>): DynamicConceptData {
+  const parseJson = (val: unknown) => {
     if (!val) return [];
     if (Array.isArray(val)) return val;
     if (typeof val === 'string') {
@@ -109,39 +109,39 @@ function parseConceptData(raw: any): DynamicConceptData {
   };
 
   return {
-    id: raw.id || '',
-    title: raw.title || '',
-    slug: raw.slug || '',
-    category: raw.category || 'General',
-    summary: raw.summary || null,
+    id: (raw.id as string) || '',
+    title: (raw.title as string) || '',
+    slug: (raw.slug as string) || '',
+    category: (raw.category as string) || 'General',
+    summary: (raw.summary as string) || null,
     body: typeof raw.body === 'string' ? raw.body : '',
-    status: raw.status || 'PUBLISHED',
-    bannerEyebrow: raw.bannerEyebrow || null,
-    bannerRating: raw.bannerRating || null,
-    bannerClassification: raw.bannerClassification || null,
-    bannerTitle: raw.bannerTitle || null,
-    bannerDescription: raw.bannerDescription || null,
-    bannerPrimaryCtaText: raw.bannerPrimaryCtaText || null,
-    bannerPrimaryCtaLink: raw.bannerPrimaryCtaLink || null,
-    bannerSecondaryCtaText: raw.bannerSecondaryCtaText || null,
-    bannerSecondaryCtaLink: raw.bannerSecondaryCtaLink || null,
-    bannerShareButtonText: raw.bannerShareButtonText || null,
-    threeStoriesTitle: raw.threeStoriesTitle || null,
-    threeStoriesIntro: raw.threeStoriesIntro || null,
-    threeStoriesSupportingText: raw.threeStoriesSupportingText || null,
+    status: (raw.status as string) || 'PUBLISHED',
+    bannerEyebrow: (raw.bannerEyebrow as string) || null,
+    bannerRating: (raw.bannerRating as string) || null,
+    bannerClassification: (raw.bannerClassification as string) || null,
+    bannerTitle: (raw.bannerTitle as string) || null,
+    bannerDescription: (raw.bannerDescription as string) || null,
+    bannerPrimaryCtaText: (raw.bannerPrimaryCtaText as string) || null,
+    bannerPrimaryCtaLink: (raw.bannerPrimaryCtaLink as string) || null,
+    bannerSecondaryCtaText: (raw.bannerSecondaryCtaText as string) || null,
+    bannerSecondaryCtaLink: (raw.bannerSecondaryCtaLink as string) || null,
+    bannerShareButtonText: (raw.bannerShareButtonText as string) || null,
+    threeStoriesTitle: (raw.threeStoriesTitle as string) || null,
+    threeStoriesIntro: (raw.threeStoriesIntro as string) || null,
+    threeStoriesSupportingText: (raw.threeStoriesSupportingText as string) || null,
     stories: parseJson(raw.stories || raw.storiesItemsJson),
     gallery: parseJson(raw.gallery || raw.threeStoriesGalleryJson),
-    threeStoriesCaption: raw.threeStoriesCaption || null,
-    shareSectionHeading: raw.shareSectionHeading || null,
-    shareSharedContent: raw.shareSharedContent || null,
-    shareNotSharedContent: raw.shareNotSharedContent || null,
-    shareHighlightStatement: raw.shareHighlightStatement || null,
-    shareSupportingDescription: raw.shareSupportingDescription || null,
-    shareTraditionTag: raw.shareTraditionTag || null,
-    mythsSectionHeading: raw.mythsSectionHeading || null,
+    threeStoriesCaption: (raw.threeStoriesCaption as string) || null,
+    shareSectionHeading: (raw.shareSectionHeading as string) || null,
+    shareSharedContent: (raw.shareSharedContent as string) || null,
+    shareNotSharedContent: (raw.shareNotSharedContent as string) || null,
+    shareHighlightStatement: (raw.shareHighlightStatement as string) || null,
+    shareSupportingDescription: (raw.shareSupportingDescription as string) || null,
+    shareTraditionTag: (raw.shareTraditionTag as string) || null,
+    mythsSectionHeading: (raw.mythsSectionHeading as string) || null,
     myths: parseJson(raw.myths || raw.mythsItemsJson),
-    reframeLabel: raw.reframeLabel || null,
-    reframeContent: raw.reframeContent || null,
+    reframeLabel: (raw.reframeLabel as string) || null,
+    reframeContent: (raw.reframeContent as string) || null,
     relatedRituals: parseJson(raw.relatedRituals || raw.relatedRitualGuidesJson),
     relatedPujans: parseJson(raw.relatedPujans || raw.relatedPujansJson),
     relatedConcepts: parseJson(raw.relatedConcepts || raw.relatedConceptsJson),
@@ -287,22 +287,14 @@ function RenderHtml({ content, className }: { content: string; className?: strin
   return <p className={className}>{content}</p>;
 }
 
-export default function DharmicConceptDetailClient(props: PageProps) {
-  const params = props?.params;
-  const initialConcept = (props as any)?.concept;
+export default function DharmicConceptDetailClient({ params }: PageProps) {
   const slug = params?.slug || '';
-  const [concept, setConcept] = useState<DynamicConceptData | null>(initialConcept || null);
-  const [loading, setLoading] = useState<boolean>(!initialConcept);
+  const [concept, setConcept] = useState<DynamicConceptData | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
   const [isSaved, setIsSaved] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    if (initialConcept) {
-      setConcept(initialConcept);
-      setLoading(false);
-      return;
-    }
-
     let isMounted = true;
     async function loadConcept() {
       try {
@@ -318,9 +310,9 @@ export default function DharmicConceptDetailClient(props: PageProps) {
               .replace(/^-+|-+$/g, '');
 
           const found = list.find(
-            (c: any) =>
-              (c.slug && c.slug.toLowerCase() === slug.toLowerCase()) ||
-              slugify(c.title) === slug.toLowerCase()
+            (c: Record<string, unknown>) =>
+              (c.slug && (c.slug as string).toLowerCase() === slug.toLowerCase()) ||
+              slugify(c.title as string) === slug.toLowerCase()
           );
 
           if (found && isMounted) {
@@ -349,7 +341,7 @@ export default function DharmicConceptDetailClient(props: PageProps) {
     return () => {
       isMounted = false;
     };
-  }, [slug, initialConcept]);
+  }, [slug]);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
 interface OrderItemData {
@@ -56,8 +56,8 @@ export default function OrderConfirmationPage({ params }: PageProps) {
         }
 
         setOrder(data.order);
-      } catch (err: any) {
-        setError(err.message || 'Unable to load order details.');
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : 'Unable to load order details.');
       } finally {
         setLoading(false);
       }

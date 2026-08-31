@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import Link from 'next/link';
 
 import { getBeginnerGuideBySlug } from '@/lib/beginner-guides-data';
@@ -63,9 +63,6 @@ function cleanHtmlString(input: string | null | undefined): string {
 export default function RitualGuideDetailPage({ params }: PageProps) {
   const { slug } = params;
 
-  // ────────────────────────────────────────────────────────────────
-  // ALL HOOKS FIRST — unconditionally, before any early return.
-  // ────────────────────────────────────────────────────────────────
   const [isBeginnerGuide, setIsBeginnerGuide] = useState<boolean>(() =>
     BEGINNER_SLUGS.has(slug) ||
     slug.includes('beginner') ||
@@ -85,7 +82,7 @@ export default function RitualGuideDetailPage({ params }: PageProps) {
   const mantraAudioRef = useRef<HTMLAudioElement>(null);
   const mantraPlayRunRef = useRef(0);
 
-  // Detect beginner guide (only runs if not already known from slug heuristics)
+
   useEffect(() => {
     if (isBeginnerGuide || !slug) return;
     let cancelled = false;
@@ -97,7 +94,7 @@ export default function RitualGuideDetailPage({ params }: PageProps) {
         const json = await res.json();
         if (!cancelled && json.success && json.data) setIsBeginnerGuide(true);
       } catch {
-        /* ignore — falls through to the regular ritual guide view */
+
       }
     })();
 
@@ -106,7 +103,6 @@ export default function RitualGuideDetailPage({ params }: PageProps) {
     };
   }, [slug, isBeginnerGuide]);
 
-  // Fetch main guide data
   useEffect(() => {
     if (!slug) return;
     let cancelled = false;
@@ -127,14 +123,14 @@ export default function RitualGuideDetailPage({ params }: PageProps) {
     };
   }, [slug]);
 
-  // Sticky bottom bar on scroll
+
   useEffect(() => {
     const handleScroll = () => setShowStickyBar(window.scrollY > 400);
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Only used as a last-resort page heading — derived from the URL, not invented copy.
+
   const formattedTitle = useMemo(() => {
     if (!slug) return '';
     return slug
@@ -143,14 +139,12 @@ export default function RitualGuideDetailPage({ params }: PageProps) {
       .join(' ');
   }, [slug]);
 
-  // vidhiDaysJson is used in a few places — parse it exactly once and reuse everywhere.
   const vidhiDays = useMemo<any[]>(
     () => safeParseJson<any[]>(guideData?.vidhiDaysJson) || [],
     [guideData?.vidhiDaysJson]
   );
   const firstVidhiDay = vidhiDays[0] || null;
 
-  // Mantra data comes only from the guide record or its first vidhi day — no invented Sanskrit/label/audio.
   const mantraData = useMemo(() => {
     const label = guideData?.mantraLabel || firstVidhiDay?.mantraLabel || '';
     const text = guideData?.mantraText || firstVidhiDay?.mantraText || '';
@@ -233,7 +227,7 @@ export default function RitualGuideDetailPage({ params }: PageProps) {
     relatedData.concepts.length > 0 ||
     relatedData.dates.length > 0;
 
-  // Derived flags — used to decide which sections/anchors exist at all.
+
   const hasStory = !!(guideData?.storyTitle || guideData?.storyIntroduction || guideData?.storyContent || guideData?.storyContinuation);
   const hasSankalpa = !!(guideData?.sankalpaText || sankalpaCards.length > 0);
   const hasVidhi = vidhiDays.length > 0;
@@ -270,7 +264,7 @@ export default function RitualGuideDetailPage({ params }: PageProps) {
     const html = `<!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8" />  
   <title>${guideTitle} - Samagri PDF</title>
   <style>
     @media print {
@@ -425,9 +419,6 @@ export default function RitualGuideDetailPage({ params }: PageProps) {
     }
   };
 
-  // ────────────────────────────────────────────────────────────────
-  // Early return — now safely AFTER every hook has run.
-  // ────────────────────────────────────────────────────────────────
   if (isBeginnerGuide) {
     const guide = getBeginnerGuideBySlug(slug);
     return <BeginnerGuideDetailView guide={guide} />;

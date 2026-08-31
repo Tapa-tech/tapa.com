@@ -1,18 +1,16 @@
 'use client';
 
-import React from 'react';
 import Link from 'next/link';
 import { useCart } from '@/context/CartContext';
 
 export default function CartPage() {
   const { items, totalItems, subtotal, increaseQuantity, decreaseQuantity, removeItem, clearCart } = useCart();
 
-  const shippingCharge = subtotal > 0 ? 0 : 0; // Free delivery included
+  const shippingCharge = subtotal > 0 ? 0 : 0;
   const grandTotal = subtotal + shippingCharge;
 
   return (
     <div className="w-full bg-[var(--bg,#F2EDE4)] min-h-[70vh] py-8">
-      {/* BREADCRUMB */}
       <div className="bcrumb bg-[var(--card,#FFFFFF)] border-b border-[var(--border,#E8E0D0)] px-4 md:px-10 py-2.5 mb-6">
         <div className="max-w-[1280px] mx-auto text-xs text-[var(--sub-text,#8A7A68)]">
           <Link href="/" className="hover:text-[var(--pink,#FD066D)]">Home</Link> ›{' '}
@@ -39,7 +37,6 @@ export default function CartPage() {
 
         {items.length > 0 ? (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-            {/* CART ITEMS LIST */}
             <div className="lg:col-span-2 space-y-4">
               {items.map((item) => (
                 <div
@@ -72,7 +69,6 @@ export default function CartPage() {
                   </div>
 
                   <div className="flex items-center justify-between sm:justify-end gap-6 w-full sm:w-auto border-t sm:border-t-0 pt-3 sm:pt-0 border-[var(--border-light,#F0E8D8)]">
-                    {/* QUANTITY CONTROLS */}
                     <div className="flex items-center border border-[var(--border,#E8E0D0)] rounded-lg overflow-hidden bg-[var(--bg,#F2EDE4)]">
                       <button
                         type="button"
@@ -95,14 +91,12 @@ export default function CartPage() {
                       </button>
                     </div>
 
-                    {/* LINE TOTAL */}
                     <div className="text-right min-w-[80px]">
                       <div className="text-base font-bold text-[var(--dark,#1C1712)]">
                         ₹{(item.price * item.quantity).toLocaleString('en-IN')}
                       </div>
                     </div>
 
-                    {/* REMOVE BUTTON */}
                     <button
                       type="button"
                       onClick={() => removeItem(item.id)}
@@ -125,7 +119,6 @@ export default function CartPage() {
               </div>
             </div>
 
-            {/* ORDER SUMMARY */}
             <div className="bg-[var(--card,#FFFFFF)] border border-[var(--border,#E8E0D0)] rounded-2xl p-6 space-y-4 shadow-sm sticky top-28">
               <h2 className="text-lg font-bold text-[var(--dark,#1C1712)] border-b border-[var(--border,#E8E0D0)] pb-3">
                 Order Summary
@@ -160,7 +153,6 @@ export default function CartPage() {
             </div>
           </div>
         ) : (
-          /* EMPTY CART STATE */
           <div className="bg-[var(--card,#FFFFFF)] border border-[var(--border,#E8E0D0)] rounded-2xl p-12 text-center max-w-lg mx-auto my-8 shadow-sm">
             <div className="text-4xl mb-3">🛕</div>
             <h2 className="text-xl font-bold text-[var(--dark,#1C1712)] mb-2">Your Cart is Empty</h2>

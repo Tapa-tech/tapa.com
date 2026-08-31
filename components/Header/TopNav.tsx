@@ -29,16 +29,6 @@ export const TopNav: React.FC<TopNavProps> = ({
   const pathname = usePathname();
   const router = useRouter();
 
-  /*
-   * IMPORTANT
-   *
-   * activeKey is ONLY based on the current URL.
-   * openDropdownKey is ONLY used for opening the dropdown.
-   *
-   * This prevents the navbar active color from changing
-   * when the user hovers another category.
-   */
-
   const activeKey =
     pathname?.startsWith('/panchang')
       ? 'pa'
@@ -148,20 +138,9 @@ export const TopNav: React.FC<TopNavProps> = ({
 
           <span>
             {phase === 2
-              ? 'Search rituals, kits…'
+              ? 'Search rituals'
               : 'Search rituals'}
           </span>
-        </div>
-
-        {/* Language */}
-        <div className="lang hidden md:flex items-center">
-          <button type="button" className="on">
-            EN
-          </button>
-
-          <button type="button">
-            हिं
-          </button>
         </div>
 
         {/* Wishlist */}

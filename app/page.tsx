@@ -1,4 +1,3 @@
-import React from 'react';
 import { PreBookBanner } from '@/components/Homepage/PreBookBanner';
 import { HeroSection } from '@/components/Homepage/HeroSection';
 import { KitShelf } from '@/components/Homepage/KitShelf';
