@@ -427,17 +427,6 @@ export default function RitualGuideDetailPage({ params }: PageProps) {
     }
   };
 
-  if (isBeginnerGuide) {
-    if (typeof window !== 'undefined') {
-      window.location.href = `/beginner-guides/${slug}`;
-    }
-    return (
-      <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F8F5EE' }}>
-        <div style={{ color: '#DE1B59', fontWeight: 700, fontSize: '15px' }}>Loading Beginner Guide...</div>
-      </div>
-    );
-  }
-
   const heroTitle = guideData?.guideTitle || guideData?.title || formattedTitle;
 
   const faqSchemaData = useMemo(() => {
@@ -459,6 +448,17 @@ export default function RitualGuideDetailPage({ params }: PageProps) {
       createdAt: guideData?.createdAt,
     });
   }, [heroTitle, slug, guideData]);
+
+  if (isBeginnerGuide) {
+    if (typeof window !== 'undefined') {
+      window.location.href = `/beginner-guides/${slug}`;
+    }
+    return (
+      <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F8F5EE' }}>
+        <div style={{ color: '#DE1B59', fontWeight: 700, fontSize: '15px' }}>Loading Beginner Guide...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="rg-detail-root w-full max-w-full overflow-x-hidden min-h-screen">
