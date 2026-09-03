@@ -1,26 +1,54 @@
 -- CreateEnum
-CREATE TYPE "UserRole" AS ENUM ('CUSTOMER', 'ADMIN', 'SUPER_USER');
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'UserRole') THEN
+        CREATE TYPE "UserRole" AS ENUM ('CUSTOMER', 'ADMIN', 'SUPER_USER');
+    END IF;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "ContentStatus" AS ENUM ('DRAFT', 'PUBLISHED');
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'ContentStatus') THEN
+        CREATE TYPE "ContentStatus" AS ENUM ('DRAFT', 'PUBLISHED');
+    END IF;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "OrderStatus" AS ENUM ('PLACED', 'CONFIRMED', 'PROCESSING', 'DISPATCHED', 'DELIVERED', 'CANCELLATION_REQUESTED', 'CANCELLED');
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'OrderStatus') THEN
+        CREATE TYPE "OrderStatus" AS ENUM ('PLACED', 'CONFIRMED', 'PROCESSING', 'DISPATCHED', 'DELIVERED', 'CANCELLATION_REQUESTED', 'CANCELLED');
+    END IF;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "PaymentStatus" AS ENUM ('PENDING', 'PAID', 'FAILED', 'REFUNDED');
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'PaymentStatus') THEN
+        CREATE TYPE "PaymentStatus" AS ENUM ('PENDING', 'PAID', 'FAILED', 'REFUNDED');
+    END IF;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "PaymentMethod" AS ENUM ('COD', 'RAZORPAY');
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'PaymentMethod') THEN
+        CREATE TYPE "PaymentMethod" AS ENUM ('COD', 'RAZORPAY');
+    END IF;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "ProductStatus" AS ENUM ('ACTIVE', 'INACTIVE');
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'ProductStatus') THEN
+        CREATE TYPE "ProductStatus" AS ENUM ('ACTIVE', 'INACTIVE');
+    END IF;
+END $$;
 
 -- CreateEnum
-CREATE TYPE "ProductCategory" AS ENUM ('BY_FESTIVAL', 'BY_RITUAL', 'GRIHA_LIFE_EVENTS', 'DAILY_PUJA_ESSENTIALS');
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'ProductCategory') THEN
+        CREATE TYPE "ProductCategory" AS ENUM ('BY_FESTIVAL', 'BY_RITUAL', 'GRIHA_LIFE_EVENTS', 'DAILY_PUJA_ESSENTIALS');
+    END IF;
+END $$;
 
 -- CreateTable
-CREATE TABLE "RitualGuide" (
+CREATE TABLE IF NOT EXISTS "RitualGuide" (
     "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "slug" TEXT NOT NULL,
@@ -129,7 +157,7 @@ CREATE TABLE "RitualGuide" (
 );
 
 -- CreateTable
-CREATE TABLE "DharmicConcept" (
+CREATE TABLE IF NOT EXISTS "DharmicConcept" (
     "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "slug" TEXT NOT NULL,
@@ -175,7 +203,7 @@ CREATE TABLE "DharmicConcept" (
 );
 
 -- CreateTable
-CREATE TABLE "User" (
+CREATE TABLE IF NOT EXISTS "User" (
     "id" TEXT NOT NULL,
     "name" TEXT,
     "email" TEXT,
@@ -193,7 +221,7 @@ CREATE TABLE "User" (
 );
 
 -- CreateTable
-CREATE TABLE "Account" (
+CREATE TABLE IF NOT EXISTS "Account" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "type" TEXT NOT NULL,
@@ -213,7 +241,7 @@ CREATE TABLE "Account" (
 );
 
 -- CreateTable
-CREATE TABLE "Session" (
+CREATE TABLE IF NOT EXISTS "Session" (
     "id" TEXT NOT NULL,
     "sessionToken" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
@@ -225,14 +253,14 @@ CREATE TABLE "Session" (
 );
 
 -- CreateTable
-CREATE TABLE "VerificationToken" (
+CREATE TABLE IF NOT EXISTS "VerificationToken" (
     "identifier" TEXT NOT NULL,
     "token" TEXT NOT NULL,
     "expires" TIMESTAMP(3) NOT NULL
 );
 
 -- CreateTable
-CREATE TABLE "OtpVerification" (
+CREATE TABLE IF NOT EXISTS "OtpVerification" (
     "id" TEXT NOT NULL,
     "phone" TEXT NOT NULL,
     "hashedOtp" TEXT NOT NULL,
@@ -247,7 +275,7 @@ CREATE TABLE "OtpVerification" (
 );
 
 -- CreateTable
-CREATE TABLE "BeginnerGuide" (
+CREATE TABLE IF NOT EXISTS "BeginnerGuide" (
     "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "slug" TEXT NOT NULL,
@@ -295,7 +323,7 @@ CREATE TABLE "BeginnerGuide" (
 );
 
 -- CreateTable
-CREATE TABLE "PanchangEntry" (
+CREATE TABLE IF NOT EXISTS "PanchangEntry" (
     "id" TEXT NOT NULL,
     "date" TEXT NOT NULL,
     "dateObj" TIMESTAMP(3) NOT NULL,
@@ -319,7 +347,7 @@ CREATE TABLE "PanchangEntry" (
 );
 
 -- CreateTable
-CREATE TABLE "Order" (
+CREATE TABLE IF NOT EXISTS "Order" (
     "id" TEXT NOT NULL,
     "orderNumber" TEXT NOT NULL,
     "customerName" TEXT NOT NULL,
@@ -344,7 +372,7 @@ CREATE TABLE "Order" (
 );
 
 -- CreateTable
-CREATE TABLE "OrderItem" (
+CREATE TABLE IF NOT EXISTS "OrderItem" (
     "id" TEXT NOT NULL,
     "orderId" TEXT NOT NULL,
     "productId" TEXT NOT NULL,
@@ -359,7 +387,7 @@ CREATE TABLE "OrderItem" (
 );
 
 -- CreateTable
-CREATE TABLE "Product" (
+CREATE TABLE IF NOT EXISTS "Product" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "slug" TEXT NOT NULL,
@@ -401,7 +429,7 @@ CREATE TABLE "Product" (
 );
 
 -- CreateTable
-CREATE TABLE "Source" (
+CREATE TABLE IF NOT EXISTS "Source" (
     "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "sanskritTitle" TEXT,
@@ -416,7 +444,7 @@ CREATE TABLE "Source" (
 );
 
 -- CreateTable
-CREATE TABLE "Faq" (
+CREATE TABLE IF NOT EXISTS "Faq" (
     "id" TEXT NOT NULL,
     "question" TEXT NOT NULL,
     "answer" TEXT NOT NULL,
@@ -429,7 +457,7 @@ CREATE TABLE "Faq" (
 );
 
 -- CreateTable
-CREATE TABLE "AnnouncementBar" (
+CREATE TABLE IF NOT EXISTS "AnnouncementBar" (
     "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "message" TEXT NOT NULL,
@@ -446,7 +474,7 @@ CREATE TABLE "AnnouncementBar" (
 );
 
 -- CreateTable
-CREATE TABLE "UpcomingFeature" (
+CREATE TABLE IF NOT EXISTS "UpcomingFeature" (
     "id" TEXT NOT NULL,
     "key" TEXT,
     "title" TEXT NOT NULL,
@@ -463,7 +491,7 @@ CREATE TABLE "UpcomingFeature" (
 );
 
 -- CreateTable
-CREATE TABLE "Subscriber" (
+CREATE TABLE IF NOT EXISTS "Subscriber" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "whatsappNumber" TEXT NOT NULL,
@@ -478,7 +506,7 @@ CREATE TABLE "Subscriber" (
 );
 
 -- CreateTable
-CREATE TABLE "AuditLog" (
+CREATE TABLE IF NOT EXISTS "AuditLog" (
     "id" TEXT NOT NULL,
     "event" TEXT NOT NULL,
     "actor" TEXT NOT NULL DEFAULT 'system@tapa.co',
@@ -494,7 +522,7 @@ CREATE TABLE "AuditLog" (
 );
 
 -- CreateTable
-CREATE TABLE "ConsentLog" (
+CREATE TABLE IF NOT EXISTS "ConsentLog" (
     "id" TEXT NOT NULL,
     "userId" TEXT,
     "email" TEXT NOT NULL,
@@ -508,7 +536,7 @@ CREATE TABLE "ConsentLog" (
 );
 
 -- CreateTable
-CREATE TABLE "DownloadLog" (
+CREATE TABLE IF NOT EXISTS "DownloadLog" (
     "id" TEXT NOT NULL,
     "userId" TEXT,
     "userEmail" TEXT,
@@ -520,7 +548,7 @@ CREATE TABLE "DownloadLog" (
 );
 
 -- CreateTable
-CREATE TABLE "HeaderCategory" (
+CREATE TABLE IF NOT EXISTS "HeaderCategory" (
     "id" TEXT NOT NULL,
     "key" TEXT NOT NULL,
     "title" TEXT NOT NULL,
@@ -536,7 +564,7 @@ CREATE TABLE "HeaderCategory" (
 );
 
 -- CreateTable
-CREATE TABLE "FooterConfig" (
+CREATE TABLE IF NOT EXISTS "FooterConfig" (
     "id" TEXT NOT NULL,
     "key" TEXT NOT NULL,
     "brandJson" TEXT NOT NULL,
@@ -553,7 +581,7 @@ CREATE TABLE "FooterConfig" (
 );
 
 -- CreateTable
-CREATE TABLE "GlossaryTerm" (
+CREATE TABLE IF NOT EXISTS "GlossaryTerm" (
     "id" TEXT NOT NULL,
     "term" TEXT NOT NULL,
     "slug" TEXT NOT NULL,
@@ -574,7 +602,7 @@ CREATE TABLE "GlossaryTerm" (
 );
 
 -- CreateTable
-CREATE TABLE "AboutPage" (
+CREATE TABLE IF NOT EXISTS "AboutPage" (
     "id" TEXT NOT NULL,
     "key" TEXT NOT NULL DEFAULT 'default',
     "heroEyebrow" TEXT,
@@ -679,7 +707,7 @@ CREATE TABLE "AboutPage" (
 );
 
 -- CreateTable
-CREATE TABLE "AboutCoreValue" (
+CREATE TABLE IF NOT EXISTS "AboutCoreValue" (
     "id" TEXT NOT NULL,
     "aboutPageId" TEXT NOT NULL,
     "number" TEXT NOT NULL,
@@ -691,7 +719,7 @@ CREATE TABLE "AboutCoreValue" (
 );
 
 -- CreateTable
-CREATE TABLE "AboutEditorialSource" (
+CREATE TABLE IF NOT EXISTS "AboutEditorialSource" (
     "id" TEXT NOT NULL,
     "aboutPageId" TEXT NOT NULL,
     "source" TEXT NOT NULL,
@@ -702,7 +730,7 @@ CREATE TABLE "AboutEditorialSource" (
 );
 
 -- CreateTable
-CREATE TABLE "AboutRitualKitPoint" (
+CREATE TABLE IF NOT EXISTS "AboutRitualKitPoint" (
     "id" TEXT NOT NULL,
     "aboutPageId" TEXT NOT NULL,
     "title" TEXT NOT NULL,
@@ -713,7 +741,7 @@ CREATE TABLE "AboutRitualKitPoint" (
 );
 
 -- CreateTable
-CREATE TABLE "AboutPurohitBookingPoint" (
+CREATE TABLE IF NOT EXISTS "AboutPurohitBookingPoint" (
     "id" TEXT NOT NULL,
     "aboutPageId" TEXT NOT NULL,
     "title" TEXT NOT NULL,
@@ -724,7 +752,7 @@ CREATE TABLE "AboutPurohitBookingPoint" (
 );
 
 -- CreateTable
-CREATE TABLE "AboutPurohitArrangementPoint" (
+CREATE TABLE IF NOT EXISTS "AboutPurohitArrangementPoint" (
     "id" TEXT NOT NULL,
     "aboutPageId" TEXT NOT NULL,
     "title" TEXT NOT NULL,
@@ -735,7 +763,7 @@ CREATE TABLE "AboutPurohitArrangementPoint" (
 );
 
 -- CreateTable
-CREATE TABLE "AboutCircleStep" (
+CREATE TABLE IF NOT EXISTS "AboutCircleStep" (
     "id" TEXT NOT NULL,
     "aboutPageId" TEXT NOT NULL,
     "title" TEXT NOT NULL,
@@ -746,302 +774,346 @@ CREATE TABLE "AboutCircleStep" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "RitualGuide_slug_key" ON "RitualGuide"("slug");
+CREATE UNIQUE INDEX IF NOT EXISTS "RitualGuide_slug_key" ON "RitualGuide"("slug");
 
 -- CreateIndex
-CREATE INDEX "RitualGuide_slug_idx" ON "RitualGuide"("slug");
+CREATE INDEX IF NOT EXISTS "RitualGuide_slug_idx" ON "RitualGuide"("slug");
 
 -- CreateIndex
-CREATE INDEX "RitualGuide_status_idx" ON "RitualGuide"("status");
+CREATE INDEX IF NOT EXISTS "RitualGuide_status_idx" ON "RitualGuide"("status");
 
 -- CreateIndex
-CREATE INDEX "RitualGuide_status_category_idx" ON "RitualGuide"("status", "category");
+CREATE INDEX IF NOT EXISTS "RitualGuide_status_category_idx" ON "RitualGuide"("status", "category");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "DharmicConcept_slug_key" ON "DharmicConcept"("slug");
+CREATE UNIQUE INDEX IF NOT EXISTS "DharmicConcept_slug_key" ON "DharmicConcept"("slug");
 
 -- CreateIndex
-CREATE INDEX "DharmicConcept_slug_idx" ON "DharmicConcept"("slug");
+CREATE INDEX IF NOT EXISTS "DharmicConcept_slug_idx" ON "DharmicConcept"("slug");
 
 -- CreateIndex
-CREATE INDEX "DharmicConcept_status_idx" ON "DharmicConcept"("status");
+CREATE INDEX IF NOT EXISTS "DharmicConcept_status_idx" ON "DharmicConcept"("status");
 
 -- CreateIndex
-CREATE INDEX "DharmicConcept_category_idx" ON "DharmicConcept"("category");
+CREATE INDEX IF NOT EXISTS "DharmicConcept_category_idx" ON "DharmicConcept"("category");
 
 -- CreateIndex
-CREATE INDEX "DharmicConcept_authorId_idx" ON "DharmicConcept"("authorId");
+CREATE INDEX IF NOT EXISTS "DharmicConcept_authorId_idx" ON "DharmicConcept"("authorId");
 
 -- CreateIndex
-CREATE INDEX "DharmicConcept_status_category_idx" ON "DharmicConcept"("status", "category");
+CREATE INDEX IF NOT EXISTS "DharmicConcept_status_category_idx" ON "DharmicConcept"("status", "category");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
+CREATE UNIQUE INDEX IF NOT EXISTS "User_email_key" ON "User"("email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "User_phone_key" ON "User"("phone");
+CREATE UNIQUE INDEX IF NOT EXISTS "User_phone_key" ON "User"("phone");
 
 -- CreateIndex
-CREATE INDEX "User_email_idx" ON "User"("email");
+CREATE INDEX IF NOT EXISTS "User_email_idx" ON "User"("email");
 
 -- CreateIndex
-CREATE INDEX "User_phone_idx" ON "User"("phone");
+CREATE INDEX IF NOT EXISTS "User_phone_idx" ON "User"("phone");
 
 -- CreateIndex
-CREATE INDEX "User_role_idx" ON "User"("role");
+CREATE INDEX IF NOT EXISTS "User_role_idx" ON "User"("role");
 
 -- CreateIndex
-CREATE INDEX "User_role_createdAt_idx" ON "User"("role", "createdAt");
+CREATE INDEX IF NOT EXISTS "User_role_createdAt_idx" ON "User"("role", "createdAt");
 
 -- CreateIndex
-CREATE INDEX "Account_userId_idx" ON "Account"("userId");
+CREATE INDEX IF NOT EXISTS "Account_userId_idx" ON "Account"("userId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Account_provider_providerAccountId_key" ON "Account"("provider", "providerAccountId");
+CREATE UNIQUE INDEX IF NOT EXISTS "Account_provider_providerAccountId_key" ON "Account"("provider", "providerAccountId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Session_sessionToken_key" ON "Session"("sessionToken");
+CREATE UNIQUE INDEX IF NOT EXISTS "Session_sessionToken_key" ON "Session"("sessionToken");
 
 -- CreateIndex
-CREATE INDEX "Session_userId_idx" ON "Session"("userId");
+CREATE INDEX IF NOT EXISTS "Session_userId_idx" ON "Session"("userId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "VerificationToken_token_key" ON "VerificationToken"("token");
+CREATE UNIQUE INDEX IF NOT EXISTS "VerificationToken_token_key" ON "VerificationToken"("token");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "VerificationToken_identifier_token_key" ON "VerificationToken"("identifier", "token");
+CREATE UNIQUE INDEX IF NOT EXISTS "VerificationToken_identifier_token_key" ON "VerificationToken"("identifier", "token");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "OtpVerification_phone_key" ON "OtpVerification"("phone");
+CREATE UNIQUE INDEX IF NOT EXISTS "OtpVerification_phone_key" ON "OtpVerification"("phone");
 
 -- CreateIndex
-CREATE INDEX "OtpVerification_phone_idx" ON "OtpVerification"("phone");
+CREATE INDEX IF NOT EXISTS "OtpVerification_phone_idx" ON "OtpVerification"("phone");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "BeginnerGuide_slug_key" ON "BeginnerGuide"("slug");
+CREATE UNIQUE INDEX IF NOT EXISTS "BeginnerGuide_slug_key" ON "BeginnerGuide"("slug");
 
 -- CreateIndex
-CREATE INDEX "BeginnerGuide_slug_idx" ON "BeginnerGuide"("slug");
+CREATE INDEX IF NOT EXISTS "BeginnerGuide_slug_idx" ON "BeginnerGuide"("slug");
 
 -- CreateIndex
-CREATE INDEX "BeginnerGuide_status_idx" ON "BeginnerGuide"("status");
+CREATE INDEX IF NOT EXISTS "BeginnerGuide_status_idx" ON "BeginnerGuide"("status");
 
 -- CreateIndex
-CREATE INDEX "BeginnerGuide_status_category_idx" ON "BeginnerGuide"("status", "category");
+CREATE INDEX IF NOT EXISTS "BeginnerGuide_status_category_idx" ON "BeginnerGuide"("status", "category");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "PanchangEntry_dateObj_key" ON "PanchangEntry"("dateObj");
+CREATE UNIQUE INDEX IF NOT EXISTS "PanchangEntry_dateObj_key" ON "PanchangEntry"("dateObj");
 
 -- CreateIndex
-CREATE INDEX "PanchangEntry_year_idx" ON "PanchangEntry"("year");
+CREATE INDEX IF NOT EXISTS "PanchangEntry_year_idx" ON "PanchangEntry"("year");
 
 -- CreateIndex
-CREATE INDEX "PanchangEntry_date_idx" ON "PanchangEntry"("date");
+CREATE INDEX IF NOT EXISTS "PanchangEntry_date_idx" ON "PanchangEntry"("date");
 
 -- CreateIndex
-CREATE INDEX "PanchangEntry_isAuspicious_dateObj_idx" ON "PanchangEntry"("isAuspicious", "dateObj");
+CREATE INDEX IF NOT EXISTS "PanchangEntry_isAuspicious_dateObj_idx" ON "PanchangEntry"("isAuspicious", "dateObj");
 
 -- CreateIndex
-CREATE INDEX "PanchangEntry_year_paksha_tithiName_idx" ON "PanchangEntry"("year", "paksha", "tithiName");
+CREATE INDEX IF NOT EXISTS "PanchangEntry_year_paksha_tithiName_idx" ON "PanchangEntry"("year", "paksha", "tithiName");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Order_orderNumber_key" ON "Order"("orderNumber");
+CREATE UNIQUE INDEX IF NOT EXISTS "Order_orderNumber_key" ON "Order"("orderNumber");
 
 -- CreateIndex
-CREATE INDEX "Order_orderNumber_idx" ON "Order"("orderNumber");
+CREATE INDEX IF NOT EXISTS "Order_orderNumber_idx" ON "Order"("orderNumber");
 
 -- CreateIndex
-CREATE INDEX "Order_customerMobile_idx" ON "Order"("customerMobile");
+CREATE INDEX IF NOT EXISTS "Order_customerMobile_idx" ON "Order"("customerMobile");
 
 -- CreateIndex
-CREATE INDEX "Order_customerEmail_idx" ON "Order"("customerEmail");
+CREATE INDEX IF NOT EXISTS "Order_customerEmail_idx" ON "Order"("customerEmail");
 
 -- CreateIndex
-CREATE INDEX "Order_orderStatus_idx" ON "Order"("orderStatus");
+CREATE INDEX IF NOT EXISTS "Order_orderStatus_idx" ON "Order"("orderStatus");
 
 -- CreateIndex
-CREATE INDEX "Order_userId_idx" ON "Order"("userId");
+CREATE INDEX IF NOT EXISTS "Order_userId_idx" ON "Order"("userId");
 
 -- CreateIndex
-CREATE INDEX "Order_createdAt_idx" ON "Order"("createdAt");
+CREATE INDEX IF NOT EXISTS "Order_createdAt_idx" ON "Order"("createdAt");
 
 -- CreateIndex
-CREATE INDEX "Order_userId_createdAt_idx" ON "Order"("userId", "createdAt");
+CREATE INDEX IF NOT EXISTS "Order_userId_createdAt_idx" ON "Order"("userId", "createdAt");
 
 -- CreateIndex
-CREATE INDEX "OrderItem_orderId_idx" ON "OrderItem"("orderId");
+CREATE INDEX IF NOT EXISTS "OrderItem_orderId_idx" ON "OrderItem"("orderId");
 
 -- CreateIndex
-CREATE INDEX "OrderItem_productId_idx" ON "OrderItem"("productId");
+CREATE INDEX IF NOT EXISTS "OrderItem_productId_idx" ON "OrderItem"("productId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Product_slug_key" ON "Product"("slug");
+CREATE UNIQUE INDEX IF NOT EXISTS "Product_slug_key" ON "Product"("slug");
 
 -- CreateIndex
-CREATE INDEX "Product_slug_idx" ON "Product"("slug");
+CREATE INDEX IF NOT EXISTS "Product_slug_idx" ON "Product"("slug");
 
 -- CreateIndex
-CREATE INDEX "Product_status_idx" ON "Product"("status");
+CREATE INDEX IF NOT EXISTS "Product_status_idx" ON "Product"("status");
 
 -- CreateIndex
-CREATE INDEX "Product_category_idx" ON "Product"("category");
+CREATE INDEX IF NOT EXISTS "Product_category_idx" ON "Product"("category");
 
 -- CreateIndex
-CREATE INDEX "Product_status_category_idx" ON "Product"("status", "category");
+CREATE INDEX IF NOT EXISTS "Product_status_category_idx" ON "Product"("status", "category");
 
 -- CreateIndex
-CREATE INDEX "Product_status_createdAt_idx" ON "Product"("status", "createdAt");
+CREATE INDEX IF NOT EXISTS "Product_status_createdAt_idx" ON "Product"("status", "createdAt");
 
 -- CreateIndex
-CREATE INDEX "Source_category_idx" ON "Source"("category");
+CREATE INDEX IF NOT EXISTS "Source_category_idx" ON "Source"("category");
 
 -- CreateIndex
-CREATE INDEX "Faq_category_idx" ON "Faq"("category");
+CREATE INDEX IF NOT EXISTS "Faq_category_idx" ON "Faq"("category");
 
 -- CreateIndex
-CREATE INDEX "AnnouncementBar_isActive_idx" ON "AnnouncementBar"("isActive");
+CREATE INDEX IF NOT EXISTS "AnnouncementBar_isActive_idx" ON "AnnouncementBar"("isActive");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "UpcomingFeature_key_key" ON "UpcomingFeature"("key");
+CREATE UNIQUE INDEX IF NOT EXISTS "UpcomingFeature_key_key" ON "UpcomingFeature"("key");
 
 -- CreateIndex
-CREATE INDEX "UpcomingFeature_status_idx" ON "UpcomingFeature"("status");
+CREATE INDEX IF NOT EXISTS "UpcomingFeature_status_idx" ON "UpcomingFeature"("status");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Subscriber_whatsappNumber_key" ON "Subscriber"("whatsappNumber");
+CREATE UNIQUE INDEX IF NOT EXISTS "Subscriber_whatsappNumber_key" ON "Subscriber"("whatsappNumber");
 
 -- CreateIndex
-CREATE INDEX "Subscriber_whatsappNumber_idx" ON "Subscriber"("whatsappNumber");
+CREATE INDEX IF NOT EXISTS "Subscriber_whatsappNumber_idx" ON "Subscriber"("whatsappNumber");
 
 -- CreateIndex
-CREATE INDEX "Subscriber_status_idx" ON "Subscriber"("status");
+CREATE INDEX IF NOT EXISTS "Subscriber_status_idx" ON "Subscriber"("status");
 
 -- CreateIndex
-CREATE INDEX "AuditLog_event_idx" ON "AuditLog"("event");
+CREATE INDEX IF NOT EXISTS "AuditLog_event_idx" ON "AuditLog"("event");
 
 -- CreateIndex
-CREATE INDEX "AuditLog_severity_idx" ON "AuditLog"("severity");
+CREATE INDEX IF NOT EXISTS "AuditLog_severity_idx" ON "AuditLog"("severity");
 
 -- CreateIndex
-CREATE INDEX "AuditLog_createdAt_idx" ON "AuditLog"("createdAt");
+CREATE INDEX IF NOT EXISTS "AuditLog_createdAt_idx" ON "AuditLog"("createdAt");
 
 -- CreateIndex
-CREATE INDEX "ConsentLog_email_idx" ON "ConsentLog"("email");
+CREATE INDEX IF NOT EXISTS "ConsentLog_email_idx" ON "ConsentLog"("email");
 
 -- CreateIndex
-CREATE INDEX "ConsentLog_userId_idx" ON "ConsentLog"("userId");
+CREATE INDEX IF NOT EXISTS "ConsentLog_userId_idx" ON "ConsentLog"("userId");
 
 -- CreateIndex
-CREATE INDEX "DownloadLog_resourceId_idx" ON "DownloadLog"("resourceId");
+CREATE INDEX IF NOT EXISTS "DownloadLog_resourceId_idx" ON "DownloadLog"("resourceId");
 
 -- CreateIndex
-CREATE INDEX "DownloadLog_userId_idx" ON "DownloadLog"("userId");
+CREATE INDEX IF NOT EXISTS "DownloadLog_userId_idx" ON "DownloadLog"("userId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "HeaderCategory_key_key" ON "HeaderCategory"("key");
+CREATE UNIQUE INDEX IF NOT EXISTS "HeaderCategory_key_key" ON "HeaderCategory"("key");
 
 -- CreateIndex
-CREATE INDEX "HeaderCategory_key_idx" ON "HeaderCategory"("key");
+CREATE INDEX IF NOT EXISTS "HeaderCategory_key_idx" ON "HeaderCategory"("key");
 
 -- CreateIndex
-CREATE INDEX "HeaderCategory_status_idx" ON "HeaderCategory"("status");
+CREATE INDEX IF NOT EXISTS "HeaderCategory_status_idx" ON "HeaderCategory"("status");
 
 -- CreateIndex
-CREATE INDEX "HeaderCategory_displayOrder_idx" ON "HeaderCategory"("displayOrder");
+CREATE INDEX IF NOT EXISTS "HeaderCategory_displayOrder_idx" ON "HeaderCategory"("displayOrder");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "FooterConfig_key_key" ON "FooterConfig"("key");
+CREATE UNIQUE INDEX IF NOT EXISTS "FooterConfig_key_key" ON "FooterConfig"("key");
 
 -- CreateIndex
-CREATE INDEX "FooterConfig_key_idx" ON "FooterConfig"("key");
+CREATE INDEX IF NOT EXISTS "FooterConfig_key_idx" ON "FooterConfig"("key");
 
 -- CreateIndex
-CREATE INDEX "FooterConfig_status_idx" ON "FooterConfig"("status");
+CREATE INDEX IF NOT EXISTS "FooterConfig_status_idx" ON "FooterConfig"("status");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "GlossaryTerm_slug_key" ON "GlossaryTerm"("slug");
+CREATE UNIQUE INDEX IF NOT EXISTS "GlossaryTerm_slug_key" ON "GlossaryTerm"("slug");
 
 -- CreateIndex
-CREATE INDEX "GlossaryTerm_slug_idx" ON "GlossaryTerm"("slug");
+CREATE INDEX IF NOT EXISTS "GlossaryTerm_slug_idx" ON "GlossaryTerm"("slug");
 
 -- CreateIndex
-CREATE INDEX "GlossaryTerm_status_idx" ON "GlossaryTerm"("status");
+CREATE INDEX IF NOT EXISTS "GlossaryTerm_status_idx" ON "GlossaryTerm"("status");
 
 -- CreateIndex
-CREATE INDEX "GlossaryTerm_category_idx" ON "GlossaryTerm"("category");
+CREATE INDEX IF NOT EXISTS "GlossaryTerm_category_idx" ON "GlossaryTerm"("category");
 
 -- CreateIndex
-CREATE INDEX "GlossaryTerm_language_idx" ON "GlossaryTerm"("language");
+CREATE INDEX IF NOT EXISTS "GlossaryTerm_language_idx" ON "GlossaryTerm"("language");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "AboutPage_key_key" ON "AboutPage"("key");
+CREATE UNIQUE INDEX IF NOT EXISTS "AboutPage_key_key" ON "AboutPage"("key");
 
 -- CreateIndex
-CREATE INDEX "AboutCoreValue_aboutPageId_idx" ON "AboutCoreValue"("aboutPageId");
+CREATE INDEX IF NOT EXISTS "AboutCoreValue_aboutPageId_idx" ON "AboutCoreValue"("aboutPageId");
 
 -- CreateIndex
-CREATE INDEX "AboutCoreValue_sortOrder_idx" ON "AboutCoreValue"("sortOrder");
+CREATE INDEX IF NOT EXISTS "AboutCoreValue_sortOrder_idx" ON "AboutCoreValue"("sortOrder");
 
 -- CreateIndex
-CREATE INDEX "AboutEditorialSource_aboutPageId_idx" ON "AboutEditorialSource"("aboutPageId");
+CREATE INDEX IF NOT EXISTS "AboutEditorialSource_aboutPageId_idx" ON "AboutEditorialSource"("aboutPageId");
 
 -- CreateIndex
-CREATE INDEX "AboutEditorialSource_sortOrder_idx" ON "AboutEditorialSource"("sortOrder");
+CREATE INDEX IF NOT EXISTS "AboutEditorialSource_sortOrder_idx" ON "AboutEditorialSource"("sortOrder");
 
 -- CreateIndex
-CREATE INDEX "AboutRitualKitPoint_aboutPageId_idx" ON "AboutRitualKitPoint"("aboutPageId");
+CREATE INDEX IF NOT EXISTS "AboutRitualKitPoint_aboutPageId_idx" ON "AboutRitualKitPoint"("aboutPageId");
 
 -- CreateIndex
-CREATE INDEX "AboutRitualKitPoint_sortOrder_idx" ON "AboutRitualKitPoint"("sortOrder");
+CREATE INDEX IF NOT EXISTS "AboutRitualKitPoint_sortOrder_idx" ON "AboutRitualKitPoint"("sortOrder");
 
 -- CreateIndex
-CREATE INDEX "AboutPurohitBookingPoint_aboutPageId_idx" ON "AboutPurohitBookingPoint"("aboutPageId");
+CREATE INDEX IF NOT EXISTS "AboutPurohitBookingPoint_aboutPageId_idx" ON "AboutPurohitBookingPoint"("aboutPageId");
 
 -- CreateIndex
-CREATE INDEX "AboutPurohitBookingPoint_sortOrder_idx" ON "AboutPurohitBookingPoint"("sortOrder");
+CREATE INDEX IF NOT EXISTS "AboutPurohitBookingPoint_sortOrder_idx" ON "AboutPurohitBookingPoint"("sortOrder");
 
 -- CreateIndex
-CREATE INDEX "AboutPurohitArrangementPoint_aboutPageId_idx" ON "AboutPurohitArrangementPoint"("aboutPageId");
+CREATE INDEX IF NOT EXISTS "AboutPurohitArrangementPoint_aboutPageId_idx" ON "AboutPurohitArrangementPoint"("aboutPageId");
 
 -- CreateIndex
-CREATE INDEX "AboutPurohitArrangementPoint_sortOrder_idx" ON "AboutPurohitArrangementPoint"("sortOrder");
+CREATE INDEX IF NOT EXISTS "AboutPurohitArrangementPoint_sortOrder_idx" ON "AboutPurohitArrangementPoint"("sortOrder");
 
 -- CreateIndex
-CREATE INDEX "AboutCircleStep_aboutPageId_idx" ON "AboutCircleStep"("aboutPageId");
+CREATE INDEX IF NOT EXISTS "AboutCircleStep_aboutPageId_idx" ON "AboutCircleStep"("aboutPageId");
 
 -- CreateIndex
-CREATE INDEX "AboutCircleStep_sortOrder_idx" ON "AboutCircleStep"("sortOrder");
+CREATE INDEX IF NOT EXISTS "AboutCircleStep_sortOrder_idx" ON "AboutCircleStep"("sortOrder");
 
 -- AddForeignKey
-ALTER TABLE "DharmicConcept" ADD CONSTRAINT "DharmicConcept_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'DharmicConcept_authorId_fkey') THEN
+        ALTER TABLE "DharmicConcept" ADD CONSTRAINT "DharmicConcept_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "Account" ADD CONSTRAINT "Account_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Account_userId_fkey') THEN
+        ALTER TABLE "Account" ADD CONSTRAINT "Account_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "Session" ADD CONSTRAINT "Session_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Session_userId_fkey') THEN
+        ALTER TABLE "Session" ADD CONSTRAINT "Session_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "Order" ADD CONSTRAINT "Order_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Order_userId_fkey') THEN
+        ALTER TABLE "Order" ADD CONSTRAINT "Order_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "OrderItem" ADD CONSTRAINT "OrderItem_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "Order"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'OrderItem_orderId_fkey') THEN
+        ALTER TABLE "OrderItem" ADD CONSTRAINT "OrderItem_orderId_fkey" FOREIGN KEY ("orderId") REFERENCES "Order"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "AboutCoreValue" ADD CONSTRAINT "AboutCoreValue_aboutPageId_fkey" FOREIGN KEY ("aboutPageId") REFERENCES "AboutPage"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'AboutCoreValue_aboutPageId_fkey') THEN
+        ALTER TABLE "AboutCoreValue" ADD CONSTRAINT "AboutCoreValue_aboutPageId_fkey" FOREIGN KEY ("aboutPageId") REFERENCES "AboutPage"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "AboutEditorialSource" ADD CONSTRAINT "AboutEditorialSource_aboutPageId_fkey" FOREIGN KEY ("aboutPageId") REFERENCES "AboutPage"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'AboutEditorialSource_aboutPageId_fkey') THEN
+        ALTER TABLE "AboutEditorialSource" ADD CONSTRAINT "AboutEditorialSource_aboutPageId_fkey" FOREIGN KEY ("aboutPageId") REFERENCES "AboutPage"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "AboutRitualKitPoint" ADD CONSTRAINT "AboutRitualKitPoint_aboutPageId_fkey" FOREIGN KEY ("aboutPageId") REFERENCES "AboutPage"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'AboutRitualKitPoint_aboutPageId_fkey') THEN
+        ALTER TABLE "AboutRitualKitPoint" ADD CONSTRAINT "AboutRitualKitPoint_aboutPageId_fkey" FOREIGN KEY ("aboutPageId") REFERENCES "AboutPage"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "AboutPurohitBookingPoint" ADD CONSTRAINT "AboutPurohitBookingPoint_aboutPageId_fkey" FOREIGN KEY ("aboutPageId") REFERENCES "AboutPage"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'AboutPurohitBookingPoint_aboutPageId_fkey') THEN
+        ALTER TABLE "AboutPurohitBookingPoint" ADD CONSTRAINT "AboutPurohitBookingPoint_aboutPageId_fkey" FOREIGN KEY ("aboutPageId") REFERENCES "AboutPage"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "AboutPurohitArrangementPoint" ADD CONSTRAINT "AboutPurohitArrangementPoint_aboutPageId_fkey" FOREIGN KEY ("aboutPageId") REFERENCES "AboutPage"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'AboutPurohitArrangementPoint_aboutPageId_fkey') THEN
+        ALTER TABLE "AboutPurohitArrangementPoint" ADD CONSTRAINT "AboutPurohitArrangementPoint_aboutPageId_fkey" FOREIGN KEY ("aboutPageId") REFERENCES "AboutPage"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
 -- AddForeignKey
-ALTER TABLE "AboutCircleStep" ADD CONSTRAINT "AboutCircleStep_aboutPageId_fkey" FOREIGN KEY ("aboutPageId") REFERENCES "AboutPage"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'AboutCircleStep_aboutPageId_fkey') THEN
+        ALTER TABLE "AboutCircleStep" ADD CONSTRAINT "AboutCircleStep_aboutPageId_fkey" FOREIGN KEY ("aboutPageId") REFERENCES "AboutPage"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
