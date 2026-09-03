@@ -1,72 +1,56 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { SessionProvider, useSession } from 'next-auth/react';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 
 interface SourceItem {
   id: string;
   title: string;
-  sanskritTitle: string;
-  category: 'Purana' | 'Veda' | 'Upanishad' | 'Smriti' | 'Agama' | 'Tantra';
+  sanskritTitle?: string | null;
+  category: string;
   citationsCount: number;
   isVerified: boolean;
-  notes: string;
+  notes?: string | null;
 }
-
-const INITIAL_SOURCES: SourceItem[] = [
-  {
-    id: 'src-1',
-    title: 'Devi Mahatmya (Durga Saptashati)',
-    sanskritTitle: 'देवीमाहात्म्यम् (दुर्गासप्तशती)',
-    category: 'Purana',
-    citationsCount: 14,
-    isVerified: true,
-    notes: 'Primary scriptural reference for Navratri, Chandi Path, and Devi Pujas.',
-  },
-  {
-    id: 'src-2',
-    title: 'Shukla Yajurveda Samhita',
-    sanskritTitle: 'शुक्लयजुर्वेदसंहिता',
-    category: 'Veda',
-    citationsCount: 8,
-    isVerified: true,
-    notes: 'Reference for Vedic Swasti Vachan, Rudrabhishekam, and Havanam mantras.',
-  },
-  {
-    id: 'src-3',
-    title: 'Garuda Purana (Preta Khanda)',
-    sanskritTitle: 'गरुडपुराणम्',
-    category: 'Purana',
-    citationsCount: 5,
-    isVerified: true,
-    notes: 'Canonical source for Pitru Paksha and Shraddha rituals.',
-  },
-  {
-    id: 'src-4',
-    title: 'Nirnaya Sindhu (Kamalakara Bhatta)',
-    sanskritTitle: 'निर्णयसिन्धुः',
-    category: 'Smriti',
-    citationsCount: 22,
-    isVerified: true,
-    notes: 'Authoritative digest for astronomical Tithi determination and Vrat timing rules.',
-  },
-];
 
 function SourcesLibraryContent() {
   const { data: session, status } = useSession();
-  const [sources, setSources] = useState<SourceItem[]>(INITIAL_SOURCES);
+  const [sources, setSources] = useState<SourceItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   // Form State
   const [title, setTitle] = useState('');
   const [sanskritTitle, setSanskritTitle] = useState('');
-  const [category, setCategory] = useState<'Purana' | 'Veda' | 'Upanishad' | 'Smriti' | 'Agama' | 'Tantra'>('Purana');
+  const [category, setCategory] = useState<string>('Purana');
   const [notes, setNotes] = useState('');
 
-  if (status === 'loading') {
+  const fetchSources = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admin/sources');
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setSources(data.sources || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch sources:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (status === 'authenticated') {
+      fetchSources();
+    }
+  }, [status, fetchSources]);
+
+  if (status === 'loading' || loading) {
     return (
       <div style={{ minHeight: '100vh', background: '#FBF9F5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ color: '#DE1B59', fontWeight: 600 }}>Loading Sources Library...</div>
@@ -78,33 +62,60 @@ function SourcesLibraryContent() {
   const userRole = (session?.user as any)?.role?.toUpperCase() || 'SUPER_ADMIN';
 
   const filteredSources = sources.filter((s) => {
-    const matchesSearch = s.title.toLowerCase().includes(search.toLowerCase()) || s.sanskritTitle.includes(search) || s.notes.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch =
+      s.title.toLowerCase().includes(search.toLowerCase()) ||
+      (s.sanskritTitle && s.sanskritTitle.includes(search)) ||
+      (s.notes && s.notes.toLowerCase().includes(search.toLowerCase()));
     const matchesCategory = categoryFilter === 'ALL' || s.category === categoryFilter;
     return matchesSearch && matchesCategory;
   });
 
-  const handleCreate = (e: React.FormEvent) => {
+  const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
-    const newSource: SourceItem = {
-      id: `src-${Date.now()}`,
-      title: title.trim(),
-      sanskritTitle: sanskritTitle.trim(),
-      category,
-      citationsCount: 0,
-      isVerified: true,
-      notes: notes.trim(),
-    };
-    setSources([newSource, ...sources]);
-    setTitle('');
-    setSanskritTitle('');
-    setNotes('');
-    setIsModalOpen(false);
+    if (!title.trim() || submitting) return;
+
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/admin/sources', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: title.trim(),
+          sanskritTitle: sanskritTitle.trim() || null,
+          category,
+          notes: notes.trim() || null,
+          isVerified: true,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setSources([data.source, ...sources]);
+        setTitle('');
+        setSanskritTitle('');
+        setNotes('');
+        setIsModalOpen(false);
+      }
+    } catch (err) {
+      console.error('Failed to create source:', err);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Delete this source from library?')) {
-      setSources(sources.filter((s) => s.id !== id));
+  const handleDelete = async (id: string) => {
+    if (!confirm('Delete this source from library?')) return;
+
+    try {
+      const res = await fetch(`/api/admin/sources?id=${id}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setSources(sources.filter((s) => s.id !== id));
+      }
+    } catch (err) {
+      console.error('Failed to delete source:', err);
     }
   };
 
@@ -227,7 +238,7 @@ function SourcesLibraryContent() {
 
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#374151', marginBottom: '6px' }}>Category</label>
-                <select value={category} onChange={(e) => setCategory(e.target.value as any)} style={{ width: '100%', padding: '10px', border: '1px solid #E5E7EB', borderRadius: '10px', fontSize: '13px', boxSizing: 'border-box' }}>
+                <select value={category} onChange={(e) => setCategory(e.target.value)} style={{ width: '100%', padding: '10px', border: '1px solid #E5E7EB', borderRadius: '10px', fontSize: '13px', boxSizing: 'border-box' }}>
                   <option value="Purana">Purana</option>
                   <option value="Veda">Veda</option>
                   <option value="Smriti">Smriti Digest</option>
@@ -243,7 +254,9 @@ function SourcesLibraryContent() {
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px' }}>
                 <button type="button" onClick={() => setIsModalOpen(false)} style={{ background: '#F3F4F6', color: '#374151', border: 'none', padding: '10px 20px', borderRadius: '10px', fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
-                <button type="submit" style={{ background: '#DE1B59', color: '#FFFFFF', border: 'none', padding: '10px 20px', borderRadius: '10px', fontWeight: 700, cursor: 'pointer' }}>Save Source</button>
+                <button type="submit" disabled={submitting} style={{ background: '#DE1B59', color: '#FFFFFF', border: 'none', padding: '10px 20px', borderRadius: '10px', fontWeight: 700, cursor: 'pointer' }}>
+                  {submitting ? 'Saving...' : 'Save Source'}
+                </button>
               </div>
             </form>
           </div>

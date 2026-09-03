@@ -1,6 +1,8 @@
 'use client';
 
 import Link from 'next/link';
+import { Breadcrumb } from '@/components/common/Breadcrumb';
+
 import { useCart } from '@/context/CartContext';
 
 export default function CartPage() {
@@ -11,13 +13,8 @@ export default function CartPage() {
 
   return (
     <div className="w-full bg-[var(--bg,#F2EDE4)] min-h-[70vh] py-8">
-      <div className="bcrumb bg-[var(--card,#FFFFFF)] border-b border-[var(--border,#E8E0D0)] px-4 md:px-10 py-2.5 mb-6">
-        <div className="max-w-[1280px] mx-auto text-xs text-[var(--sub-text,#8A7A68)]">
-          <Link href="/" className="hover:text-[var(--pink,#FD066D)]">Home</Link> ›{' '}
-          <Link href="/ritual-kits" className="hover:text-[var(--pink,#FD066D)]">Ritual Kits</Link> ›{' '}
-          <b className="text-[var(--body-text,#2C2010)]">Shopping Cart</b>
-        </div>
-      </div>
+      <Breadcrumb items={[{ label: 'Ritual Kits', href: '/ritual-kits' }, { label: 'Shopping Cart' }]} />
+
 
       <div className="max-w-[1280px] mx-auto px-4 md:px-10">
         <div className="flex items-center justify-between gap-4 mb-6 border-b border-[var(--border,#E8E0D0)] pb-4">

@@ -110,6 +110,122 @@ export function getServerProduct(sku: string): ServerProduct | null {
   return SERVER_PRODUCTS_CATALOG[normalizedSku] || null;
 }
 
+export function resolveKitForGuide(slug: string): ServerProduct {
+  const clean = (slug || '').toLowerCase().trim();
+  if (clean.includes('navratri') || clean.includes('shakti') || clean.includes('sharad')) {
+    return SERVER_PRODUCTS_CATALOG['shakti-kit'];
+  }
+  if (clean.includes('teej') || clean.includes('hartalika')) {
+    return SERVER_PRODUCTS_CATALOG['teej-pujan-kit'];
+  }
+  if (clean.includes('ganesh') || clean.includes('chaturthi')) {
+    return SERVER_PRODUCTS_CATALOG['ganesh-sthapana-kit'];
+  }
+  if (clean.includes('sundarkand') || clean.includes('kandas')) {
+    return SERVER_PRODUCTS_CATALOG['sundarkand-kit'];
+  }
+  if (clean.includes('ekadash') || clean.includes('vrat')) {
+    return SERVER_PRODUCTS_CATALOG['shubh-ekadash'];
+  }
+  if (clean.includes('diwali') || clean.includes('lakshmi')) {
+    return SERVER_PRODUCTS_CATALOG['lakshmi-pujan-kit'];
+  }
+  if (clean.includes('shivaratri') || clean.includes('shiva')) {
+    return SERVER_PRODUCTS_CATALOG['maha-shivaratri-kit'];
+  }
+  if (clean.includes('rudra')) {
+    return SERVER_PRODUCTS_CATALOG['rudrabhishek-kit'];
+  }
+  if (clean.includes('satyanarayan')) {
+    return SERVER_PRODUCTS_CATALOG['satyanarayan-kit'];
+  }
+  return SERVER_PRODUCTS_CATALOG['sundarkand-kit'];
+}
+
+export interface SamagriItemInput {
+  id?: string;
+  itemName: string;
+  quantity: string;
+  unit: string;
+}
+
+export type ProductCategoryType = 'BY_FESTIVAL' | 'BY_RITUAL' | 'GRIHA_LIFE_EVENTS' | 'DAILY_PUJA_ESSENTIALS';
+
+export interface ProductRecord {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  category?: ProductCategoryType | string | null;
+  price: number;
+  stock: number;
+  status: 'ACTIVE' | 'INACTIVE';
+
+  featuredImage?: string | null;
+  imagesJson?: string | null;
+  samagriItemsJson?: string | null;
+  significanceLabel?: string | null;
+  significanceHeading?: string | null;
+  significanceDescription?: string | null;
+  whatsInsideLabel?: string | null;
+  whatsInsideHeading?: string | null;
+  whatsInsideDescription?: string | null;
+  howToUseLabel?: string | null;
+  howToUseHeading?: string | null;
+  howToUseStepsJson?: string | null;
+  supportingText?: string | null;
+  dispatchInfo?: string | null;
+  expectedDelivery?: string | null;
+  serviceableAreas?: string | null;
+  courierInfo?: string | null;
+  cancellationInfo?: string | null;
+  cancellationPolicyText?: string | null;
+  cancellationPolicyUrl?: string | null;
+  returnsInfo?: string | null;
+  returnsPolicyText?: string | null;
+  returnsPolicyUrl?: string | null;
+  damageInTransitInfo?: string | null;
+  damageClaimText?: string | null;
+  damageClaimUrl?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+
+
+export const IN_MEMORY_PRODUCTS_STORE = globalThis as unknown as {
+  products: Map<string, ProductRecord>;
+};
+
+if (!IN_MEMORY_PRODUCTS_STORE.products) {
+  IN_MEMORY_PRODUCTS_STORE.products = new Map<string, ProductRecord>();
+
+  // Pre-seed in-memory store with default catalog items
+  Object.values(SERVER_PRODUCTS_CATALOG).forEach((item) => {
+    const defaultImages = ['/images/placeholder-kit.jpg'];
+    IN_MEMORY_PRODUCTS_STORE.products.set(item.id, {
+      id: item.id,
+      name: item.name,
+      slug: item.slug,
+      description: `Complete authentic puja kit for ${item.name}. Included sacred samagri ingredients for auspicious rituals.`,
+      category: item.name.includes('Navratri') ? 'Navratri Pujan · Season 1' : 'Ritual Kits',
+      price: item.price,
+      stock: 25,
+      status: 'ACTIVE',
+      featuredImage: defaultImages[0],
+      imagesJson: JSON.stringify(defaultImages),
+      samagriItemsJson: JSON.stringify([
+        { id: 'sam-1', itemName: 'Ganga Jal', quantity: '25', unit: 'ml' },
+        { id: 'sam-2', itemName: 'Roli Kumkum', quantity: '50', unit: 'g' },
+        { id: 'sam-3', itemName: 'Akshat Rice', quantity: '100', unit: 'g' },
+        { id: 'sam-4', itemName: 'Moli Thread', quantity: '1', unit: 'pcs' },
+      ]),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+  });
+}
+
 // Resilient in-memory store fallback for orders
 export const IN_MEMORY_ORDERS_STORE = globalThis as unknown as {
   orders: Map<string, any>;

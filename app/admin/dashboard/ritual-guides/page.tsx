@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import { SessionProvider, signOut, useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
-import RichTextEditor from '@/components/admin/RichTextEditor';
+
+const RichTextEditor = dynamic(() => import('@/components/admin/RichTextEditor'), { ssr: false });
 
 interface SankalpaCard {
   id: string;

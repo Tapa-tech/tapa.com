@@ -19,16 +19,16 @@ interface SearchResultCardProps {
   searchQuery: string;
 }
 
-export const SearchResultCard: React.FC<SearchResultCardProps> = ({ item, searchQuery }) => {
-  const renderHighlighted = (text: string, term: string) => {
-    if (!term || !term.trim()) return text;
-    const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-    const parts = text.split(regex);
-    return parts.map((part, i) =>
-      regex.test(part) ? <em key={i}>{part}</em> : part
-    );
-  };
+const renderHighlighted = (text: string, term: string) => {
+  if (!term || !term.trim()) return text;
+  const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+  const parts = text.split(regex);
+  return parts.map((part, i) =>
+    regex.test(part) ? <em key={`${part}-${i}`}>{part}</em> : part
+  );
+};
 
+export const SearchResultCard: React.FC<SearchResultCardProps> = React.memo(({ item, searchQuery }) => {
   const defaultGradient = item.gradientClass || 'h-vishnu';
 
   return (
@@ -43,7 +43,7 @@ export const SearchResultCard: React.FC<SearchResultCardProps> = ({ item, search
         {item.pills && item.pills.length > 0 && (
           <span className="tapa-r-m">
             {item.pills.map((pill, idx) => (
-              <span key={idx} className={`tapa-pill ${pill.variant}`}>
+              <span key={`${pill.text}-${pill.variant}-${idx}`} className={`tapa-pill ${pill.variant}`}>
                 {pill.text}
               </span>
             ))}
@@ -52,4 +52,6 @@ export const SearchResultCard: React.FC<SearchResultCardProps> = ({ item, search
       </span>
     </Link>
   );
-};
+});
+
+SearchResultCard.displayName = 'SearchResultCard';

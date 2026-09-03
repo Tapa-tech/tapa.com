@@ -3,6 +3,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { Breadcrumb } from '@/components/common/Breadcrumb';
+
 import './beginner-listing.css';
 
 interface BeginnerGuideItem {
@@ -122,13 +124,8 @@ export default function BeginnerGuidesListingPage() {
   return (
     <div className="beginner-listing-page min-h-screen w-full max-w-full overflow-x-hidden">
       {/* BREADCRUMB */}
-      <div className="bcrumb">
-        <div className="bc-in">
-          <div className="bc-l">
-            <Link href="/">Home</Link> › <Link href="/ritual-guides">Ritual Guides</Link> › <b>Beginner's Guides</b>
-          </div>
-        </div>
-      </div>
+      <Breadcrumb items={[{ label: 'Ritual Guides', href: '/ritual-guides' }, { label: "Beginner's Guides" }]} />
+
 
       {/* SIBLING RAIL */}
       <div className="subrail">

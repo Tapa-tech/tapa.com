@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { Breadcrumb } from '@/components/common/Breadcrumb';
+
 
 type CategoryKey = 'rg' | 'pa' | 'dc' | 'rk';
 
@@ -87,19 +89,21 @@ export default function KnowledgeLandingPage() {
       </div>
 
       {/* Breadcrumbs */}
-      <div className="bcrumb bg-[var(--card)] border-b border-[var(--border)] px-4 md:px-10">
-        <div className="bc-in max-w-[1280px] mx-auto py-2.5 text-[12px] md:text-[13px] text-[var(--sub-text)]">
-          <div className="bc-l">
-            <Link href="/" className="hover:underline">Home</Link> ›{' '}
-            <b>
-              {activeCategory === 'rg' && 'Ritual Guides'}
-              {activeCategory === 'pa' && 'Panchang'}
-              {activeCategory === 'dc' && 'Dharmic Concepts'}
-              {activeCategory === 'rk' && 'Ritual Kits'}
-            </b>
-          </div>
-        </div>
-      </div>
+      <Breadcrumb
+        items={[
+          {
+            label:
+              activeCategory === 'rg'
+                ? 'Ritual Guides'
+                : activeCategory === 'pa'
+                ? 'Panchang'
+                : activeCategory === 'dc'
+                ? 'Dharmic Concepts'
+                : 'Ritual Kits',
+          },
+        ]}
+      />
+
 
       {/* Category Hero */}
       <section className={`chero ${activeCategory} py-8 md:py-11 px-4 md:px-10 relative overflow-hidden`}>

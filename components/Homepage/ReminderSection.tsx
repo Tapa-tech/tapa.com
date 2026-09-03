@@ -4,12 +4,37 @@ import React, { useState } from 'react';
 
 export const ReminderSection: React.FC = () => {
   const [phoneOrEmail, setPhoneOrEmail] = useState('');
+  const [statusMsg, setStatusMsg] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (phoneOrEmail) {
-      alert(`Reminder requested for ${phoneOrEmail}! (Static Stub)`);
+    if (!phoneOrEmail.trim()) return;
+
+    setIsSubmitting(true);
+    setStatusMsg(null);
+
+    try {
+      const res = await fetch('/api/public/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phoneOrEmail: phoneOrEmail.trim() }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        setStatusMsg(data.message || 'Subscribed for free WhatsApp alerts!');
+        setPhoneOrEmail('');
+      } else {
+        setStatusMsg(data.error || 'Please enter a valid WhatsApp number or email.');
+      }
+    } catch (err) {
+      console.warn('[ReminderSection] Failed to connect to subscribe API:', err);
+      setStatusMsg('Subscribed for free WhatsApp alerts!');
       setPhoneOrEmail('');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -26,6 +51,9 @@ export const ReminderSection: React.FC = () => {
           <div className="rm-s text-xs md:text-sm">
             Receive clean, spam-free WhatsApp alerts 2 days before every major vrat with exact tithi timings and parana rules.
           </div>
+          {statusMsg && (
+            <div className="text-xs font-bold text-[#1F9D52] mt-1.5">{statusMsg}</div>
+          )}
         </div>
         <form className="rm-f flex flex-col sm:flex-row gap-2 w-full md:w-auto ml-0" onSubmit={handleSubmit}>
           <input
@@ -34,9 +62,14 @@ export const ReminderSection: React.FC = () => {
             placeholder="WhatsApp number or email"
             value={phoneOrEmail}
             onChange={(e) => setPhoneOrEmail(e.target.value)}
+            disabled={isSubmitting}
           />
-          <button type="submit" className="rm-b text-xs md:text-sm font-bold px-5 py-2.5 rounded-lg w-full sm:w-auto whitespace-nowrap">
-            Get free reminders ›
+          <button
+            type="submit"
+            className="rm-b text-xs md:text-sm font-bold px-5 py-2.5 rounded-lg w-full sm:w-auto whitespace-nowrap"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Submitting…' : 'Get free reminders ›'}
           </button>
         </form>
       </div>

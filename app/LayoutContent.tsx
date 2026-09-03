@@ -12,7 +12,11 @@ export default function LayoutContent({ children }: { children: React.ReactNode 
   const isAdminRoute = pathname?.startsWith('/admin');
 
   if (isAdminRoute) {
-    return <main className="w-full max-w-full min-h-screen">{children}</main>;
+    return (
+      <SessionProvider>
+        <main className="w-full max-w-full min-h-screen">{children}</main>
+      </SessionProvider>
+    );
   }
 
   return (
@@ -25,4 +29,3 @@ export default function LayoutContent({ children }: { children: React.ReactNode 
     </SessionProvider>
   );
 }
-

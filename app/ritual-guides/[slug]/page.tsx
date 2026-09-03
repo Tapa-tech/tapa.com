@@ -1,12 +1,19 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
-
-import { getBeginnerGuideBySlug } from '@/lib/beginner-guides-data';
+import { useSession } from 'next-auth/react';
+import { Breadcrumb } from '@/components/common/Breadcrumb';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { generateArticleJsonLd, generateFaqJsonLd } from '@/lib/seo';
+import { generateGuidePdfHtml } from '@/lib/pdf-generator';
 import BeginnerGuideDetailView from '@/components/BeginnerGuideDetail/BeginnerGuideDetailView';
-import RitualCardModal from '@/components/RitualCard/RitualCardModal';
+import { useCart } from '@/context/CartContext';
+import { resolveKitForGuide } from '@/lib/products';
 import './ritual-guide.css';
+
+const RitualCardModal = dynamic(() => import('@/components/RitualCard/RitualCardModal'), { ssr: false });
 
 interface PageProps {
   params: {
@@ -78,6 +85,20 @@ export default function RitualGuideDetailPage({ params }: PageProps) {
   const [showStickyBar, setShowStickyBar] = useState(false);
   const [isCardModalOpen, setIsCardModalOpen] = useState(false);
   const [guideData, setGuideData] = useState<any>(null);
+
+  const { addItem, openCart } = useCart();
+
+  const handleBuyKit = () => {
+    const kit = resolveKitForGuide(slug);
+    addItem({
+      id: kit.id,
+      slug: kit.slug,
+      name: kit.name,
+      price: kit.price,
+      quantity: 1,
+    });
+    openCart();
+  };
 
   const mantraAudioRef = useRef<HTMLAudioElement>(null);
   const mantraPlayRunRef = useRef(0);
@@ -155,12 +176,19 @@ export default function RitualGuideDetailPage({ params }: PageProps) {
 
   const panchangCards = useMemo(() => {
     const parsed = safeParseJson<any[]>(guideData?.panchangCardsJson);
-    if (!parsed || parsed.length === 0) return [];
-    return parsed.map((c: any) => ({
-      k: c.k || c.key || c.title || '',
-      v: c.v || c.value || c.date || '',
-      s: c.s || c.sub || c.subtitle || '',
-    }));
+    if (parsed && parsed.length > 0) {
+      return parsed.map((c: any) => ({
+        k: c.k || c.key || c.title || '',
+        v: c.v || c.value || c.date || '',
+        s: c.s || c.sub || c.subtitle || '',
+      }));
+    }
+    return [
+      { k: 'GHATASTHAPANA MUHURAT', v: '06:15 AM – 07:22 AM', s: 'OCT 3, 2024 (PRATIPADA)' },
+      { k: 'ABHIJIT MUHURAT', v: '11:46 AM – 12:33 PM', s: 'OCT 3, 2024' },
+      { k: 'KALASH STHAPANA TITHI', v: 'PRATIPADA TITHI STARTS', s: 'OCT 3, 12:18 AM' },
+      { k: 'KANYA PUJA TITHI', v: 'NAVAMI TITHI', s: 'OCT 11, 2024' },
+    ];
   }, [guideData?.panchangCardsJson]);
 
   const sankalpaCards = useMemo(() => {
@@ -206,20 +234,47 @@ export default function RitualGuideDetailPage({ params }: PageProps) {
     [guideData?.mythsItemsJson]
   );
 
-  const relatedData = useMemo(
-    () => ({
-      guides: safeParseJson<any[]>(guideData?.relatedRitualGuidesJson) || [],
-      pujans: safeParseJson<any[]>(guideData?.relatedPujansJson) || [],
-      concepts: safeParseJson<any[]>(guideData?.relatedConceptsJson) || [],
-      dates: safeParseJson<any[]>(guideData?.relatedDatesJson) || [],
-    }),
-    [
-      guideData?.relatedRitualGuidesJson,
-      guideData?.relatedPujansJson,
-      guideData?.relatedConceptsJson,
-      guideData?.relatedDatesJson,
-    ]
-  );
+  const relatedData = useMemo(() => {
+    const parsedGuides = safeParseJson<any[]>(guideData?.relatedRitualGuidesJson);
+    const parsedPujans = safeParseJson<any[]>(guideData?.relatedPujansJson);
+    const parsedConcepts = safeParseJson<any[]>(guideData?.relatedConceptsJson);
+    const parsedDates = safeParseJson<any[]>(guideData?.relatedDatesJson);
+
+    return {
+      guides:
+        parsedGuides && parsedGuides.length > 0
+          ? parsedGuides
+          : [
+              { title: 'Dussehra / Vijayadashami', subtitle: 'The tenth day · 20 October', tag: 'CALENDAR', link: '/ritual-guides/dussehra' },
+              { title: 'Durga Ashtami', subtitle: 'The most intensive of the nine', tag: 'DEITY', link: '/ritual-guides/durga-ashtami' },
+            ],
+      pujans:
+        parsedPujans && parsedPujans.length > 0
+          ? parsedPujans
+          : [
+              { title: 'Navratri Ghatasthapana', subtitle: 'Bookable · purohit performs the sthapana', link: '/pujans/navratri-ghatasthapana' },
+              { title: 'Durga Puja', subtitle: 'The Bengali observance form', link: '/pujans/durga-puja' },
+            ],
+      concepts:
+        parsedConcepts && parsedConcepts.length > 0
+          ? parsedConcepts
+          : [
+              { title: 'What Is Navratri?', subtitle: 'The three gunas across nine nights', link: '/dharmic-concepts/what-is-navratri' },
+            ],
+      dates:
+        parsedDates && parsedDates.length > 0
+          ? parsedDates
+          : [
+              { title: 'Sharad Navratri 2026 Panchang', subtitle: 'Every tithi boundary, day by day', link: '/panchang/vrat-calendar/sharad-navratri' },
+              { title: 'Ashwin month panchang', subtitle: 'The full month', link: '/panchang/ashwin' },
+            ],
+    };
+  }, [
+    guideData?.relatedRitualGuidesJson,
+    guideData?.relatedPujansJson,
+    guideData?.relatedConceptsJson,
+    guideData?.relatedDatesJson,
+  ]);
 
   const hasRelatedItems =
     relatedData.guides.length > 0 ||
@@ -249,105 +304,58 @@ export default function RitualGuideDetailPage({ params }: PageProps) {
     setCheckedSamagri((prev) => ({ ...prev, [index]: !prev[index] }));
   };
 
-  const handleDownloadSamagriPdf = () => {
-    if (!samagriList || samagriList.length === 0) return;
+  const { data: session } = useSession();
 
+  const handleDownloadPdf = (pdfMode: 'full' | 'samagri' = 'full') => {
+    const activeUserName = session?.user?.name || session?.user?.email || 'Valued Practitioner';
     const guideTitle = guideData?.title || guideData?.guideTitle || formattedTitle || 'Ritual Guide';
-    const rawDesc = guideData?.guideSubtitle || guideData?.samagriSubtitle || guideData?.storyIntroduction || '';
+    const rawDesc = guideData?.guideSubtitle || guideData?.storyIntroduction || '';
     const guideDesc = rawDesc.replace(/<[^>]*>/g, '').trim();
+
+    const formattedSamagri = samagriList.map((s: any) => ({
+      itemName: (s.item || s.itemName || s.name || '').replace(/<[^>]*>/g, ''),
+      itemDetails: (s.note || s.itemDetails || s.details || '').replace(/<[^>]*>/g, ''),
+    }));
+
+    const formattedMyths = mythsList.map((m: any) => ({
+      myth: (m.myth || m.mythStatement || m.statement || '').replace(/<[^>]*>/g, ''),
+      correction: (m.correction || m.correctionContent || m.content || '').replace(/<[^>]*>/g, ''),
+    }));
+
+    const htmlContent = generateGuidePdfHtml({
+      title: guideTitle,
+      subtitle: guideDesc,
+      category: guideData?.category || 'RITUAL GUIDE',
+      userName: activeUserName,
+      mode: pdfMode,
+      sotCard: {
+        heading: guideData?.sotSectionHeading,
+        claim: guideData?.sotPracticeTitle,
+        source: guideData?.sotScripturalSource,
+      },
+      storyText: guideData?.storyContent || guideData?.storyIntroduction,
+      sankalpaText: guideData?.sankalpaText,
+      sankalpaMeaning: guideData?.sankalpaMeaning,
+      sankalpaCards: sankalpaCards,
+      vidhiDays: vidhiDays.map((d: any) => ({
+        dayTitle: d.dayTitle || d.title || `Day ${d.dayNumber || 1}`,
+        steps: (d.steps || []).map((step: any) => (typeof step === 'string' ? step : step.text || '')),
+      })),
+      samagriItems: formattedSamagri,
+      fastingOptions: fastingOptions,
+      mythsList: formattedMyths,
+    });
 
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
-    const logoSrc = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIQAAACMCAYAAAC9FwHKAAAxlUlEQVR4nO29eZxlV1nu/33X2vsMVdVzd9KZQyYgaaYkguJP01HCEL0IF6rBCFdFb7iCgnpxQNBKg6LXAbmiMsgVBAGtDj8CXEBE6G5IDARCIKRDhs7Y81Bz1Rn23ms99491TncHEtJJutND6smnU1X7nL33Wmu/e613eN53wXEKCQO454PPOPPODz/rHICREdyRbdXRj+N3gK66xAMs2730VSt2Dr0O4CouOX77O48fjhFw5DD3iufdNPOyn94uXZmLNGvM46FxXL4xGh32V4GK/zt8kbvfP715h50094E7L+t/doSbd1TjuBQI1oGB+Fzn9Y1duYt7DX1d/8MMse5IN24ejys0ghPY3JaXntp+3uWzk8tfEKdPfGFor76smLnux1YJTMPzs8RD4bitITZsuMQZiL8rf6OxLRukkQdr5LGxtZG7Ty7+LQMd6TYezTiuBEIjuNuB3A13S3/51tWp5S6m7m1lTlXzJwyb/rF2urq2x1+Lw3f1h3Jt3Z91bO1nLg+mX23q1i1y13XvtJ6z5vf+Uv9833V1qyLWte133f9+t//u9+433rM164K4h7l05l0a2tL/3Fz6+98v7v3tL8z7p3ePbd+3N/7+3z0v7zN0b6+0V1y/1yvNnZ517mvhfO0y19r3p/d9d/mP1S5/7v719/5e0/2+e9e1+v/d9z0z07/d5s77p/8+/272x88v5z/3b733ve/c513/f510v0/bX7v9l/m//9n/3d3d+3v9f0d7e6u+q9f3d9l8855v7N69e3e3b3c3c7v/c1u2fXFw13/f7Tz/fN897n+5d+6Z//n+bNn6d/+j/2ffXv9d6/5X5u9100v0/z01b5v7c/+y85m31u2dvefV38/9rN+a2vW3d/f+629/5/1+0397p//oXw0+t5v7Lz02r5t3/Z+172zXf2vvd5l9t8zNzV3d7/v5192+9+8s3p5r/s7/nly//0d1v617v12a4P1a3Xm2x1Xl6z31s17p/3u8fLzN0v7+6/v1+h7b+0/2vf++x/2b834X9P5Z/2L9v/W29v6h394q9/mrf97705s5P/bvv3L1c518//w+l2x//q13X/fJ010p7tN1y//tve518/39uX90u7686bZ16d+/z01vLw7s0zM19j12j/25fX/tXN3f02p76w0zbf7+5X2r113z+/1n7d6d+s///J3b6m7e7z2m/903e1/4nN+uN9f9b5X8v/+696/zO4Z1P+m5d/5t1u6/zN3t/b//d/99e2//vbfv7e4f16vT1y35n3+/c/j/9q09v02z26v25b59h/X529s7u5s3t3N3t7e5gAAAAABJRU5ErkJggg==';
-
-    const html = `<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8" />  
-  <title>${guideTitle} - Samagri PDF</title>
-  <style>
-    @media print {
-      @page { margin: 15mm; size: A4; }
-      body { margin: 0; -webkit-print-color-adjust: exact; }
-    }
-    body {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      color: #111827;
-      background: #FFFFFF;
-      padding: 32px;
-      max-width: 750px;
-      margin: 0 auto;
-    }
-    .top-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 2px solid #DE1B59;
-      padding-bottom: 16px;
-      margin-bottom: 24px;
-    }
-    .logo { height: 48px; width: auto; }
-    .brand-name { font-size: 14px; font-weight: 700; color: #DE1B59; text-transform: lowercase; }
-    .meta-block { margin-bottom: 24px; }
-    .guide-title { font-family: Georgia, serif; font-size: 26px; font-weight: 700; color: #111827; margin: 0 0 6px 0; }
-    .guide-subtitle { font-size: 14px; color: #4B5563; line-height: 1.5; margin: 0; }
-    .sec-title { font-size: 16px; font-weight: 700; color: #111827; margin: 24px 0 12px 0; padding-bottom: 6px; border-bottom: 1px solid #E5E7EB; text-transform: uppercase; letter-spacing: 0.5px; }
-    .samagri-table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-    .samagri-table th, .samagri-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #E5E7EB; }
-    .samagri-table th { background: #FAFAFA; font-size: 11px; text-transform: uppercase; color: #6B7280; letter-spacing: 0.5px; }
-    .samagri-table td { font-size: 13px; color: #1F2937; }
-    .box { display: inline-block; width: 14px; height: 14px; border: 1.5px solid #9CA3AF; border-radius: 3px; margin-right: 8px; vertical-align: middle; }
-    .footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid #E5E7EB; text-align: center; font-size: 12px; color: #9CA3AF; }
-  </style>
-</head>
-<body>
-  <div class="top-bar">
-    <img src="${logoSrc}" class="logo" alt="tapa" />
-    <span class="brand-name">the tapa company</span>
-  </div>
-  <div class="meta-block">
-    <h1 class="guide-title">${guideTitle}</h1>
-    ${guideDesc ? `<p class="guide-subtitle">${guideDesc}</p>` : ''}
-  </div>
-  <div class="sec-title">🧺 Samagri (Materials) Checklist</div>
-  <table class="samagri-table">
-    <thead>
-      <tr>
-        <th style="width: 30px;"></th>
-        <th>Item Name</th>
-        <th>Details / Note</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${samagriList
-        .map(
-          (s: any) => `
-        <tr>
-          <td><span class="box"></span></td>
-          <td style="font-weight: 600;">${(s.item || s.itemName || s.name || '').replace(/<[^>]*>/g, '')}</td>
-          <td style="color: #6B7280;">${(s.note || s.itemDetails || s.details || '').replace(/<[^>]*>/g, '')}</td>
-        </tr>
-      `
-        )
-        .join('')}
-    </tbody>
-  </table>
-  <div class="footer">
-    The Tapa Company • Ritual Guide Samagri Checklist
-  </div>
-  <script>
-    window.onload = function() {
-      window.print();
-    };
-  </script>
-</body>
-</html>`;
-
     printWindow.document.open();
-    printWindow.document.write(html);
+    printWindow.document.write(htmlContent);
     printWindow.document.close();
   };
+
+  const handleDownloadSamagriPdf = () => handleDownloadPdf('samagri');
+
 
   const toggleMantraAudio = async () => {
     const audio = mantraAudioRef.current;
@@ -420,26 +428,54 @@ export default function RitualGuideDetailPage({ params }: PageProps) {
   };
 
   if (isBeginnerGuide) {
-    const guide = getBeginnerGuideBySlug(slug);
-    return <BeginnerGuideDetailView guide={guide} />;
+    if (typeof window !== 'undefined') {
+      window.location.href = `/beginner-guides/${slug}`;
+    }
+    return (
+      <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#F8F5EE' }}>
+        <div style={{ color: '#DE1B59', fontWeight: 700, fontSize: '15px' }}>Loading Beginner Guide...</div>
+      </div>
+    );
   }
 
   const heroTitle = guideData?.guideTitle || guideData?.title || formattedTitle;
 
+  const faqSchemaData = useMemo(() => {
+    const items = mythsList.map((m: any) => ({
+      question: m.myth || m.mythStatement || '',
+      answer: m.correction || m.correctionContent || '',
+    })).filter((item: any) => item.question && item.answer);
+    return generateFaqJsonLd(items);
+  }, [mythsList]);
+
+  const articleSchemaData = useMemo(() => {
+    return generateArticleJsonLd({
+      title: heroTitle,
+      slug: slug,
+      sectionPath: 'ritual-guides',
+      description: guideData?.guideSubtitle || guideData?.storyIntroduction || heroTitle,
+      image: guideData?.storyImage || undefined,
+      updatedAt: guideData?.updatedAt,
+      createdAt: guideData?.createdAt,
+    });
+  }, [heroTitle, slug, guideData]);
+
   return (
     <div className="rg-detail-root w-full max-w-full overflow-x-hidden min-h-screen">
+      <JsonLd data={articleSchemaData} />
+      <JsonLd data={faqSchemaData} />
       {/* Breadcrumb */}
-      <div className="bcrumb">
-        <div className="bc-in">
-          <div className="bc-l">
-            <Link href="/">Home</Link> › <Link href="/ritual-guides">Ritual Guides</Link>
-            {guideData?.category ? ` › ${guideData.category}` : ''} › <b>{heroTitle}</b>
-          </div>
 
-        </div>
-      </div>
+      <Breadcrumb
+        items={[
+          { label: 'Ritual Guides', href: '/ritual-guides' },
+          ...(guideData?.category ? [{ label: guideData.category, href: '/ritual-guides' }] : []),
+          { label: heroTitle },
+        ]}
+      />
 
-      {/* Hero Section */}
+
+      {/* Hero Section main banner of Ritua detail page */}
       <section className="hero">
         <div className="hero-bg"></div>
         <div className="hero-ov"></div>
@@ -460,9 +496,21 @@ export default function RitualGuideDetailPage({ params }: PageProps) {
             {(guideData?.primaryButtonText || guideData?.secondaryButtonText || guideData?.thirdButtonText) && (
               <div className="hero-btns">
                 {guideData?.primaryButtonText && (
-                  <a href={guideData?.primaryButtonTarget || '#'} className="hb-p">
+                  <button
+                    type="button"
+                    className="hb-p"
+                    onClick={() => {
+                      const text = (guideData.primaryButtonText || '').toLowerCase();
+                      const target = guideData.primaryButtonTarget || '';
+                      if (target.startsWith('#')) {
+                        document.querySelector(target)?.scrollIntoView({ behavior: 'smooth' });
+                      } else {
+                        handleBuyKit();
+                      }
+                    }}
+                  >
                     {guideData.primaryButtonText}
-                  </a>
+                  </button>
                 )}
                 {guideData?.secondaryButtonText && (
                   <button
@@ -496,20 +544,27 @@ export default function RitualGuideDetailPage({ params }: PageProps) {
                     {guideData.thirdButtonText}
                   </button>
                 )}
+                <button className="hb-g" onClick={() => handleDownloadPdf('full')}>
+                  📥 Download PDF Guide
+                </button>
               </div>
             )}
+
           </div>
         </div>
       </section>
 
       {/* Jump-to Chips Bar — only for sections that actually have content */}
-      {(hasStory || hasSankalpa || hasVidhi || hasKatha || hasSamagri || hasFasting || hasMyths) && (
+      {/* Jump-to Chips Bar — only for sections that actually have content */}
+      {(hasPanchang || hasStory || hasSankalpa || hasVidhi || hasKatha || hasSamagri || hasFasting || hasMyths) && (
         <div className="chips">
           <div className="chips-in">
             <span className="chip-l">JUMP TO</span>
+            {hasPanchang && <a className="chip" href="#panchang">📅 Panchang</a>}
             {hasStory && <a className="chip" href="#story">📖 The story</a>}
-            {hasSankalpa && <a className="chip" href="#sankalp">✋ Sankalpa</a>}
             {hasVidhi && <a className="chip" href="#vidhi">🪔 Vidhi</a>}
+            {mantraData.hasMantra && <a className="chip" href="#mantra">☸ Mantra</a>}
+            {hasSankalpa && <a className="chip" href="#sankalp">✋ Sankalpa</a>}
             {hasKatha && <a className="chip" href="#katha">📿 Vrat Katha</a>}
             {hasSamagri && <a className="chip" href="#samagri">🧺 Samagri</a>}
             {hasFasting && <a className="chip" href="#fast">🍎 Fasting</a>}
@@ -525,11 +580,15 @@ export default function RitualGuideDetailPage({ params }: PageProps) {
           <div className="main">
             {/* Credibility Card */}
             {hasSotCard && (
-              <div className="cc">
-                <div className="cc-h">
-                  {guideData?.sotSectionHeading && <span className="cc-hl">{guideData.sotSectionHeading}</span>}
+              <div className="cc w-full max-w-full overflow-hidden">
+                <div className="cc-h flex flex-wrap items-center justify-between gap-2 px-4 sm:px-5 py-3 border-b border-[var(--border-light)]">
+                  {guideData?.sotSectionHeading && (
+                    <span className="cc-hl text-[11px] font-bold tracking-wider text-[var(--sub-text)] uppercase break-words min-w-0">
+                      {guideData.sotSectionHeading}
+                    </span>
+                  )}
                   {guideData?.sotButtonTarget && (
-                    <Link href={guideData.sotButtonTarget} className="cc-hr">
+                    <Link href={guideData.sotButtonTarget} className="cc-hr text-xs font-bold text-[var(--pink)] hover:underline ml-auto shrink-0">
                       {guideData?.sotButtonText
                         ? guideData.sotButtonText.includes('›')
                           ? guideData.sotButtonText
@@ -538,12 +597,20 @@ export default function RitualGuideDetailPage({ params }: PageProps) {
                     </Link>
                   )}
                 </div>
-                <div className="cc-b">
-                  {guideData?.sotPracticeLabel && <div className="cc-core">{guideData.sotPracticeLabel}</div>}
-                  {guideData?.sotPracticeTitle && <div className="cc-claim">{guideData.sotPracticeTitle}</div>}
-                  <div className="cc-row">
+                <div className="cc-b p-4 sm:p-5 w-full max-w-full">
+                  {guideData?.sotPracticeLabel && (
+                    <div className="cc-core text-[11px] font-bold tracking-wider text-[var(--gold)] uppercase mb-1.5 break-words">
+                      {guideData.sotPracticeLabel}
+                    </div>
+                  )}
+                  {guideData?.sotPracticeTitle && (
+                    <h3 className="cc-claim text-base sm:text-lg font-bold text-[var(--dark)] leading-snug mb-3 break-words">
+                      {guideData.sotPracticeTitle}
+                    </h3>
+                  )}
+                  <div className="cc-row flex flex-wrap items-center gap-2 w-full max-w-full">
                     {(guideData?.sotPracticeCategory || guideData?.category) && (
-                      <span className="pill d">
+                      <span className="pill d text-[11px] font-bold px-2.5 py-1 rounded-md max-w-full break-words">
                         {joinTruthy([
                           (guideData?.sotPracticeCategory || guideData?.category)?.toUpperCase(),
                           guideData?.sotPracticeRating || guideData?.rating,
@@ -551,12 +618,12 @@ export default function RitualGuideDetailPage({ params }: PageProps) {
                       </span>
                     )}
                     {(guideData?.sotPracticeClassification || guideData?.classification) && (
-                      <span className="badge puranic">
+                      <span className="badge puranic text-[11px] font-bold tracking-wider px-2.5 py-1 rounded-md max-w-full break-words">
                         {(guideData?.sotPracticeClassification || guideData?.classification)?.toUpperCase()}
                       </span>
                     )}
                     {guideData?.sotScripturalSource && (
-                      <span className="pill src">
+                      <span className="pill src text-[11px] font-semibold px-2.5 py-1 rounded-md max-w-full break-words">
                         {joinTruthy([guideData.sotScripturalSource, guideData?.sotParentScripture])}
                       </span>
                     )}
@@ -566,7 +633,7 @@ export default function RitualGuideDetailPage({ params }: PageProps) {
                   guideData?.sotScripturalElementsCount != null ||
                   guideData?.sotRegionalCustomsCount != null ||
                   guideData?.sotCorrectionsCount != null) && (
-                    <p className="cc-comp">
+                    <p className="cc-comp text-xs text-[var(--sub-text)] leading-relaxed p-3 sm:p-4 border-t border-[var(--border-light)] bg-[#FCFAF6] m-0 break-words">
                       This guide:{' '}
                       {joinTruthy(
                         [
@@ -588,27 +655,33 @@ export default function RitualGuideDetailPage({ params }: PageProps) {
 
             {/* Panchang Card */}
             {hasPanchang && (
-              <div className="pan">
+              <div className="pan" id="panchang">
                 <div className="pan-h">
-                  {guideData?.festivalName && <span className="pan-hl">📅 {guideData.festivalName.toUpperCase()}</span>}
-                  {(guideData?.panchangLocation || guideData?.panchangSource) && (
-                    <span className="pan-hr">{joinTruthy([guideData?.panchangLocation, guideData?.panchangSource])}</span>
-                  )}
+                  <span className="pan-hl">
+                    📅 {guideData?.festivalName ? guideData.festivalName.toUpperCase() : 'PANCHANG FOR NAVRATRI 2024 (MUMBAI)'}
+                  </span>
+                  <span className="pan-hr">
+                    {guideData?.panchangLocation || guideData?.panchangSource || 'MUMBAI, INDIA · DRIK PANCHANG'}
+                  </span>
                 </div>
                 <div className="pan-g">
                   {panchangCards.map((card, idx) => (
-                    <div className="pc" key={idx}>
+                    <div className="pc" key={`pan-${slug}-${card.k || idx}-${idx}`}>
                       <div className="pc-k">{card.k}</div>
                       <div className="pc-v">{card.v}</div>
                       <div className="pc-s">{card.s}</div>
                     </div>
                   ))}
                 </div>
-                {guideData?.panchangNote && (
-                  <p className="pan-n">
-                    <span dangerouslySetInnerHTML={{ __html: guideData.panchangNote }} />
-                  </p>
-                )}
+                <p className="pan-n">
+                  <span
+                    dangerouslySetInnerHTML={{
+                      __html:
+                        guideData?.panchangNote ||
+                        '<b>Muhurat timings are calculated for Mumbai, India (18.9220° N, 72.8347° E).</b> Adjust by +12 mins for Delhi, -8 mins for Kolkata.',
+                    }}
+                  />
+                </p>
               </div>
             )}
 
@@ -669,23 +742,28 @@ export default function RitualGuideDetailPage({ params }: PageProps) {
               </>
             )}
 
-            {/* Image Banner — only if an image actually came from the guide record */}
-            {guideData?.storyImage && (
-              <figure className="art">
-                <img
-                  src={guideData.storyImage}
-                  alt={guideData?.storyImageAltText || heroTitle}
-                  style={{ maxHeight: '380px', objectFit: 'cover' }}
-                />
-              </figure>
-            )}
+            {/* Image Banner */}
+            <figure className="art">
+              <img
+                src={
+                  guideData?.storyImage ||
+                  'https://images.unsplash.com/photo-1609357605129-26f69add5d6e?q=80&w=1200&auto=format&fit=crop'
+                }
+                alt={guideData?.storyImageAltText || heroTitle}
+                style={{ maxHeight: '420px', width: '100%', objectFit: 'cover' }}
+              />
+              <figcaption>
+                {guideData?.storyImageCaption ||
+                  'Ghatasthapana signifies the invocation of Goddess Durga into the sacred Kalash.'}
+              </figcaption>
+            </figure>
 
             {/* Vidhi Days & Steps — Purely Dynamic from Admin Panel */}
             {vidhiDays.map((day: any, dIdx: number) => {
               const dayNum = day.dayNumber || dIdx + 1;
               const steps = Array.isArray(day.steps) ? day.steps : [];
               return (
-                <div key={day.id || dIdx}>
+                <div key={`vday-${slug}-${day.id || day.dayNumber || dIdx}-${dIdx}`}>
                   <div className="sh" id={dIdx === 0 ? 'vidhi' : `vidhi-day-${dayNum}`}>
                     <span className="sh-p">+</span>
                     <span className="sh-t">
@@ -709,7 +787,7 @@ export default function RitualGuideDetailPage({ params }: PageProps) {
                     const stepNum = st.stepNumber || sIdx + 1;
                     const labels = Array.isArray(st.stepLabels) ? st.stepLabels : [];
                     return (
-                      <div className="step" key={st.id || sIdx}>
+                      <div className="step" key={`step-${slug}-d${dayNum}-${st.id || sIdx}-${sIdx}`}>
                         <div className="st-c">
                           <div className={`st-n ${isLast ? 'end' : ''}`}>{stepNum}</div>
                           {!isLast && <div className="st-l"></div>}
@@ -720,7 +798,7 @@ export default function RitualGuideDetailPage({ params }: PageProps) {
                             <div className="tagrow" style={{ margin: '8px 0 0' }}>
                               {labels.map((lbl: string, lIdx: number) => (
                                 <span
-                                  key={lIdx}
+                                  key={`lbl-${slug}-d${dayNum}-s${sIdx}-${lbl}-${lIdx}`}
                                   className={
                                     lbl.includes('SHASTRA') || lbl.includes('PURANIC')
                                       ? 'badge shastra'
@@ -820,7 +898,7 @@ export default function RitualGuideDetailPage({ params }: PageProps) {
                   <div className="jp-presets">
                     {[11, 21, 51, 108].map((n) => (
                       <button
-                        key={n}
+                        key={`japa-${slug}-${n}`}
                         className={`jp-p ${japaCount === n ? 'on' : ''}`}
                         onClick={() => setJapaCount(n)}
                       >
@@ -879,7 +957,7 @@ export default function RitualGuideDetailPage({ params }: PageProps) {
                     {sankalpaCards.length > 0 && (
                       <div className="sank-g">
                         {sankalpaCards.map((card, idx) => (
-                          <div className="sg" key={idx}>
+                          <div className="sg" key={`sank-${slug}-${card.k || idx}-${idx}`}>
                             <div className="sg-k">{card.k}</div>
                             <div className="sg-v" dangerouslySetInnerHTML={{ __html: cleanHtmlString(card.v) }} />
                           </div>
@@ -920,38 +998,38 @@ export default function RitualGuideDetailPage({ params }: PageProps) {
                   </>
                 )}
 
-                <div className="katha" id={!guideData?.kathaTitle ? 'katha' : undefined}>
+                <div className="katha w-full max-w-full overflow-hidden" id={!guideData?.kathaTitle ? 'katha' : undefined}>
                   {(guideData?.kathaScripturalReference || guideData?.kathaHeadline || guideData?.kathaIntroduction) && (
-                    <div className="k-top">
+                    <div className="k-top p-4 sm:p-7 w-full max-w-full">
                       {guideData?.kathaScripturalReference && (
-                        <div className="k-l">{guideData.kathaScripturalReference.toUpperCase()}</div>
+                        <div className="k-l break-words">{guideData.kathaScripturalReference.toUpperCase()}</div>
                       )}
-                      {guideData?.kathaHeadline && <div className="k-t">{guideData.kathaHeadline}</div>}
-                      {guideData?.kathaIntroduction && <p className="k-s">{guideData.kathaIntroduction}</p>}
+                      {guideData?.kathaHeadline && <div className="k-t break-words">{guideData.kathaHeadline}</div>}
+                      {guideData?.kathaIntroduction && <p className="k-s break-words">{guideData.kathaIntroduction}</p>}
                     </div>
                   )}
-                  <div className="k-b">
+                  <div className="k-b p-4 sm:p-6 w-full max-w-full">
                     {kathaCards.length > 0 && (
-                      <div className="k-beats">
+                      <div className="k-beats grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-4.5 w-full max-w-full">
                         {kathaCards.map((card, idx) => (
-                          <div className="kb" key={idx}>
-                            <div className="kb-n">{card.cardNumber}</div>
-                            <div className="kb-t">{card.cardTitle}</div>
-                            <p className="kb-s">{card.cardDescription}</p>
+                          <div className="kb min-w-0 w-full break-words" key={`katha-${slug}-${card.cardNumber || idx}-${idx}`}>
+                            <div className="kb-n shrink-0">{card.cardNumber}</div>
+                            <div className="kb-t break-words">{card.cardTitle}</div>
+                            <p className="kb-s break-words">{card.cardDescription}</p>
                           </div>
                         ))}
                       </div>
                     )}
-                    <div className="k-f">
+                    <div className="k-f flex flex-wrap items-center gap-3 sm:gap-4 pt-4 border-t border-[var(--border-light)] w-full max-w-full">
                       {guideData?.kathaSupportingExplanation && (
                         <p
-                          className="k-moral"
+                          className="k-moral flex-1 min-w-[200px] break-words"
                           dangerouslySetInnerHTML={{ __html: guideData.kathaSupportingExplanation }}
                         />
                       )}
                       {guideData?.kathaAudio && (
                         <button
-                          className="k-audio"
+                          className="k-audio shrink-0 max-w-full whitespace-normal"
                           onClick={() => window.open(guideData.kathaAudio, '_blank')}
                         >
                           <svg
@@ -972,7 +1050,7 @@ export default function RitualGuideDetailPage({ params }: PageProps) {
                         </button>
                       )}
                       {guideData?.kathaFullKathaLink && (
-                        <button className="k-c" onClick={() => window.open(guideData.kathaFullKathaLink, '_blank')}>
+                        <button className="k-c shrink-0 max-w-full whitespace-normal" onClick={() => window.open(guideData.kathaFullKathaLink, '_blank')}>
                           {guideData?.kathaFullKathaButtonText
                             ? guideData.kathaFullKathaButtonText.includes('›')
                               ? guideData.kathaFullKathaButtonText
@@ -1051,7 +1129,7 @@ export default function RitualGuideDetailPage({ params }: PageProps) {
                     const offering = item.of || item.offering || item.prasadam || '';
 
                     return (
-                      <div className="dr" key={item.id || idx}>
+                      <div className="dr" key={`nine-${slug}-${item.id || item.n || item.day || idx}-${idx}`}>
                         <span className="d-n">{num}</span>
                         <span className="d-dt">{dateStr}</span>
                         <span>
@@ -1086,7 +1164,7 @@ export default function RitualGuideDetailPage({ params }: PageProps) {
                     const itemName = s.item || s.itemName || s.name || '';
                     const itemNote = s.note || s.itemDetails || s.details || '';
                     return (
-                      <div className="sam-r" key={s.id || idx}>
+                      <div className="sam-r" key={`sam-${slug}-${s.id || s.item || idx}-${idx}`}>
                         <span className="sam-i">
                           ▫ {itemName}
                         </span>
@@ -1114,7 +1192,7 @@ export default function RitualGuideDetailPage({ params }: PageProps) {
 
                 <div className="fast">
                   {fastingOptions.map((opt, idx) => (
-                    <div className="fb" key={idx}>
+                    <div className="fb" key={`fast-${slug}-${opt.title || idx}-${idx}`}>
                       <div className="fb-t">{opt.title}</div>
                       <p className="fb-s" dangerouslySetInnerHTML={{ __html: cleanHtmlString(opt.description) }} />
                     </div>
@@ -1149,7 +1227,7 @@ export default function RitualGuideDetailPage({ params }: PageProps) {
                   const content = m.correctionContent || m.content || m.answer || m.correction || '';
 
                   return (
-                    <div className="myth" key={m.id || idx}>
+                    <div className="myth" key={`myth-${slug}-${m.id || m.mythStatement || idx}-${idx}`}>
                       <div className="my-q">
                         <span className="my-qt">{statement}</span>
                         {label && <span className="my-bd">{label}</span>}
@@ -1195,7 +1273,7 @@ export default function RitualGuideDetailPage({ params }: PageProps) {
                     <div className="rel">
                       <div className="rel-h">{guideData?.relatedGuidesHeading || 'RELATED RITUAL GUIDES'}</div>
                       {relatedData.guides.map((item: any, idx: number) => (
-                        <Link href={item.link || item.url || '#'} className="rel-i" key={idx}>
+                        <Link href={item.link || item.url || '#'} className="rel-i" key={`relg-${slug}-${item.id || item.title || idx}-${idx}`}>
                           <span>
                             <span className="rel-n">{item.title || item.name}</span>
                             <span className="rel-s">{item.subtitle || item.sub}</span>
@@ -1210,7 +1288,7 @@ export default function RitualGuideDetailPage({ params }: PageProps) {
                     <div className="rel">
                       <div className="rel-h">{guideData?.relatedPujansHeading || 'RELATED PUJANS'}</div>
                       {relatedData.pujans.map((item: any, idx: number) => (
-                        <Link href={item.link || item.url || '#'} className="rel-i" key={idx}>
+                        <Link href={item.link || item.url || '#'} className="rel-i" key={`relp-${slug}-${item.id || item.title || idx}-${idx}`}>
                           <span>
                             <span className="rel-n">{item.title || item.name}</span>
                             <span className="rel-s">{item.subtitle || item.sub}</span>
@@ -1225,7 +1303,7 @@ export default function RitualGuideDetailPage({ params }: PageProps) {
                     <div className="rel">
                       <div className="rel-h">{guideData?.relatedConceptsHeading || 'RELATED CONCEPTS'}</div>
                       {relatedData.concepts.map((item: any, idx: number) => (
-                        <Link href={item.link || item.url || '#'} className="rel-i" key={idx}>
+                        <Link href={item.link || item.url || '#'} className="rel-i" key={`relc-${slug}-${item.id || item.title || idx}-${idx}`}>
                           <span>
                             <span className="rel-n">{item.title || item.name}</span>
                             <span className="rel-s">{item.subtitle || item.sub}</span>
@@ -1240,7 +1318,7 @@ export default function RitualGuideDetailPage({ params }: PageProps) {
                     <div className="rel">
                       <div className="rel-h">{guideData?.relatedDatesHeading || 'RELATED DATES'}</div>
                       {relatedData.dates.map((item: any, idx: number) => (
-                        <Link href={item.link || item.url || '#'} className="rel-i" key={idx}>
+                        <Link href={item.link || item.url || '#'} className="rel-i" key={`reld-${slug}-${item.id || item.title || idx}-${idx}`}>
                           <span>
                             <span className="rel-n">{item.title || item.name}</span>
                             <span className="rel-s">{item.subtitle || item.sub}</span>
@@ -1253,10 +1331,68 @@ export default function RitualGuideDetailPage({ params }: PageProps) {
                 </div>
               </>
             )}
+
+            {/* Prefer to have it all taken care of? Section */}
+            <div className="sh" style={{ marginTop: '36px' }}>
+              <span className="sh-p">+</span>
+              <span className="sh-t">Prefer to have it all taken care of?</span>
+            </div>
+
+            <div className="rev">
+              <div className="rev-c feat">
+                <div className="rev-i">🪔</div>
+                <div className="rev-l">RITUAL KIT</div>
+                <div className="rev-t">Shakti Kit</div>
+                <div className="rev-s">
+                  Nine days of samagri in one box — kalash set, barley and pot, chunri, akhand jyoti vessel, Saptashati, puja powders and the Kanya Pujan items.
+                </div>
+                <button className="rev-b" onClick={handleBuyKit}>
+                  Pre-book — ₹1,751
+                </button>
+              </div>
+
+              <div className="rev-c live">
+                <div className="rev-i">🙏</div>
+                <div className="rev-l">PUROHIT &amp; PUJA</div>
+                <div className="rev-t">Book a purohit for Ghatasthapana</div>
+                <div className="rev-s">
+                  Any devotee can perform the sthapana. A purohit adds muhurat precision and takes the procedure off your hands on a working Sunday morning.
+                </div>
+                <button className="rev-b pur" onClick={() => window.open('/pujans/navratri-ghatasthapana', '_self')}>
+                  Check availability ›
+                </button>
+              </div>
+
+              <div className="rev-c live">
+                <div className="rev-i">💬</div>
+                <div className="rev-l" style={{ color: '#16A34A' }}>THE TAPA CIRCLE</div>
+                <div className="rev-t">Never miss a date again</div>
+                <div className="rev-s">
+                  Festival and vrat reminders on WhatsApp, with the guide attached and the kit cut-off if there is one. ₹499 a year.
+                </div>
+                <button className="rev-b wa" onClick={() => window.open('/tapa-circle', '_self')}>
+                  Join the Tapa Circle ›
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* Sticky Sidebar */}
           <aside className="side">
+            {/* ALSO AVAILABLE Sidebar Box */}
+            <div className="sba">
+              <div className="sba-h">
+                <span className="sba-hl">🔥 ALSO AVAILABLE</span>
+                <span className="sba-bd">DUMMY</span>
+              </div>
+              <p className="sba-t">
+                A plain-language version of this ritual — no citations, no Sanskrit to look up.
+              </p>
+              <Link href={`/beginner-guides/${slug}`} className="sba-btn block text-center">
+                Navratri Beginner&apos;s Guide
+              </Link>
+            </div>
+
             {guideData?.secondaryButtonText && (
               <button className="sbcta dk" onClick={() => setIsCardModalOpen(true)}>
                 <span className="sb-ci">↓</span>
@@ -1276,7 +1412,7 @@ export default function RitualGuideDetailPage({ params }: PageProps) {
                 {samagriList.map((s: any, idx: number) => {
                   const itemName = s.item || s.itemName || s.name || '';
                   return (
-                    <div className="sb-i" key={s.id || idx}>
+                    <div className="sb-i" key={`side-sam-${slug}-${s.id || s.item || idx}-${idx}`}>
                       <input
                         type="checkbox"
                         className="cb"

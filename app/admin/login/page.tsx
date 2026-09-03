@@ -80,7 +80,14 @@ function AuthModalContent() {
   // Customer Signup State
   const [signupName, setSignupName] = useState('');
   const [signupEmail, setSignupEmail] = useState('');
+  const [signupPhone, setSignupPhone] = useState('');
   const [signupPassword, setSignupPassword] = useState('');
+  const [signupConfirmPassword, setSignupConfirmPassword] = useState('');
+  const [signupConsent, setSignupConsent] = useState(false);
+  const [registeredPendingEmail, setRegisteredPendingEmail] = useState<string | null>(null);
+  const [devVerificationUrl, setDevVerificationUrl] = useState<string | null>(null);
+
+
 
   // Email/Password Login State
   const [loginEmail, setLoginEmail] = useState('');
@@ -128,15 +135,33 @@ function AuthModalContent() {
     setSuccess(null);
 
     if (!signupName || signupName.trim().length < 2) {
-      setError('Please enter your full name.');
+      setError('Please enter your full name (at least 2 characters).');
       return;
     }
-    if (!signupEmail || !signupEmail.includes('@')) {
-      setError('Please enter a valid email address.');
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!signupEmail || !emailRegex.test(signupEmail.trim())) {
+      setError('Please enter a valid email address (e.g. name@example.com).');
       return;
     }
+
+    if (signupPhone.trim() && !/^[+0-9\s-]{10,15}$/.test(signupPhone.trim())) {
+      setError('Please enter a valid phone number format (e.g. +919876543210).');
+      return;
+    }
+
     if (!signupPassword || signupPassword.length < 6) {
-      setError('Password must be at least 6 characters.');
+      setError('Password must be at least 6 characters long.');
+      return;
+    }
+
+    if (signupPassword !== signupConfirmPassword) {
+      setError('Passwords do not match. Please confirm your password.');
+      return;
+    }
+
+    if (!signupConsent) {
+      setError('You must agree to the platform Terms & Privacy Policy to create an account.');
       return;
     }
 
@@ -146,9 +171,11 @@ function AuthModalContent() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          name: signupName,
-          email: signupEmail,
+          name: signupName.trim(),
+          email: signupEmail.trim(),
+          phone: signupPhone.trim() || undefined,
           password: signupPassword,
+          consent: signupConsent,
         }),
       });
 
@@ -156,27 +183,21 @@ function AuthModalContent() {
       if (!res.ok || !data.success) {
         setError(data.error || 'Registration failed. Please try again.');
       } else {
-        setSuccess('Account created successfully! Signing you in...');
-        // Auto sign-in
-        const loginRes = await signIn('credentials', {
-          username: signupEmail,
-          password: signupPassword,
-          redirect: false,
-        });
-
-        if (loginRes?.ok) {
-          window.location.href = '/account';
-        } else {
-          setActiveTab('login');
-          setLoginEmail(signupEmail);
+        setRegisteredPendingEmail(signupEmail.trim());
+        if (data.devVerificationUrl) {
+          setDevVerificationUrl(data.devVerificationUrl);
         }
+        setSuccess('Account created');
       }
+
     } catch (err: any) {
       setError(err.message || 'Error creating account.');
     } finally {
       setLoading(false);
     }
   };
+
+
 
   // Handle Customer & Admin Login
   const handleEmailPasswordLogin = async (e: React.FormEvent) => {
@@ -625,100 +646,224 @@ function AuthModalContent() {
 
             {/* TAB 2: CUSTOMER SIGNUP */}
             {activeTab === 'signup' && (
-              <form onSubmit={handleCustomerSignup}>
-                <div style={{ marginBottom: '12px' }}>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>
-                    Full Name
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Komal Sharma"
-                    value={signupName}
-                    onChange={(e) => setSignupName(e.target.value)}
+              registeredPendingEmail ? (
+                <div style={{ textAlign: 'center', padding: '16px 8px' }}>
+                  <div style={{ fontSize: '32px', marginBottom: '12px' }}>✉️</div>
+                  <h2 style={{ fontFamily: 'Georgia, serif', fontSize: '20px', fontWeight: 700, color: '#111827', margin: '0 0 8px' }}>
+                    Account created
+                  </h2>
+                  <p style={{ fontSize: '13px', color: '#4B5563', lineHeight: 1.5, margin: '0 0 16px' }}>
+                    Please verify your email address to complete your registration.
+                  </p>
+                  <div style={{ background: '#FFFDF9', border: '1px solid #F5E6D3', padding: '10px 14px', borderRadius: '10px', fontSize: '12px', color: '#111827', marginBottom: '16px', fontWeight: 600 }}>
+                    Registered Email: {registeredPendingEmail}
+                  </div>
+
+                  {devVerificationUrl && (
+                    <div style={{ marginBottom: '16px', padding: '10px', background: '#FEF3C7', border: '1px solid #FCD34D', borderRadius: '10px', textAlign: 'center' }}>
+                      <p style={{ fontSize: '11px', color: '#92400E', fontWeight: 700, margin: '0 0 6px' }}>⚡ LOCAL DEV TEST LINK:</p>
+                      <Link
+                        href={devVerificationUrl}
+                        target="_blank"
+                        style={{
+                          display: 'inline-block',
+                          background: '#D97706',
+                          color: '#FFFFFF',
+                          padding: '8px 14px',
+                          borderRadius: '8px',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          textDecoration: 'none',
+                        }}
+                      >
+                        Verify Email Now ›
+                      </Link>
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => { setRegisteredPendingEmail(null); setDevVerificationUrl(null); setActiveTab('login'); setError(null); setSuccess(null); }}
                     style={{
                       width: '100%',
-                      background: '#FFFFFF',
-                      border: '1px solid #D1D5DB',
-                      color: '#111827',
-                      padding: '10px 12px',
+                      background: '#DE1B59',
+                      color: '#FFFFFF',
+                      border: 'none',
+                      padding: '12px',
                       borderRadius: '10px',
+                      fontWeight: 700,
                       fontSize: '13px',
-                      boxSizing: 'border-box',
-                      outline: 'none',
+                      cursor: 'pointer',
                     }}
-                  />
-                </div>
+                  >
+                    ‹ Return to Sign In
+                  </button>
 
-                <div style={{ marginBottom: '12px' }}>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>
-                    Email Address
-                  </label>
-                  <input
-                    type="email"
-                    placeholder="name@example.com"
-                    value={signupEmail}
-                    onChange={(e) => setSignupEmail(e.target.value)}
+                </div>
+              ) : (
+                <form onSubmit={handleCustomerSignup}>
+                  <div style={{ marginBottom: '12px' }}>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>
+                      Full Name *
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Komal Sharma"
+                      value={signupName}
+                      onChange={(e) => setSignupName(e.target.value)}
+                      style={{
+                        width: '100%',
+                        background: '#FFFFFF',
+                        border: '1px solid #D1D5DB',
+                        color: '#111827',
+                        padding: '10px 12px',
+                        borderRadius: '10px',
+                        fontSize: '13px',
+                        boxSizing: 'border-box',
+                        outline: 'none',
+                      }}
+                    />
+                  </div>
+
+                  <div style={{ marginBottom: '12px' }}>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>
+                      Email Address *
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="name@example.com"
+                      value={signupEmail}
+                      onChange={(e) => setSignupEmail(e.target.value)}
+                      style={{
+                        width: '100%',
+                        background: '#FFFFFF',
+                        border: '1px solid #D1D5DB',
+                        color: '#111827',
+                        padding: '10px 12px',
+                        borderRadius: '10px',
+                        fontSize: '13px',
+                        boxSizing: 'border-box',
+                        outline: 'none',
+                      }}
+                    />
+                  </div>
+
+                  <div style={{ marginBottom: '12px' }}>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>
+                      Phone Number (Optional Profile Field)
+                    </label>
+                    <input
+                      type="tel"
+                      placeholder="+919876543210"
+                      value={signupPhone}
+                      onChange={(e) => setSignupPhone(e.target.value)}
+                      style={{
+                        width: '100%',
+                        background: '#FFFFFF',
+                        border: '1px solid #D1D5DB',
+                        color: '#111827',
+                        padding: '10px 12px',
+                        borderRadius: '10px',
+                        fontSize: '13px',
+                        boxSizing: 'border-box',
+                        outline: 'none',
+                      }}
+                    />
+                  </div>
+
+                  <div style={{ marginBottom: '12px' }}>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>
+                      Password (min. 6 characters) *
+                    </label>
+                    <input
+                      type="password"
+                      placeholder="••••••••"
+                      value={signupPassword}
+                      onChange={(e) => setSignupPassword(e.target.value)}
+                      style={{
+                        width: '100%',
+                        background: '#FFFFFF',
+                        border: '1px solid #D1D5DB',
+                        color: '#111827',
+                        padding: '10px 12px',
+                        borderRadius: '10px',
+                        fontSize: '13px',
+                        boxSizing: 'border-box',
+                        outline: 'none',
+                      }}
+                    />
+                  </div>
+
+                  <div style={{ marginBottom: '16px' }}>
+                    <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>
+                      Confirm Password *
+                    </label>
+                    <input
+                      type="password"
+                      placeholder="••••••••"
+                      value={signupConfirmPassword}
+                      onChange={(e) => setSignupConfirmPassword(e.target.value)}
+                      style={{
+                        width: '100%',
+                        background: '#FFFFFF',
+                        border: '1px solid #D1D5DB',
+                        color: '#111827',
+                        padding: '10px 12px',
+                        borderRadius: '10px',
+                        fontSize: '13px',
+                        boxSizing: 'border-box',
+                        outline: 'none',
+                      }}
+                    />
+                  </div>
+
+                  {/* Consent Checkbox */}
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '16px' }}>
+                    <input
+                      type="checkbox"
+                      id="signupConsent"
+                      checked={signupConsent}
+                      onChange={(e) => setSignupConsent(e.target.checked)}
+                      style={{ marginTop: '3px', cursor: 'pointer', accentColor: '#DE1B59' }}
+                    />
+                    <label htmlFor="signupConsent" style={{ fontSize: '11px', color: '#4B5563', lineHeight: 1.4, cursor: 'pointer' }}>
+                      I agree that The Tapa Co. may use the information I provide for account management, authentication, security, order processing, and other services required to provide the platform. See our{' '}
+                      <Link href="/about" target="_blank" style={{ color: '#DE1B59', fontWeight: 600, textDecoration: 'underline' }}>
+                        Terms &amp; Conditions
+                      </Link>{' '}
+                      and{' '}
+                      <Link href="/about" target="_blank" style={{ color: '#DE1B59', fontWeight: 600, textDecoration: 'underline' }}>
+                        Privacy Policy
+                      </Link>.
+                    </label>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={loading}
                     style={{
                       width: '100%',
-                      background: '#FFFFFF',
-                      border: '1px solid #D1D5DB',
-                      color: '#111827',
-                      padding: '10px 12px',
+                      background: '#DE1B59',
+                      color: '#FFFFFF',
+                      border: 'none',
+                      padding: '12px',
                       borderRadius: '10px',
+                      fontWeight: 700,
                       fontSize: '13px',
-                      boxSizing: 'border-box',
-                      outline: 'none',
+                      cursor: loading ? 'not-allowed' : 'pointer',
+                      boxShadow: '0 4px 12px rgba(222, 27, 89, 0.25)',
+                      marginBottom: '14px',
+                      opacity: loading ? 0.7 : 1,
                     }}
-                  />
-                </div>
+                  >
+                    {loading ? 'Creating Account...' : 'Create Account'}
+                  </button>
 
-                <div style={{ marginBottom: '18px' }}>
-                  <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#374151', marginBottom: '4px' }}>
-                    Password (min. 6 characters)
-                  </label>
-                  <input
-                    type="password"
-                    placeholder="••••••••"
-                    value={signupPassword}
-                    onChange={(e) => setSignupPassword(e.target.value)}
-                    style={{
-                      width: '100%',
-                      background: '#FFFFFF',
-                      border: '1px solid #D1D5DB',
-                      color: '#111827',
-                      padding: '10px 12px',
-                      borderRadius: '10px',
-                      fontSize: '13px',
-                      boxSizing: 'border-box',
-                      outline: 'none',
-                    }}
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={loading}
-                  style={{
-                    width: '100%',
-                    background: '#DE1B59',
-                    color: '#FFFFFF',
-                    border: 'none',
-                    padding: '12px',
-                    borderRadius: '10px',
-                    fontWeight: 700,
-                    fontSize: '13px',
-                    cursor: loading ? 'not-allowed' : 'pointer',
-                    boxShadow: '0 4px 12px rgba(222, 27, 89, 0.25)',
-                    marginBottom: '14px',
-                  }}
-                >
-                  {loading ? 'Creating Account...' : 'Create Account'}
-                </button>
-
-                <div style={{ textAlign: 'center', marginTop: '16px' }}>
-                  <GoogleSignInButton label="Continue with Google" onClick={() => signIn('google', { callbackUrl: '/account' })} />
-                </div>
-              </form>
+                  <div style={{ textAlign: 'center', marginTop: '16px' }}>
+                    <GoogleSignInButton label="Continue with Google" onClick={() => signIn('google', { callbackUrl: '/account' })} />
+                  </div>
+                </form>
+              )
             )}
 
             {/* TAB 3: PHONE OTP */}

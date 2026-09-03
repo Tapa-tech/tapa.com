@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { Breadcrumb } from '@/components/common/Breadcrumb';
+
 
 interface RitualGuide {
   id?: string | number;
@@ -294,13 +296,8 @@ export default function RitualGuidesPage() {
 
   return (
     <div className="plp-page">
-      <div className="bcrumb">
-        <div className="bc-in">
-          <div className="bc-l">
-            <Link href="/">Home</Link> › <b>Ritual Guides</b>
-          </div>
-        </div>
-      </div>
+      <Breadcrumb items={[{ label: 'Ritual Guides' }]} />
+
 
       <section className="chero rg">
         <div className="wrap max-w-[1280px] mx-auto px-4 md:px-10 w-full overflow-x-hidden">

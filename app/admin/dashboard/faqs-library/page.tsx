@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { SessionProvider, useSession } from 'next-auth/react';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 
@@ -8,47 +8,46 @@ interface FAQItem {
   id: string;
   question: string;
   answer: string;
-  category: 'Rituals & Puja' | 'Panchang & Dates' | 'Accounts & Orders' | 'General';
+  category: string;
   helpfulVotes: number;
 }
 
-const INITIAL_FAQS: FAQItem[] = [
-  {
-    id: 'faq-1',
-    question: 'How are Panchang Tithi timings calculated for different cities?',
-    answer: 'Panchang timings are calculated using local sunrise and astronomical ephemeris algorithms for exact geographic coordinates.',
-    category: 'Panchang & Dates',
-    helpfulVotes: 142,
-  },
-  {
-    id: 'faq-2',
-    question: 'Can I perform Ghatasthapana if I miss the morning Abhijit Muhurta?',
-    answer: 'If Abhijit Muhurta is missed, Pradosh Kaal or auspicious Choghadiya timings recommended in scripture can be utilized.',
-    category: 'Rituals & Puja',
-    helpfulVotes: 98,
-  },
-  {
-    id: 'faq-3',
-    question: 'What items are included in the Tapa Puja Kit?',
-    answer: 'Each Puja Kit contains scripturally prescribed samagri including Kalash, Gangajal, Akshat, Haldi, Kumkum, and authentic herbs.',
-    category: 'Accounts & Orders',
-    helpfulVotes: 76,
-  },
-];
-
 function FAQsLibraryContent() {
   const { data: session, status } = useSession();
-  const [faqs, setFaqs] = useState<FAQItem[]>(INITIAL_FAQS);
+  const [faqs, setFaqs] = useState<FAQItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
-  // Form
+  // Form State
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState('');
-  const [category, setCategory] = useState<'Rituals & Puja' | 'Panchang & Dates' | 'Accounts & Orders' | 'General'>('Rituals & Puja');
+  const [category, setCategory] = useState<string>('Rituals & Puja');
 
-  if (status === 'loading') {
+  const fetchFaqs = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admin/faqs');
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setFaqs(data.faqs || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch FAQs:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (status === 'authenticated') {
+      fetchFaqs();
+    }
+  }, [status, fetchFaqs]);
+
+  if (status === 'loading' || loading) {
     return (
       <div style={{ minHeight: '100vh', background: '#FBF9F5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ color: '#DE1B59', fontWeight: 600 }}>Loading FAQs Library...</div>
@@ -65,25 +64,49 @@ function FAQsLibraryContent() {
     return matchesSearch && matchesCategory;
   });
 
-  const handleCreate = (e: React.FormEvent) => {
+  const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!question.trim() || !answer.trim()) return;
-    const newFaq: FAQItem = {
-      id: `faq-${Date.now()}`,
-      question: question.trim(),
-      answer: answer.trim(),
-      category,
-      helpfulVotes: 0,
-    };
-    setFaqs([newFaq, ...faqs]);
-    setQuestion('');
-    setAnswer('');
-    setIsModalOpen(false);
+    if (!question.trim() || !answer.trim() || submitting) return;
+
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/admin/faqs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          question: question.trim(),
+          answer: answer.trim(),
+          category,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setFaqs([data.faq, ...faqs]);
+        setQuestion('');
+        setAnswer('');
+        setIsModalOpen(false);
+      }
+    } catch (err) {
+      console.error('Failed to create FAQ:', err);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Delete this FAQ entry?')) {
-      setFaqs(faqs.filter((f) => f.id !== id));
+  const handleDelete = async (id: string) => {
+    if (!confirm('Delete this FAQ entry?')) return;
+
+    try {
+      const res = await fetch(`/api/admin/faqs?id=${id}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setFaqs(faqs.filter((f) => f.id !== id));
+      }
+    } catch (err) {
+      console.error('Failed to delete FAQ:', err);
     }
   };
 
@@ -188,7 +211,7 @@ function FAQsLibraryContent() {
 
               <div style={{ marginBottom: '16px' }}>
                 <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#374151', marginBottom: '6px' }}>Category</label>
-                <select value={category} onChange={(e) => setCategory(e.target.value as any)} style={{ width: '100%', padding: '10px', border: '1px solid #E5E7EB', borderRadius: '10px', fontSize: '13px', boxSizing: 'border-box' }}>
+                <select value={category} onChange={(e) => setCategory(e.target.value)} style={{ width: '100%', padding: '10px', border: '1px solid #E5E7EB', borderRadius: '10px', fontSize: '13px', boxSizing: 'border-box' }}>
                   <option value="Rituals & Puja">Rituals &amp; Puja</option>
                   <option value="Panchang & Dates">Panchang &amp; Dates</option>
                   <option value="Accounts & Orders">Accounts &amp; Orders</option>
@@ -203,7 +226,9 @@ function FAQsLibraryContent() {
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px' }}>
                 <button type="button" onClick={() => setIsModalOpen(false)} style={{ background: '#F3F4F6', color: '#374151', border: 'none', padding: '10px 20px', borderRadius: '10px', fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
-                <button type="submit" style={{ background: '#DE1B59', color: '#FFFFFF', border: 'none', padding: '10px 20px', borderRadius: '10px', fontWeight: 700, cursor: 'pointer' }}>Save FAQ</button>
+                <button type="submit" disabled={submitting} style={{ background: '#DE1B59', color: '#FFFFFF', border: 'none', padding: '10px 20px', borderRadius: '10px', fontWeight: 700, cursor: 'pointer' }}>
+                  {submitting ? 'Saving...' : 'Save FAQ'}
+                </button>
               </div>
             </form>
           </div>

@@ -20,10 +20,13 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
     { href: '/admin/dashboard', label: 'Dashboard', icon: '🩼', exact: true },
     { href: '/admin/dashboard/ritual-guides', label: 'Ritual Guides', icon: '📖' },
     { href: '/admin/dashboard/dharmic-concepts', label: 'Dharmic Concepts', icon: '🧭' },
-    { href: '/admin/dashboard/panchang', label: 'Panchang & Vrats', icon: '📅' },
-    { href: '/admin/products', label: 'Products & Kits', icon: '📦' },
-    { href: '/admin/orders', label: 'Orders Management', icon: '🛒' },
-    { href: '/admin/tapa-circle', label: 'Tapa Circle', icon: '👥' },
+    { href: '/admin/dashboard/about', label: 'About Page CMS', icon: 'ℹ️' },
+    { href: '/admin/dashboard/glossary', label: 'Glossary Terms', icon: '📖' },
+    { href: '/admin/dashboard/beginner-guides', label: 'Beginner Guides', icon: '🗺️' },
+    { href: '/admin/dashboard/panchang', label: 'Panchang & Vratas', icon: '📅' },
+    { href: '/admin/dashboard/products', label: 'Products & Kits', icon: '📦' },
+    { href: '/admin/dashboard/orders', label: 'Orders Management', icon: '🛒' },
+    { href: '/admin/dashboard/tapa-circle', label: 'Tapa Circle', icon: '👥' },
     { href: '/admin/dashboard/upcoming-features', label: 'Upcoming Features', icon: '✨' },
     { href: '/admin/dashboard/announcements', label: 'Announcements', icon: '📢' },
     { href: '/admin/dashboard/homepage-banners', label: 'Homepage Banners', icon: '🖼️' },
@@ -38,9 +41,10 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   const isActive = (itemHref: string, exact?: boolean) => {
     if (!pathname) return false;
     if (exact) {
-      return pathname === itemHref || pathname === '/admin';
+      return pathname === '/admin/dashboard' || pathname === '/admin';
     }
-    return pathname.startsWith(itemHref) || (itemHref.startsWith('/admin/') && pathname.startsWith('/admin/dashboard/' + itemHref.replace('/admin/', '')));
+    const sectionKey = itemHref.replace('/admin/dashboard/', '').replace('/admin/', '');
+    return pathname.includes(`/${sectionKey}`);
   };
 
   return (
@@ -54,7 +58,10 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
         flexDirection: 'column',
         justifyContent: 'space-between',
         flexShrink: 0,
-        minHeight: '100vh',
+        position: 'sticky',
+        top: 0,
+        height: '100vh',
+        overflowY: 'auto',
       }}
     >
       <div>

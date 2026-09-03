@@ -1,8 +1,6 @@
 import { getElasticsearchClient, SearchHitResult } from './elasticsearch';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/db';
 import { VRAT_CALENDAR_2026 } from './vrat-calendar-data';
-
-const prisma = new PrismaClient();
 
 export const DEFAULT_SEARCH_DOCUMENTS: SearchHitResult[] = [
   // RITUAL GUIDES

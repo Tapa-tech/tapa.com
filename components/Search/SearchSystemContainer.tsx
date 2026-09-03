@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { SearchBar } from './SearchBar';
 import { SearchFilters, CategoryFilter } from './SearchFilters';
 import { GlossaryResult, GlossaryDefinition } from './GlossaryResult';
@@ -278,7 +278,7 @@ export const SearchSystemContainer: React.FC<SearchSystemContainerProps> = ({
     executeSearch(query);
   };
 
-  const handleClear = () => {
+  const handleClear = useCallback(() => {
     setQuery('');
     setActiveQuery('');
     setGuidesResults([]);
@@ -287,23 +287,37 @@ export const SearchSystemContainer: React.FC<SearchSystemContainerProps> = ({
     setConceptsResults([]);
     setKitsResults([]);
     setMatchedDefinition(null);
-  };
+  }, []);
 
-  const handleSelectQuery = (q: string) => {
+  const handleSelectQuery = useCallback((q: string) => {
     setQuery(q);
     executeSearch(q);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  }, [executeSearch]);
 
   // Counts
-  const counts = {
-    glossary: (matchedDefinition ? 1 : 0) + glossaryResults.length,
-    guides: guidesResults.length,
-    panchang: panchangResults.length,
-    concepts: conceptsResults.length,
-    kits: kitsResults.length,
-  };
-  const totalResults = counts.glossary + counts.guides + counts.panchang + counts.concepts + counts.kits;
+  const counts = useMemo(
+    () => ({
+      glossary: (matchedDefinition ? 1 : 0) + glossaryResults.length,
+      guides: guidesResults.length,
+      panchang: panchangResults.length,
+      concepts: conceptsResults.length,
+      kits: kitsResults.length,
+    }),
+    [
+      matchedDefinition,
+      glossaryResults.length,
+      guidesResults.length,
+      panchangResults.length,
+      conceptsResults.length,
+      kitsResults.length,
+    ]
+  );
+
+  const totalResults = useMemo(
+    () => counts.glossary + counts.guides + counts.panchang + counts.concepts + counts.kits,
+    [counts]
+  );
 
   // Filtered views based on CategoryFilter
   const showGlossary = activeFilter === 'All' || activeFilter === 'Glossary';

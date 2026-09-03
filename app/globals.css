@@ -147,13 +147,20 @@ button {
 }
 
 .burger {
-  display: none;
+  display: flex;
   width: 36px;
   border: none;
   background: none;
   flex-direction: column;
   gap: 4.5px;
   padding: 0 7px;
+  cursor: pointer;
+}
+
+@media (min-width: 768px) {
+  .burger {
+    display: none;
+  }
 }
 
 .burger span {
@@ -184,8 +191,14 @@ button {
 }
 
 .nav-in .cats {
-  display: flex;
+  display: none;
   flex: 1;
+}
+
+@media (min-width: 768px) {
+  .nav-in .cats {
+    display: flex;
+  }
 }
 
 .nav-in .cat {
@@ -2011,7 +2024,7 @@ button {
 }
 
 .k-top {
-  height: 118px;
+  height: auto;
   position: relative;
   display: flex;
   align-items: flex-start;
@@ -6016,16 +6029,19 @@ figure.art img {
   line-height: 1.6;
 }
 
-.bc-l a, .bc-in a {
+.bc-l a,
+.bc-in a {
   color: var(--sub-text);
   text-decoration: none;
 }
 
-.bc-l a:hover, .bc-in a:hover {
+.bc-l a:hover,
+.bc-in a:hover {
   color: var(--pink);
 }
 
-.bc-l b, .bc-in b {
+.bc-l b,
+.bc-in b {
   color: var(--body-text);
   font-weight: 500;
 }

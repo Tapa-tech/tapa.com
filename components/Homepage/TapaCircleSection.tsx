@@ -1,8 +1,36 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { TapaCircleSectionData, INITIAL_HOMEPAGE_PART3 } from '@/lib/homepage-part3';
 
-export const TapaCircleSection: React.FC = () => {
+interface TapaCircleSectionProps {
+  data?: TapaCircleSectionData;
+}
+
+export const TapaCircleSection: React.FC<TapaCircleSectionProps> = ({ data: initialData }) => {
+  const [circ, setCirc] = useState<TapaCircleSectionData>(initialData || INITIAL_HOMEPAGE_PART3.tapaCircle);
+
+  useEffect(() => {
+    if (initialData) return;
+    let isMounted = true;
+    async function loadPart3() {
+      try {
+        const res = await fetch('/api/public/homepage-part3');
+        const data = await res.json();
+        if (res.ok && data.success && data.data?.tapaCircle && isMounted) {
+          setCirc(data.data.tapaCircle);
+        }
+      } catch (err) {
+        console.warn('[TapaCircleSection] Failed to fetch tapa circle section data:', err);
+      }
+    }
+    loadPart3();
+    return () => {
+      isMounted = false;
+    };
+  }, [initialData]);
+
   return (
     <section className="sec py-8 md:py-12">
       <div className="wrap max-w-[1280px] mx-auto px-4 md:px-10">
@@ -13,15 +41,15 @@ export const TapaCircleSection: React.FC = () => {
             </svg>
           </div>
           <div className="flex-1">
-            <div className="circ-l text-xs font-bold mb-1">THE TAPA CIRCLE</div>
-            <div className="circ-t text-base md:text-xl font-bold mb-1">Never miss a date, or a cut-off</div>
-            <p className="circ-s text-xs md:text-sm">
-              Festival and vrat reminders on WhatsApp, with the guide attached and the kit cut-off if there is one. ₹499 a year.
-            </p>
+            <div className="circ-l text-xs font-bold mb-1">{circ.badge}</div>
+            <div className="circ-t text-base md:text-xl font-bold mb-1">{circ.title}</div>
+            <p className="circ-s text-xs md:text-sm">{circ.description}</p>
           </div>
-          <button className="circ-b text-xs md:text-sm font-bold px-6 py-3 rounded-xl w-full md:w-auto whitespace-nowrap">
-            Join the Tapa Circle ›
-          </button>
+          <Link href={circ.ctaHref || '/account'} className="w-full md:w-auto">
+            <button className="circ-b text-xs md:text-sm font-bold px-6 py-3 rounded-xl w-full md:w-auto whitespace-nowrap">
+              {circ.ctaText}
+            </button>
+          </Link>
         </div>
       </div>
     </section>

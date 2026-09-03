@@ -1,4 +1,5 @@
-import { getBeginnerGuideBySlug } from '@/lib/beginner-guides-data';
+import { notFound } from 'next/navigation';
+import { fetchBeginnerGuideBySlug } from '@/lib/get-beginner-guide';
 import BeginnerGuideDetailView from '@/components/BeginnerGuideDetail/BeginnerGuideDetailView';
 
 interface PageProps {
@@ -7,9 +8,13 @@ interface PageProps {
   };
 }
 
-export default function RitualGuideBeginnerPage({ params }: PageProps) {
+export default async function RitualGuideBeginnerPage({ params }: PageProps) {
   const { slug } = params;
-  const guide = getBeginnerGuideBySlug(slug);
+  const guide = await fetchBeginnerGuideBySlug(slug);
+
+  if (!guide) {
+    notFound();
+  }
 
   return <BeginnerGuideDetailView guide={guide} />;
 }

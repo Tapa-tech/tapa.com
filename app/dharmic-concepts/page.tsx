@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { Breadcrumb } from '@/components/common/Breadcrumb';
+
 import './concepts.css';
 
 interface Concept {
@@ -214,13 +216,8 @@ export default function DharmicConceptsPage() {
   return (
     <div className="concepts-page min-h-screen w-full max-w-full overflow-x-hidden">
 
-      <div className="bcrumb">
-        <div className="bc-in">
-          <div className="bc-l">
-            <Link href="/">Home</Link> › <b>Dharmic Concepts</b>
-          </div>
-        </div>
-      </div>
+      <Breadcrumb items={[{ label: 'Dharmic Concepts' }]} />
+
 
 
       <section className="chero dc">

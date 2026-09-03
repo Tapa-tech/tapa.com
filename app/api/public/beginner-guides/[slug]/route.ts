@@ -13,27 +13,16 @@ export async function GET(
 
     const cleanSlug = slug.trim().toLowerCase();
 
-    // 1. Exact slug match
     let guide = await prisma.beginnerGuide.findFirst({
       where: {
         OR: [
           { slug: cleanSlug },
           { slug: slug },
+          { slug: { contains: cleanSlug } },
+          { title: { contains: cleanSlug } },
         ],
       },
     });
-
-    // 2. Flexible fallback search by title/slug substring
-    if (!guide) {
-      guide = await prisma.beginnerGuide.findFirst({
-        where: {
-          OR: [
-            { slug: { contains: cleanSlug } },
-            { title: { contains: cleanSlug } },
-          ],
-        },
-      });
-    }
 
     return NextResponse.json({
       success: true,

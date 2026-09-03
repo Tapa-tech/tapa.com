@@ -37,7 +37,6 @@ export const PATCH = withUserAuth(async (req, { user }) => {
   try {
     const body = await req.json();
     const { name, phone, email } = body || {};
-
     const updateData: { name?: string; phone?: string; email?: string } = {};
     if (name && typeof name === 'string') updateData.name = name.trim();
     if (phone && typeof phone === 'string') updateData.phone = phone.trim();

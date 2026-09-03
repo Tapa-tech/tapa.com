@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { findInMemoryGuide, getInMemoryGuides } from '@/lib/ritual-guides-store';
+import { getCachedOrFetch, CACHE_KEYS } from '@/lib/redis';
 
 export async function GET(
   req: Request,
@@ -14,41 +15,39 @@ export async function GET(
 
     const cleanSlug = slug.trim().toLowerCase();
 
-    let guide: any = null;
-    try {
-      // 1. Try exact match
-      guide = await prisma.ritualGuide.findFirst({
-        where: {
-          OR: [
-            { slug: cleanSlug },
-            { slug: slug },
-          ],
-        },
-      });
+    const guide = await getCachedOrFetch(
+      CACHE_KEYS.PUBLIC_RITUAL_GUIDE_SLUG(cleanSlug),
+      async () => {
+        let g: any = null;
+        try {
+          g = await prisma.ritualGuide.findFirst({
+            where: {
+              OR: [
+                { slug: cleanSlug },
+                { slug: slug },
+                { slug: { contains: cleanSlug } },
+                { title: { contains: cleanSlug } },
+              ],
+            },
+          });
 
-      // 2. Fallback to flexible matching if exact slug is not found
-      if (!guide) {
-        guide = await prisma.ritualGuide.findFirst({
-          where: {
-            OR: [
-              { slug: { contains: cleanSlug } },
-              { title: { contains: cleanSlug } },
-            ],
-          },
-        });
-      }
+          if (!g) {
+            g = await prisma.ritualGuide.findFirst({
+              where: { status: 'PUBLISHED' },
+            });
+          }
+        } catch (dbErr: any) {
+          console.warn('[API Public Ritual Guide Slug GET] DB warning:', dbErr?.message || dbErr);
+        }
 
-      // 3. Fallback to any published or existing guide if available
-      if (!guide) {
-        guide = await prisma.ritualGuide.findFirst();
-      }
-    } catch (dbErr: any) {
-      console.warn('[API Public Ritual Guide Slug GET] DB warning:', dbErr?.message || dbErr);
-    }
+        if (!g) {
+          g = findInMemoryGuide(cleanSlug) || getInMemoryGuides()[0] || null;
+        }
 
-    if (!guide) {
-      guide = findInMemoryGuide(cleanSlug) || getInMemoryGuides()[0] || null;
-    }
+        return g;
+      },
+      1800
+    );
 
     return NextResponse.json({
       success: true,

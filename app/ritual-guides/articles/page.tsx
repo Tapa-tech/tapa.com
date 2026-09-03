@@ -3,6 +3,8 @@
 import { useState, useEffect, useMemo, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { Breadcrumb } from '@/components/common/Breadcrumb';
+
 
 interface ArticleItem {
   id?: string;
@@ -604,13 +606,8 @@ function ArticlesListingContent() {
   return (
     <div className="plp-page min-h-screen w-full max-w-full overflow-x-hidden">
       {/* Breadcrumb */}
-      <div className="bcrumb">
-        <div className="bc-in">
-          <div className="bc-l">
-            <Link href="/">Home</Link> › <Link href="/ritual-guides">Ritual Guides</Link> › <b>All Articles</b>
-          </div>
-        </div>
-      </div>
+      <Breadcrumb items={[{ label: 'Ritual Guides', href: '/ritual-guides' }, { label: 'All Articles' }]} />
+
 
       {/* Hero Section */}
       <section className="chero">

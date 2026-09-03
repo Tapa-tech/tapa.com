@@ -7,7 +7,12 @@ export type AuditEventType =
   | 'UNAUTHORIZED_ACCESS_ATTEMPT'
   | 'FORBIDDEN_ROLE_ATTEMPT'
   | 'RATE_LIMIT_EXCEEDED'
-  | 'CONCURRENT_SUPER_USER_SESSION_REJECTED';
+  | 'CONCURRENT_SUPER_USER_SESSION_REJECTED'
+  | 'USER_CREATED_BY_ADMIN'
+  | 'USER_PROFILE_UPDATED_BY_ADMIN'
+  | 'USER_ROLE_CHANGED_BY_ADMIN'
+  | 'USER_ACTIVATION_TOGGLED'
+  | 'USER_DELETED_BY_ADMIN';
 
 export interface AuditLogPayload {
   event: AuditEventType;
@@ -15,6 +20,7 @@ export interface AuditLogPayload {
   phone?: string;
   ip?: string;
   details?: string;
+  severity?: 'INFO' | 'WARN' | 'CRITICAL';
 }
 
 /**
@@ -27,9 +33,10 @@ function sanitizePhoneForLog(phone?: string): string | undefined {
 }
 
 /**
- * Security Audit Logger - records authentication and security events without exposing secrets or OTPs
+ * Security Audit Logger - records authentication and security events without exposing secrets or OTPs.
+ * Safe for both Edge Middleware and Node.js Server Runtimes.
  */
-export function logSecurityEvent({ event, userId, phone, ip, details }: AuditLogPayload): void {
+export function logSecurityEvent({ event, userId, phone, ip, details, severity = 'INFO' }: AuditLogPayload): void {
   const timestamp = new Date().toISOString();
   const safePhone = sanitizePhoneForLog(phone);
 
@@ -42,6 +49,33 @@ export function logSecurityEvent({ event, userId, phone, ip, details }: AuditLog
     details: details || '',
   };
 
-  // Structured security log output
+  // Structured security log output (safe for all runtimes)
   console.log(`[SECURITY AUDIT] ${timestamp} | ${event} | User: ${logEntry.userId} | Phone: ${logEntry.phone} | IP: ${logEntry.ip} ${details ? '| ' + details : ''}`);
+
+  // Skip Prisma DB insertion in Edge Runtime (Middleware) to prevent Edge PrismaClient errors
+  if (process.env.NEXT_RUNTIME === 'edge' || typeof (globalThis as any).EdgeRuntime === 'string') {
+    return;
+  }
+
+  // DB insertion if PostgreSQL is connected (Node.js runtime only)
+  if (process.env.DATABASE_URL?.startsWith('postgres')) {
+    import('@/lib/db')
+      .then(({ prisma }) => {
+        return prisma.auditLog.create({
+          data: {
+            event,
+            actor: userId || 'anonymous',
+            role: 'USER',
+            target: phone ? safePhone : userId || 'system',
+            ipAddress: ip || 'unknown',
+            severity,
+            details: details || null,
+            userId: userId || null,
+          },
+        });
+      })
+      .catch((err) => {
+        console.error('[SECURITY AUDIT DB LOG ERROR]', err?.message || err);
+      });
+  }
 }

@@ -1,14 +1,19 @@
 import React from 'react';
+import { CorrectionsBandData, INITIAL_FOOTER_CONFIG } from '@/lib/footer-config';
 
-export const CorrectionsBand: React.FC = () => {
+interface CorrectionsBandProps {
+  data?: CorrectionsBandData;
+}
+
+export const CorrectionsBand: React.FC<CorrectionsBandProps> = ({ data = INITIAL_FOOTER_CONFIG.corrections }) => {
   return (
     <div className="tf-w">
       <div className="tf-corr">
-        <div className="tf-corr-t">Every article carries a named source.</div>
-        <p className="tf-corr-p">
-          Where a practice comes from scripture, we cite the text. Where it comes from custom, we say so. Where it is a misconception, we correct it. Find an error and we will fix it, and record the correction.
-        </p>
-        <a className="tf-corr-a" href="#">Report a correction ›</a>
+        <div className="tf-corr-t">{data.heading}</div>
+        <p className="tf-corr-p">{data.paragraph}</p>
+        <a className="tf-corr-a" href={data.reportCtaHref || '#'}>
+          {data.reportCtaText}
+        </a>
       </div>
     </div>
   );

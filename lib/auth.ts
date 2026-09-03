@@ -163,6 +163,16 @@ export const authOptions: NextAuthOptions = {
                 }
               }
 
+              // Check email verification for customer email/password accounts
+              if (dbUser.role === 'CUSTOMER' && !dbUser.emailVerified && dbUser.password) {
+                logSecurityEvent({
+                  event: 'AUTH_LOGIN_FAILURE',
+                  userId: dbUser.id,
+                  details: 'Unverified email credentials login attempt rejected',
+                });
+                throw new Error('Please verify your email address to complete your registration before signing in.');
+              }
+
               logSecurityEvent({
                 event: 'AUTH_LOGIN_SUCCESS',
                 userId: dbUser.id,

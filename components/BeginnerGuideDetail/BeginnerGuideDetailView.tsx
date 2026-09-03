@@ -1,8 +1,15 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+
 import Link from 'next/link';
-import { BeginnerGuide } from '@/lib/beginner-guides-data';
+import { useSession } from 'next-auth/react';
+import { BeginnerGuide } from '@/types/beginner-guide';
+import { generateGuidePdfHtml } from '@/lib/pdf-generator';
+import { useCart } from '@/context/CartContext';
+import { SERVER_PRODUCTS_CATALOG } from '@/lib/products';
+
+
 
 interface BeginnerGuideDetailViewProps {
   guide: BeginnerGuide;
@@ -31,6 +38,19 @@ export default function BeginnerGuideDetailView({ guide: initialGuide }: Beginne
   const [lang, setLang] = useState<'EN' | 'HI'>('EN');
   const [isSaved, setIsSaved] = useState(false);
   const [guide, setGuide] = useState<BeginnerGuide>(initialGuide);
+  const { addItem, openCart } = useCart();
+
+  const handleBuyKit = () => {
+    const kit = SERVER_PRODUCTS_CATALOG['sundarkand-kit'];
+    addItem({
+      id: kit.id,
+      slug: kit.slug,
+      name: kit.name,
+      price: kit.price,
+      quantity: 1,
+    });
+    openCart();
+  };
 
   useEffect(() => {
     setGuide(initialGuide);
@@ -125,6 +145,30 @@ export default function BeginnerGuideDetailView({ guide: initialGuide }: Beginne
     }
   };
 
+  const { data: session } = useSession();
+
+  const handleDownloadPdf = () => {
+    const activeUserName = session?.user?.name || session?.user?.email || 'Valued Practitioner';
+    const htmlContent = generateGuidePdfHtml({
+      title: guide.title,
+      subtitle: guide.subtitle,
+      category: "BEGINNER'S GUIDE",
+      userName: activeUserName,
+      mode: 'full',
+      storyText: guide.openingText || (guide.introParagraphs || []).join('<br/><br/>'),
+      mythsList: (guide.worries || []).map((w) => ({
+        myth: w.question,
+        correction: w.answer,
+      })),
+    });
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+    printWindow.document.open();
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
+  };
+
   return (
     <div className="w-full max-w-full overflow-x-hidden min-h-screen" style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--body-text)' }}>
 
@@ -135,28 +179,6 @@ export default function BeginnerGuideDetailView({ guide: initialGuide }: Beginne
             <Link href="/">Home</Link> › <Link href="/ritual-guides">Ritual Guides</Link> ›{' '}
             {guide.breadcrumbCategory} › <b>{guide.title}</b>
           </div>
-          {/* <div className="bc-r">
-            <div className="lang">
-              <button
-                className={lang === 'EN' ? 'on' : ''}
-                onClick={() => setLang('EN')}
-              >
-                EN
-              </button>
-              <button
-                className={lang === 'HI' ? 'on' : ''}
-                onClick={() => setLang('HI')}
-              >
-                हिं
-              </button>
-            </div>
-            <button className="bcb" onClick={() => setIsSaved(!isSaved)}>
-              {isSaved ? '🔖 Saved' : '🔖 Save'}
-            </button>
-            <button className="bcb" onClick={handleShare}>
-              ↗ Share
-            </button>
-          </div> */}
         </div>
       </div>
 
@@ -183,14 +205,18 @@ export default function BeginnerGuideDetailView({ guide: initialGuide }: Beginne
               <button className="hb-g" onClick={() => setIsSaved(!isSaved)}>
                 {isSaved ? 'Saved' : guide.heroSecondaryCta.label}
               </button>
+              <button className="hb-g" onClick={handleDownloadPdf}>
+                📥 Download PDF
+              </button>
             </div>
           </div>
         </div>
       </section>
 
+
       {/* Reassurance Bar */}
-      <div className="reassure">
-        <div className="re-in">
+      <div className="reassure overflow-x-auto no-scrollbar w-full max-w-full">
+        <div className="re-in flex flex-nowrap items-center gap-4 min-w-max md:min-w-0">
           {guide.reassuranceItems.map((item, idx) => (
             <span className="re" key={idx}>
               <span className="re-i">{item.icon}</span>
@@ -201,8 +227,8 @@ export default function BeginnerGuideDetailView({ guide: initialGuide }: Beginne
       </div>
 
       {/* Sticky Chips Bar */}
-      <div className="chips">
-        <div className="chips-in">
+      <div className="chips overflow-x-auto no-scrollbar w-full max-w-full">
+        <div className="chips-in flex flex-nowrap items-center gap-2 min-w-max md:min-w-0">
           <span className="chip-l">JUMP TO</span>
           {guide.chips.map((chip, idx) => (
             <a key={idx} className="chip" href={chip.href}>
@@ -226,7 +252,7 @@ export default function BeginnerGuideDetailView({ guide: initialGuide }: Beginne
             {/* Optional Art / Hero Image */}
             {guide.heroArtImage && (
               <figure className="art">
-                <img src={guide.heroArtImage.src} alt={guide.heroArtImage.alt} />
+                <img src={guide.heroArtImage.src} alt={guide.heroArtImage.alt} loading="lazy" decoding="async" />
               </figure>
             )}
 
@@ -358,12 +384,18 @@ export default function BeginnerGuideDetailView({ guide: initialGuide }: Beginne
                       <div className="rev-l">{card.label}</div>
                       <div className="rev-t">{card.title}</div>
                       <div className="rev-s">{card.subtitle}</div>
-                      {card.href ? (
+                      {card.id === 'rev-kit' || card.title.toLowerCase().includes('kit') || card.label.toLowerCase().includes('kit') ? (
+                        <button type="button" onClick={handleBuyKit} className="rev-b w-full text-center">
+                          {card.buttonText}
+                        </button>
+                      ) : card.href ? (
                         <Link href={card.href} className="rev-b text-center block">
                           {card.buttonText}
                         </Link>
                       ) : (
-                        <button className="rev-b">{card.buttonText}</button>
+                        <button type="button" onClick={handleBuyKit} className="rev-b w-full text-center">
+                          {card.buttonText}
+                        </button>
                       )}
                     </div>
                   ))}

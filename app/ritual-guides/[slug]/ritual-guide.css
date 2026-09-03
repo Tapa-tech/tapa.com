@@ -607,6 +607,8 @@ button {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .cc-hl {
@@ -657,6 +659,8 @@ button {
   border-top: 1px solid var(--border-light);
   background: #FCFAF6;
   margin: 0;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .cc-comp b {
@@ -861,6 +865,16 @@ figure.art {
 figure.art img {
   width: 100%;
   display: block;
+}
+
+figure.art figcaption {
+  padding: 10px 16px;
+  font-size: 12.5px;
+  color: var(--sub-text);
+  text-align: center;
+  background: #FCFAF6;
+  border-top: 1px solid var(--border-light);
+  font-style: italic;
 }
 
 /* ── VIDHI STEPS ── */
@@ -1176,11 +1190,26 @@ figure.art img {
   overflow: hidden;
   border: 1px solid var(--border);
   margin: 6px 0 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+.katha .k-top {
+  height: auto;
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 11px 13px;
+  flex-direction: column;
 }
 
 .k-top {
   background: linear-gradient(150deg, #5C1A30, #2A0810);
   padding: 26px 28px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .k-l {
@@ -1189,6 +1218,7 @@ figure.art img {
   color: #E3B567;
   letter-spacing: .7px;
   margin-bottom: 10px;
+  word-break: break-word;
 }
 
 .k-t {
@@ -1198,6 +1228,8 @@ figure.art img {
   line-height: 1.28;
   letter-spacing: -.4px;
   margin-bottom: 9px;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .k-s {
@@ -1205,11 +1237,15 @@ figure.art img {
   color: #D8A8B4;
   line-height: 1.75;
   margin: 0;
+  word-break: break-word;
 }
 
 .k-b {
   background: var(--card);
   padding: 22px 26px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .k-beats {
@@ -1217,12 +1253,44 @@ figure.art img {
   grid-template-columns: repeat(4, 1fr);
   gap: 11px;
   margin-bottom: 18px;
+  width: 100%;
+  max-width: 100%;
+}
+
+@media (max-width: 1024px) {
+  .k-beats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+}
+
+@media (max-width: 640px) {
+  .k-beats {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .k-top {
+    padding: 18px 16px;
+  }
+
+  .k-b {
+    padding: 16px 14px;
+  }
+
+  .k-t {
+    font-size: 20px;
+  }
 }
 
 .kb {
   background: var(--bg);
   border-radius: 12px;
   padding: 14px 15px;
+  min-width: 0;
+  width: 100%;
+  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .kb-n {
@@ -1238,6 +1306,7 @@ figure.art img {
   align-items: center;
   justify-content: center;
   margin-bottom: 9px;
+  flex-shrink: 0;
 }
 
 .kb-t {
@@ -1246,6 +1315,7 @@ figure.art img {
   color: var(--dark);
   line-height: 1.35;
   margin-bottom: 4px;
+  word-break: break-word;
 }
 
 .kb-s {
@@ -1253,6 +1323,7 @@ figure.art img {
   color: var(--sub-text);
   line-height: 1.6;
   margin: 0;
+  word-break: break-word;
 }
 
 .k-f {
@@ -1262,15 +1333,18 @@ figure.art img {
   flex-wrap: wrap;
   padding-top: 16px;
   border-top: 1px solid var(--border-light);
+  width: 100%;
+  max-width: 100%;
 }
 
 .k-moral {
-  flex: 1;
-  min-width: 220px;
+  flex: 1 1 200px;
+  min-width: 0;
   font-size: 13.5px;
   color: var(--sub-text);
   line-height: 1.75;
   margin: 0;
+  word-break: break-word;
 }
 
 .k-moral b {
@@ -1869,6 +1943,68 @@ figure.art img {
   line-height: 1.5;
 }
 
+.sba {
+  background: var(--p-bg);
+  border: 1px solid var(--p-bd);
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.sba-h {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.sba-hl {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: .6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sba-bd {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--b-bd);
+  color: var(--b-tx);
+}
+
+.sba-t {
+  font-size: 12.5px;
+  color: var(--sub-text);
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+
+.sba-btn {
+  display: block;
+  width: 100%;
+  border: 1.5px solid var(--yellow-d);
+  background: var(--card);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--dark);
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sba-btn:hover {
+  background: var(--p-bg);
+  border-color: var(--amber);
+}
+
 .sbn {
   background: var(--p-bg);
   border: 1px solid var(--p-bd);
@@ -2335,15 +2471,16 @@ figure.art img {
   .hero {
     height: auto;
     min-height: 380px;
-    align-items: flex-end;
+    padding: 32px 0;
+    align-items: center;
   }
 
   .hero-c {
-    padding: 0 16px 24px;
+    padding: 0 16px;
   }
 
   .hero-h1 {
-    font-size: 28px;
+    font-size: 26px;
   }
 
   .hero-sub {
@@ -2351,18 +2488,21 @@ figure.art img {
   }
 
   .hero-btns {
-    flex-direction: row;
-    gap: 9px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    width: 100%;
   }
 
   .hb-p,
   .hb-g {
-    flex: 1 1 0;
+    width: 100%;
     min-width: 0;
     text-align: center;
-    padding: 12px 8px;
-    font-size: 12.5px;
+    padding: 10px 8px;
+    font-size: 12px;
     line-height: 1.25;
+    white-space: normal;
   }
 
   .strip-in {
@@ -2390,6 +2530,7 @@ figure.art img {
 
   .main {
     max-width: none;
+    overflow: hidden;
   }
 
   .side {

@@ -8,5 +8,7 @@ export async function GET(request: Request) {
 
     const data = generateVratCalendar(year);
 
-    return NextResponse.json(data);
+    const res = NextResponse.json(data);
+    res.headers.set('Cache-Control', 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400');
+    return res;
 }

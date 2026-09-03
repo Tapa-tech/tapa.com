@@ -1,6 +1,12 @@
 import React from 'react';
+import Link from 'next/link';
+import { UtilityBandData, INITIAL_FOOTER_CONFIG } from '@/lib/footer-config';
 
-export const UtilityBand: React.FC = () => {
+interface UtilityBandProps {
+  data?: UtilityBandData;
+}
+
+export const UtilityBand: React.FC<UtilityBandProps> = ({ data = INITIAL_FOOTER_CONFIG.utility }) => {
   return (
     <div className="tf-util">
       <div className="tf-util-in">
@@ -9,13 +15,17 @@ export const UtilityBand: React.FC = () => {
             <circle cx="11" cy="11" r="7" />
             <path d="M20 20l-3.5-3.5" />
           </svg>
-          <span className="q">Search rituals</span>
+          <span className="q">{data.searchPlaceholder}</span>
           <button className="tf-srch-go">Search</button>
         </div>
         <div className="tf-auth">
-          <span className="tf-auth-n">Save rituals, track orders, manage reminders</span>
-          <button className="tf-b-g">Sign in</button>
-          <button className="tf-b-s">Create account</button>
+          <span className="tf-auth-n">{data.authText}</span>
+          <Link href="/admin/login">
+            <button className="tf-b-g">{data.signInText}</button>
+          </Link>
+          <Link href="/admin/login?mode=signup">
+            <button className="tf-b-s">{data.signUpText}</button>
+          </Link>
         </div>
       </div>
     </div>

@@ -1,81 +1,60 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { SessionProvider, useSession } from 'next-auth/react';
-import Link from 'next/link';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 
 interface FeatureItem {
   id: string;
   title: string;
   category: string;
-  status: 'In Planning' | 'In Development' | 'Beta Testing' | 'Released';
-  targetRelease: string;
-  description: string;
-  priority: 'High' | 'Medium' | 'Low';
+  status: string;
+  targetRelease?: string | null;
+  description?: string | null;
+  priority: string;
   requests: number;
 }
 
-const INITIAL_FEATURES: FeatureItem[] = [
-  {
-    id: 'feat-1',
-    title: 'AI Panchang Muhurta Finder',
-    category: 'Panchang Engine',
-    status: 'In Development',
-    targetRelease: 'Q4 2026',
-    description: 'Personalized auspicious timing calculations based on city location, Lagna, and Tithi for home pujas.',
-    priority: 'High',
-    requests: 248,
-  },
-  {
-    id: 'feat-2',
-    title: 'WhatsApp Samagri Order Bot',
-    category: 'Ecommerce',
-    status: 'Beta Testing',
-    targetRelease: 'Q3 2026',
-    description: 'Direct 1-click Samagri kit order placement and delivery tracking via WhatsApp automation.',
-    priority: 'High',
-    requests: 184,
-  },
-  {
-    id: 'feat-3',
-    title: 'Audio Chanting & Shloka Practice Mode',
-    category: 'Ritual Engine',
-    status: 'In Planning',
-    targetRelease: 'Q1 2027',
-    description: 'Interactive audio player with syllable-by-syllable Sanskrit pronunciation guide for ritual mantras.',
-    priority: 'Medium',
-    requests: 112,
-  },
-  {
-    id: 'feat-4',
-    title: 'Offline Vrat Calendar PDF Generator',
-    category: 'Content & Media',
-    status: 'Released',
-    targetRelease: 'Q3 2026',
-    description: 'Downloadable high-resolution printable PDF calendar for daily Vrat observances.',
-    priority: 'High',
-    requests: 310,
-  },
-];
-
 function UpcomingFeaturesContent() {
   const { data: session, status } = useSession();
-  const [features, setFeatures] = useState<FeatureItem[]>(INITIAL_FEATURES);
+  const [features, setFeatures] = useState<FeatureItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [categoryFilter, setCategoryFilter] = useState('ALL');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   // Form State
   const [newTitle, setNewTitle] = useState('');
   const [newCategory, setNewCategory] = useState('Ritual Engine');
-  const [newStatus, setNewStatus] = useState<'In Planning' | 'In Development' | 'Beta Testing' | 'Released'>('In Planning');
+  const [newStatus, setNewStatus] = useState<string>('In Planning');
   const [newTarget, setNewTarget] = useState('Q4 2026');
   const [newDesc, setNewDesc] = useState('');
-  const [newPriority, setNewPriority] = useState<'High' | 'Medium' | 'Low'>('High');
+  const [newPriority, setNewPriority] = useState<string>('High');
 
-  if (status === 'loading') {
+  const fetchFeatures = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admin/upcoming-features');
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setFeatures(data.features || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch features:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (status === 'authenticated') {
+      fetchFeatures();
+    }
+  }, [status, fetchFeatures]);
+
+  if (status === 'loading' || loading) {
     return (
       <div style={{ minHeight: '100vh', background: '#FBF9F5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ color: '#DE1B59', fontWeight: 600 }}>Loading Upcoming Features Console...</div>
@@ -87,34 +66,60 @@ function UpcomingFeaturesContent() {
   const userRole = (session?.user as any)?.role?.toUpperCase() || 'SUPER_ADMIN';
 
   const filteredFeatures = features.filter((f) => {
-    const matchesSearch = f.title.toLowerCase().includes(search.toLowerCase()) || f.description.toLowerCase().includes(search.toLowerCase());
+    const matchesSearch =
+      f.title.toLowerCase().includes(search.toLowerCase()) ||
+      (f.description && f.description.toLowerCase().includes(search.toLowerCase()));
     const matchesStatus = statusFilter === 'ALL' || f.status === statusFilter;
     const matchesCategory = categoryFilter === 'ALL' || f.category === categoryFilter;
     return matchesSearch && matchesStatus && matchesCategory;
   });
 
-  const handleAddFeature = (e: React.FormEvent) => {
+  const handleAddFeature = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTitle.trim()) return;
-    const item: FeatureItem = {
-      id: `feat-${Date.now()}`,
-      title: newTitle.trim(),
-      category: newCategory,
-      status: newStatus,
-      targetRelease: newTarget,
-      description: newDesc.trim(),
-      priority: newPriority,
-      requests: 1,
-    };
-    setFeatures([item, ...features]);
-    setNewTitle('');
-    setNewDesc('');
-    setIsModalOpen(false);
+    if (!newTitle.trim() || submitting) return;
+
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/admin/upcoming-features', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: newTitle.trim(),
+          category: newCategory,
+          status: newStatus,
+          targetRelease: newTarget,
+          description: newDesc.trim() || null,
+          priority: newPriority,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setFeatures([data.feature, ...features]);
+        setNewTitle('');
+        setNewDesc('');
+        setIsModalOpen(false);
+      }
+    } catch (err) {
+      console.error('Failed to add feature:', err);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm('Delete this feature request from roadmap?')) {
-      setFeatures(features.filter((f) => f.id !== id));
+  const handleDelete = async (id: string) => {
+    if (!confirm('Delete this feature request from roadmap?')) return;
+
+    try {
+      const res = await fetch(`/api/admin/upcoming-features?id=${id}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setFeatures(features.filter((f) => f.id !== id));
+      }
+    } catch (err) {
+      console.error('Failed to delete feature:', err);
     }
   };
 
@@ -230,7 +235,7 @@ function UpcomingFeaturesContent() {
 
                 <div style={{ borderTop: '1px solid #F3F4F6', paddingTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}>
                   <div style={{ display: 'flex', gap: '12px', color: '#6B7280' }}>
-                    <span>Target: <strong>{item.targetRelease}</strong></span>
+                    <span>Target: <strong>{item.targetRelease || 'TBD'}</strong></span>
                     <span>Requests: <strong>{item.requests}</strong></span>
                   </div>
                   <button
@@ -268,7 +273,7 @@ function UpcomingFeaturesContent() {
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#374151', marginBottom: '6px' }}>Status</label>
-                  <select value={newStatus} onChange={(e) => setNewStatus(e.target.value as any)} style={{ width: '100%', padding: '10px', border: '1px solid #E5E7EB', borderRadius: '10px', fontSize: '13px', boxSizing: 'border-box' }}>
+                  <select value={newStatus} onChange={(e) => setNewStatus(e.target.value)} style={{ width: '100%', padding: '10px', border: '1px solid #E5E7EB', borderRadius: '10px', fontSize: '13px', boxSizing: 'border-box' }}>
                     <option value="In Planning">In Planning</option>
                     <option value="In Development">In Development</option>
                     <option value="Beta Testing">Beta Testing</option>
@@ -284,7 +289,9 @@ function UpcomingFeaturesContent() {
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px' }}>
                 <button type="button" onClick={() => setIsModalOpen(false)} style={{ background: '#F3F4F6', color: '#374151', border: 'none', padding: '10px 20px', borderRadius: '10px', fontWeight: 700, cursor: 'pointer' }}>Cancel</button>
-                <button type="submit" style={{ background: '#DE1B59', color: '#FFFFFF', border: 'none', padding: '10px 20px', borderRadius: '10px', fontWeight: 700, cursor: 'pointer' }}>Save Feature</button>
+                <button type="submit" disabled={submitting} style={{ background: '#DE1B59', color: '#FFFFFF', border: 'none', padding: '10px 20px', borderRadius: '10px', fontWeight: 700, cursor: 'pointer' }}>
+                  {submitting ? 'Saving...' : 'Save Feature'}
+                </button>
               </div>
             </form>
           </div>

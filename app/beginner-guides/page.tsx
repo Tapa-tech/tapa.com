@@ -1,9 +1,13 @@
-'use client';
-
-import { getBeginnerGuideBySlug } from '@/lib/beginner-guides-data';
+import { notFound } from 'next/navigation';
+import { fetchBeginnerGuideBySlug } from '@/lib/get-beginner-guide';
 import BeginnerGuideDetailView from '@/components/BeginnerGuideDetail/BeginnerGuideDetailView';
 
-export default function BeginnerGuidesIndexPage() {
-  const guide = getBeginnerGuideBySlug('sundarkand-path');
+export default async function BeginnerGuidesIndexPage() {
+  const guide = (await fetchBeginnerGuideBySlug('seven-kandas')) || (await fetchBeginnerGuideBySlug('sundarkand-path'));
+
+  if (!guide) {
+    notFound();
+  }
+
   return <BeginnerGuideDetailView guide={guide} />;
 }

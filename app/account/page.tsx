@@ -6,10 +6,13 @@ import Link from 'next/link';
 
 interface OrderItem {
   id: string;
-  name: string;
-  price: number;
+  productId?: string;
+  productName?: string;
+  name?: string;
+  unitPrice?: number;
+  price?: number;
   quantity: number;
-  lineTotal: number;
+  lineTotal?: number;
 }
 
 interface Order {
@@ -81,8 +84,7 @@ function AccountDashboardContent() {
 
   useEffect(() => {
     if (status === 'authenticated') {
-      fetchProfile();
-      fetchOrders();
+      Promise.all([fetchProfile(), fetchOrders()]);
     }
   }, [status, fetchProfile, fetchOrders]);
 
@@ -296,7 +298,7 @@ function AccountDashboardContent() {
                         {order.orderStatus}
                       </span>
                     </div>
-                    <div className="font-bold text-[var(--text)]">₹{order.grandTotal?.toLocaleString('en-IN')}</div>
+                    <div className="font-bold text-[var(--text)]">₹{(order.grandTotal ?? 0).toLocaleString('en-IN')}</div>
                     <button
                       type="button"
                       onClick={() => { setSelectedOrder(order); setActiveTab('orders'); }}
@@ -346,15 +348,20 @@ function AccountDashboardContent() {
 
               <h3 className="text-xs font-bold text-[var(--text)] uppercase tracking-wider mb-3">Order Items</h3>
               <div className="divide-y divide-[var(--border)] mb-6 border border-[var(--border)] rounded-xl overflow-hidden">
-                {selectedOrder.items?.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between p-4 bg-white text-xs">
-                    <div>
-                      <div className="font-bold text-[var(--text)]">{item.name}</div>
-                      <div className="text-[11px] text-[var(--sub-text)]">Qty: {item.quantity} × ₹{item.price.toLocaleString('en-IN')}</div>
+                {selectedOrder.items?.map((item) => {
+                  const itemName = item.name || item.productName || 'Ritual Kit';
+                  const unitPrice = item.unitPrice ?? item.price ?? 0;
+                  const lineTotal = item.lineTotal ?? (unitPrice * item.quantity);
+                  return (
+                    <div key={item.id || item.productId} className="flex items-center justify-between p-4 bg-white text-xs">
+                      <div>
+                        <div className="font-bold text-[var(--text)]">{itemName}</div>
+                        <div className="text-[11px] text-[var(--sub-text)]">Qty: {item.quantity} × ₹{unitPrice.toLocaleString('en-IN')}</div>
+                      </div>
+                      <div className="font-bold text-[var(--text)]">₹{lineTotal.toLocaleString('en-IN')}</div>
                     </div>
-                    <div className="font-bold text-[var(--text)]">₹{item.lineTotal.toLocaleString('en-IN')}</div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
 
@@ -367,10 +374,10 @@ function AccountDashboardContent() {
                   <div className="text-[var(--sub-text)] mt-1">Mobile: {selectedOrder.customerMobile}</div>
                 </div>
                 <div className="space-y-1 text-right md:text-right">
-                  <div className="flex justify-between"><span>Subtotal:</span><span>₹{selectedOrder.subtotal.toLocaleString('en-IN')}</span></div>
-                  <div className="flex justify-between"><span>Delivery:</span><span>{selectedOrder.deliveryCharge === 0 ? 'FREE' : `₹${selectedOrder.deliveryCharge}`}</span></div>
+                  <div className="flex justify-between"><span>Subtotal:</span><span>₹{(selectedOrder.subtotal ?? 0).toLocaleString('en-IN')}</span></div>
+                  <div className="flex justify-between"><span>Delivery:</span><span>{selectedOrder.deliveryCharge === 0 ? 'FREE' : `₹${selectedOrder.deliveryCharge || 0}`}</span></div>
                   <div className="flex justify-between font-bold text-sm text-[var(--text)] pt-2 border-t border-[var(--border)]">
-                    <span>Grand Total:</span><span>₹{selectedOrder.grandTotal.toLocaleString('en-IN')}</span>
+                    <span>Grand Total:</span><span>₹{(selectedOrder.grandTotal ?? 0).toLocaleString('en-IN')}</span>
                   </div>
                   <div className="text-[11px] text-[var(--sub-text)] pt-1">Payment Method: {selectedOrder.paymentMethod} ({selectedOrder.paymentStatus})</div>
                 </div>
@@ -421,7 +428,7 @@ function AccountDashboardContent() {
                     </span>
                   </div>
                   <div className="font-bold text-xs text-[var(--text)]">
-                    ₹{order.grandTotal?.toLocaleString('en-IN')}
+                    ₹{(order.grandTotal ?? 0).toLocaleString('en-IN')}
                   </div>
                   <div className="flex gap-2">
                     <button

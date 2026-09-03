@@ -19,6 +19,7 @@ enum ContentStatus {
   DRAFT
   PUBLISHED
 }
+
 model RitualGuide {
   id                    String   @id @default(cuid())
   title                 String
@@ -157,6 +158,7 @@ model RitualGuide {
 
   @@index([slug])
   @@index([status])
+  @@index([status, category])
 }
 
 model DharmicConcept {
@@ -243,6 +245,7 @@ model User {
   @@index([email])
   @@index([phone])
   @@index([role])
+  @@index([role, createdAt])
 }
 
 model Account {
@@ -363,6 +366,7 @@ model BeginnerGuide {
 
   @@index([slug])
   @@index([status])
+  @@index([status, category])
 }
 
 model PanchangEntry {
@@ -388,6 +392,8 @@ model PanchangEntry {
 
   @@index([year])
   @@index([date])
+  @@index([isAuspicious, dateObj])
+  @@index([year, paksha, tithiName])
 }
 
 enum OrderStatus {
@@ -409,6 +415,7 @@ enum PaymentStatus {
 
 enum PaymentMethod {
   COD
+  RAZORPAY
 }
 
 model Order {
@@ -432,6 +439,10 @@ model Order {
   paymentStatus   PaymentStatus @default(PENDING)
   orderStatus     OrderStatus   @default(PLACED)
 
+  razorpayOrderId   String?       @unique
+  razorpayPaymentId String?
+  razorpaySignature String?
+
   userId          String?
   user            User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
 
@@ -441,10 +452,13 @@ model Order {
   updatedAt       DateTime      @updatedAt
 
   @@index([orderNumber])
+  @@index([razorpayOrderId])
   @@index([customerMobile])
   @@index([customerEmail])
   @@index([orderStatus])
   @@index([userId])
+  @@index([createdAt])
+  @@index([userId, createdAt])
 }
 
 model OrderItem {
@@ -465,5 +479,441 @@ model OrderItem {
   @@index([productId])
 }
 
+enum ProductStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum ProductCategory {
+  BY_FESTIVAL
+  BY_RITUAL
+  GRIHA_LIFE_EVENTS
+  DAILY_PUJA_ESSENTIALS
+}
+
+
+model Product {
+  id               String        @id @default(cuid())
+  name             String
+  slug             String        @unique
+  description      String?       @db.Text
+  category         ProductCategory @default(BY_FESTIVAL)
+  price            Int           // Numeric price in INR without ₹ symbol
+
+  stock            Int           @default(0)
+  status           ProductStatus @default(ACTIVE)
+  featuredImage    String?       @db.Text // Exact single featured image URL/reference
+  imagesJson       String?       @db.Text // JSON array of string image URLs/references
+  samagriItemsJson       String?       @db.Text // JSON array of { id, itemName, quantity, unit }
+
+  // Significance & How to Use Section
+  significanceLabel      String?
+  significanceHeading    String?
+  significanceDescription String?       @db.Text
+  whatsInsideLabel       String?
+  whatsInsideHeading     String?
+  whatsInsideDescription  String?       @db.Text
+  howToUseLabel          String?
+  howToUseHeading        String?
+  howToUseStepsJson      String?       @db.Text // JSON array of { text, order }
+  supportingText         String?
+
+  // Delivery & Policies Section
+  dispatchInfo           String?       @db.Text
+  expectedDelivery       String?
+  serviceableAreas       String?
+  courierInfo            String?       @db.Text
+
+  cancellationInfo       String?       @db.Text
+  cancellationPolicyText String?
+  cancellationPolicyUrl  String?
+  returnsInfo            String?       @db.Text
+  returnsPolicyText      String?
+  returnsPolicyUrl       String?
+  damageInTransitInfo    String?       @db.Text
+  damageClaimText        String?
+  damageClaimUrl         String?
+
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@index([slug])
+  @@index([status])
+  @@index([category])
+  @@index([status, category])
+  @@index([status, createdAt])
+}
+
+model Source {
+  id             String   @id @default(cuid())
+  title          String
+  sanskritTitle  String?
+  category       String   @default("Purana")
+  citationsCount Int      @default(0)
+  isVerified     Boolean  @default(true)
+  notes          String?  @db.Text
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([category])
+}
+
+model Faq {
+  id           String   @id @default(cuid())
+  question     String
+  answer       String   @db.Text
+  category     String   @default("General")
+  helpfulVotes Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([category])
+}
+
+model AnnouncementBar {
+  id        String    @id @default(cuid())
+  title     String
+  message   String    @db.Text
+  type      String    @default("Header Banner")
+  targetUrl String?
+  isActive  Boolean   @default(true)
+  startDate DateTime?
+  endDate   DateTime?
+  priority  Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([isActive])
+}
+
+model UpcomingFeature {
+  id            String   @id @default(cuid())
+  key           String?  @unique
+  title         String
+  category      String   @default("General")
+  status        String   @default("In Planning")
+  targetRelease String?
+  description   String?  @db.Text
+  priority      String   @default("Medium")
+  requests      Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([status])
+}
+
+model Subscriber {
+  id             String    @id @default(cuid())
+  name           String
+  whatsappNumber String    @unique
+  optInDate      DateTime  @default(now())
+  consentGiven   Boolean   @default(true)
+  status         String    @default("Active")
+  userId         String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([whatsappNumber])
+  @@index([status])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  event     String
+  actor     String   @default("system@tapa.co")
+  role      String   @default("SYSTEM")
+  target    String?
+  ipAddress String?
+  severity  String   @default("INFO")
+  details   String?  @db.Text
+  userId    String?
+  createdAt DateTime @default(now())
+
+  @@index([event])
+  @@index([severity])
+  @@index([createdAt])
+}
+
+model ConsentLog {
+  id           String   @id @default(cuid())
+  userId       String?
+  email        String
+  phone        String?
+  consentGiven Boolean  @default(true)
+  version      String   @default("v1.0")
+  ip           String?
+  createdAt    DateTime @default(now())
+
+  @@index([email])
+  @@index([userId])
+}
+
+model DownloadLog {
+  id           String   @id @default(cuid())
+  userId       String?
+  userEmail    String?
+  resourceId   String
+  resourceType String
+  createdAt    DateTime @default(now())
+
+  @@index([resourceId])
+  @@index([userId])
+}
+
+model HeaderCategory {
+  id           String   @id @default(cuid())
+  key          String   @unique // e.g. "rg", "pa", "dc", "rk"
+  title        String
+  displayOrder Int      @default(0)
+  status       String   @default("PUBLISHED")
+  columnsJson  String   @db.Text
+  featuredJson String   @db.Text
+  footerJson   String   @db.Text
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([key])
+  @@index([status])
+  @@index([displayOrder])
+}
+
+model FooterConfig {
+  id              String   @id @default(cuid())
+  key             String   @unique // "default"
+  brandJson       String   @db.Text
+  utilityJson     String   @db.Text
+  sitemapJson     String   @db.Text
+  columnsJson     String   @db.Text
+  correctionsJson String   @db.Text
+  legalJson       String   @db.Text
+  status          String   @default("PUBLISHED")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([key])
+  @@index([status])
+}
+model GlossaryTerm {
+  id                  String        @id @default(cuid())
+  term                String
+  slug                String        @unique
+  language            String        @default("SANSKRIT")
+  devanagari          String?
+  pronunciation       String?
+  category            String        @default("PRACTICE")
+  definition          String        @db.Text
+  appearsInJson       String?       @db.Text
+  relatedConceptTitle String?
+  relatedConceptSlug  String?
+  status              ContentStatus @default(PUBLISHED)
+  displayOrder        Int           @default(0)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  @@index([slug])
+  @@index([status])
+  @@index([category])
+  @@index([language])
+}
+
+model AboutPage {
+  id                         String   @id @default(cuid())
+  key                        String   @unique @default("default")
+  
+  // Hero
+  heroEyebrow                String?
+  heroTitle                  String?
+  heroStandfirst             String?  @db.Text
+  heroParagraph1             String?  @db.Text
+  heroParagraph2             String?  @db.Text
+  heroPullQuote              String?  @db.Text
+  filmLogo                   String?  @db.Text
+  filmSpec                   String?
+
+  // Why Tapa Section
+  whySectionNumber           String?
+  whyTitleDevanagari         String?
+  whyDevanagariDesc          String?  @db.Text
+  whyParagraph2              String?  @db.Text
+  founderTrayTitle           String?
+  founderName                String?
+  founderDesignation         String?
+  founderLetterTitle         String?
+  founderLetterP1            String?  @db.Text
+  founderLetterP2            String?  @db.Text
+  founderLetterP3            String?  @db.Text
+  founderLetterP4            String?  @db.Text
+  founderLetterP5            String?  @db.Text
+  founderFamilyImage         String?  @db.Text
+  founderFamilyCaption       String?
+  founderPullQuote1          String?  @db.Text
+  founderLetterP6            String?  @db.Text
+  founderLetterP7            String?  @db.Text
+  founderLetterP8            String?  @db.Text
+  founderSignatureName       String?
+  founderSignatureTitle      String?
+  founderSignatureCompany    String?
+  founderPullQuote2          String?  @db.Text
+  founderLetterP9            String?  @db.Text
+  founderLetterP10           String?  @db.Text
+  founderAvatar              String?  @db.Text
+  coreValuesHeading          String?
+  coreValuesSubtitle         String?
+  coreValuesIntro            String?  @db.Text
+
+  // Editorial Method
+  editorialSectionNumber     String?
+  editorialTitle             String?
+  editorialStandfirst        String?  @db.Text
+  editorialDharmaTitle       String?
+  editorialDharmaSub         String?
+  editorialDharmaDesc        String?  @db.Text
+  editorialPrathaTitle       String?
+  editorialPrathaSub         String?
+  editorialPrathaDesc        String?  @db.Text
+  editorialBhrantiTitle      String?
+  editorialBhrantiSub        String?
+  editorialBhrantiDesc       String?  @db.Text
+  editorialRuleText          String?  @db.Text
+  editorialConsensusText     String?
+  editorialSeparatedText     String?  @db.Text
+  editorialWeighTitle        String?
+  editorialWeighP1           String?  @db.Text
+  editorialWeighP2           String?  @db.Text
+  editorialCtaText           String?
+  editorialCtaUrl            String?
+
+  // Glossary Section
+  glossarySectionNumber      String?
+  glossaryTitle              String?
+  glossaryStandfirst         String?  @db.Text
+  glossaryParagraph1         String?  @db.Text
+  glossaryParagraph2         String?  @db.Text
+  glossaryCtaText            String?
+  glossaryCtaUrl             String?
+
+  // Ritual Kits Section
+  kitsSectionNumber          String?
+  kitsTitle                  String?
+  kitsStandfirst             String?  @db.Text
+  kitsParagraph1             String?  @db.Text
+  kitsParagraph2             String?  @db.Text
+  kitsHeading                String?
+  kitsNote                   String?
+  kitsCtaText                String?
+  kitsCtaUrl                 String?
+
+  // Puja With Purohit Section
+  purohitSectionNumber       String?
+  purohitTitle               String?
+  purohitChipText            String?
+  purohitParagraph           String?  @db.Text
+  purohitBookingHeading      String?
+  purohitArrangeHeading      String?
+  purohitNotHappenHeading    String?
+  purohitNotHappenDesc       String?  @db.Text
+  purohitNotifyCtaText       String?
+
+  // Tapa Circle Section
+  circleSectionNumber        String?
+  circleTitle                String?
+  circlePriceChip            String?
+  circleStandfirst           String?  @db.Text
+  circleParagraph1           String?  @db.Text
+  circleParagraph2           String?  @db.Text
+  circleTrayTitle            String?
+  circleLeavingNote          String?  @db.Text
+  circleJoinCtaText          String?
+
+  // Closing Section
+  closingLabel               String?
+  closingPreText             String?
+  closingText                String?  @db.Text
+  closingLogo                String?  @db.Text
+
+  // Relations
+  coreValues                 AboutCoreValue[]
+  editorialSources           AboutEditorialSource[]
+  kitPoints                  AboutRitualKitPoint[]
+  purohitBookingPoints       AboutPurohitBookingPoint[]
+  purohitArrangementPoints   AboutPurohitArrangementPoint[]
+  circleSteps                AboutCircleStep[]
+
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
+}
+
+model AboutCoreValue {
+  id          String    @id @default(cuid())
+  aboutPageId String
+  aboutPage   AboutPage @relation(fields: [aboutPageId], references: [id], onDelete: Cascade)
+  number      String
+  title       String
+  description String    @db.Text
+  sortOrder   Int       @default(0)
+
+  @@index([aboutPageId])
+  @@index([sortOrder])
+}
+
+model AboutEditorialSource {
+  id          String    @id @default(cuid())
+  aboutPageId String
+  aboutPage   AboutPage @relation(fields: [aboutPageId], references: [id], onDelete: Cascade)
+  source      String
+  score       String
+  sortOrder   Int       @default(0)
+
+  @@index([aboutPageId])
+  @@index([sortOrder])
+}
+
+model AboutRitualKitPoint {
+  id          String    @id @default(cuid())
+  aboutPageId String
+  aboutPage   AboutPage @relation(fields: [aboutPageId], references: [id], onDelete: Cascade)
+  title       String
+  description String    @db.Text
+  sortOrder   Int       @default(0)
+
+  @@index([aboutPageId])
+  @@index([sortOrder])
+}
+
+model AboutPurohitBookingPoint {
+  id          String    @id @default(cuid())
+  aboutPageId String
+  aboutPage   AboutPage @relation(fields: [aboutPageId], references: [id], onDelete: Cascade)
+  title       String
+  description String    @db.Text
+  sortOrder   Int       @default(0)
+
+  @@index([aboutPageId])
+  @@index([sortOrder])
+}
+
+model AboutPurohitArrangementPoint {
+  id          String    @id @default(cuid())
+  aboutPageId String
+  aboutPage   AboutPage @relation(fields: [aboutPageId], references: [id], onDelete: Cascade)
+  title       String
+  description String    @db.Text
+  sortOrder   Int       @default(0)
+
+  @@index([aboutPageId])
+  @@index([sortOrder])
+}
+
+model AboutCircleStep {
+  id          String    @id @default(cuid())
+  aboutPageId String
+  aboutPage   AboutPage @relation(fields: [aboutPageId], references: [id], onDelete: Cascade)
+  title       String
+  description String    @db.Text
+  sortOrder   Int       @default(0)
+
+  @@index([aboutPageId])
+  @@index([sortOrder])
+}
 
 

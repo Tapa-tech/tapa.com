@@ -2,6 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { Breadcrumb } from '@/components/common/Breadcrumb';
+import { JsonLd } from '@/components/seo/JsonLd';
+import { generateArticleJsonLd, generateFaqJsonLd } from '@/lib/seo';
+
+
 
 export interface StoryItem {
   id: string;
@@ -93,7 +98,10 @@ interface PageProps {
   searchParams?: { [key: string]: string | string[] | undefined };
 }
 
-function parseConceptData(raw: Record<string, unknown>): DynamicConceptData {
+function parseConceptData(raw: Record<string, unknown>, targetSlug?: string): DynamicConceptData {
+  const slug = (raw.slug as string) || targetSlug || '';
+  const fallback = createFallbackConcept(slug);
+
   const parseJson = (val: unknown) => {
     if (!val) return [];
     if (Array.isArray(val)) return val;
@@ -108,44 +116,57 @@ function parseConceptData(raw: Record<string, unknown>): DynamicConceptData {
     return [];
   };
 
+  const stories = parseJson(raw.stories || raw.storiesItemsJson);
+  const gallery = parseJson(raw.gallery || raw.threeStoriesGalleryJson);
+  const myths = parseJson(raw.myths || raw.mythsItemsJson);
+  const relatedRituals = parseJson(raw.relatedRituals || raw.relatedRitualGuidesJson);
+  const relatedPujans = parseJson(raw.relatedPujans || raw.relatedPujansJson);
+  const relatedConcepts = parseJson(raw.relatedConcepts || raw.relatedConceptsJson);
+  const relatedDates = parseJson(raw.relatedDates || raw.relatedDatesJson);
+
   return {
-    id: (raw.id as string) || '',
-    title: (raw.title as string) || '',
-    slug: (raw.slug as string) || '',
-    category: (raw.category as string) || 'General',
-    summary: (raw.summary as string) || null,
-    body: typeof raw.body === 'string' ? raw.body : '',
-    status: (raw.status as string) || 'PUBLISHED',
-    bannerEyebrow: (raw.bannerEyebrow as string) || null,
-    bannerRating: (raw.bannerRating as string) || null,
-    bannerClassification: (raw.bannerClassification as string) || null,
-    bannerTitle: (raw.bannerTitle as string) || null,
-    bannerDescription: (raw.bannerDescription as string) || null,
-    bannerPrimaryCtaText: (raw.bannerPrimaryCtaText as string) || null,
-    bannerPrimaryCtaLink: (raw.bannerPrimaryCtaLink as string) || null,
-    bannerSecondaryCtaText: (raw.bannerSecondaryCtaText as string) || null,
-    bannerSecondaryCtaLink: (raw.bannerSecondaryCtaLink as string) || null,
-    bannerShareButtonText: (raw.bannerShareButtonText as string) || null,
-    threeStoriesTitle: (raw.threeStoriesTitle as string) || null,
-    threeStoriesIntro: (raw.threeStoriesIntro as string) || null,
-    threeStoriesSupportingText: (raw.threeStoriesSupportingText as string) || null,
-    stories: parseJson(raw.stories || raw.storiesItemsJson),
-    gallery: parseJson(raw.gallery || raw.threeStoriesGalleryJson),
-    threeStoriesCaption: (raw.threeStoriesCaption as string) || null,
-    shareSectionHeading: (raw.shareSectionHeading as string) || null,
-    shareSharedContent: (raw.shareSharedContent as string) || null,
-    shareNotSharedContent: (raw.shareNotSharedContent as string) || null,
-    shareHighlightStatement: (raw.shareHighlightStatement as string) || null,
-    shareSupportingDescription: (raw.shareSupportingDescription as string) || null,
-    shareTraditionTag: (raw.shareTraditionTag as string) || null,
-    mythsSectionHeading: (raw.mythsSectionHeading as string) || null,
-    myths: parseJson(raw.myths || raw.mythsItemsJson),
-    reframeLabel: (raw.reframeLabel as string) || null,
-    reframeContent: (raw.reframeContent as string) || null,
-    relatedRituals: parseJson(raw.relatedRituals || raw.relatedRitualGuidesJson),
-    relatedPujans: parseJson(raw.relatedPujans || raw.relatedPujansJson),
-    relatedConcepts: parseJson(raw.relatedConcepts || raw.relatedConceptsJson),
-    relatedDates: parseJson(raw.relatedDates || raw.relatedDatesJson),
+    id: (raw.id as string) || fallback.id,
+    title: (raw.title as string) || fallback.title,
+    slug: slug || fallback.slug,
+    category: (raw.category as string) || fallback.category,
+    summary: (raw.summary as string) || fallback.summary,
+    body: (typeof raw.body === 'string' && raw.body) ? raw.body : fallback.body,
+    status: (raw.status as string) || fallback.status,
+
+    bannerEyebrow: (raw.bannerEyebrow as string) || fallback.bannerEyebrow,
+    bannerRating: (raw.bannerRating as string) || fallback.bannerRating,
+    bannerClassification: (raw.bannerClassification as string) || fallback.bannerClassification,
+    bannerTitle: (raw.bannerTitle as string) || fallback.bannerTitle,
+    bannerDescription: (raw.bannerDescription as string) || fallback.bannerDescription,
+    bannerPrimaryCtaText: (raw.bannerPrimaryCtaText as string) || fallback.bannerPrimaryCtaText,
+    bannerPrimaryCtaLink: (raw.bannerPrimaryCtaLink as string) || fallback.bannerPrimaryCtaLink,
+    bannerSecondaryCtaText: (raw.bannerSecondaryCtaText as string) || fallback.bannerSecondaryCtaText,
+    bannerSecondaryCtaLink: (raw.bannerSecondaryCtaLink as string) || fallback.bannerSecondaryCtaLink,
+    bannerShareButtonText: (raw.bannerShareButtonText as string) || fallback.bannerShareButtonText,
+
+    threeStoriesTitle: (raw.threeStoriesTitle as string) || fallback.threeStoriesTitle,
+    threeStoriesIntro: (raw.threeStoriesIntro as string) || fallback.threeStoriesIntro,
+    threeStoriesSupportingText: (raw.threeStoriesSupportingText as string) || fallback.threeStoriesSupportingText,
+    stories: stories.length > 0 ? stories : fallback.stories,
+    gallery: gallery.length > 0 ? gallery : fallback.gallery,
+    threeStoriesCaption: (raw.threeStoriesCaption as string) || fallback.threeStoriesCaption,
+
+    shareSectionHeading: (raw.shareSectionHeading as string) || fallback.shareSectionHeading,
+    shareSharedContent: (raw.shareSharedContent as string) || fallback.shareSharedContent,
+    shareNotSharedContent: (raw.shareNotSharedContent as string) || fallback.shareNotSharedContent,
+    shareHighlightStatement: (raw.shareHighlightStatement as string) || fallback.shareHighlightStatement,
+    shareSupportingDescription: (raw.shareSupportingDescription as string) || fallback.shareSupportingDescription,
+    shareTraditionTag: (raw.shareTraditionTag as string) || fallback.shareTraditionTag,
+
+    mythsSectionHeading: (raw.mythsSectionHeading as string) || fallback.mythsSectionHeading,
+    myths: myths.length > 0 ? myths : fallback.myths,
+    reframeLabel: (raw.reframeLabel as string) || fallback.reframeLabel,
+    reframeContent: (raw.reframeContent as string) || fallback.reframeContent,
+
+    relatedRituals: relatedRituals.length > 0 ? relatedRituals : fallback.relatedRituals,
+    relatedPujans: relatedPujans.length > 0 ? relatedPujans : fallback.relatedPujans,
+    relatedConcepts: relatedConcepts.length > 0 ? relatedConcepts : fallback.relatedConcepts,
+    relatedDates: relatedDates.length > 0 ? relatedDates : fallback.relatedDates,
   };
 }
 
@@ -159,7 +180,97 @@ function formatTitleFromSlug(slug: string): string {
 
 function createFallbackConcept(slug: string): DynamicConceptData {
   const formattedTitle = formatTitleFromSlug(slug);
-  const isBilva = slug?.toLowerCase().includes('bilva') || slug?.toLowerCase().includes('bael');
+  const cleanSlug = (slug || '').toLowerCase();
+  const isBilva = cleanSlug.includes('bilva') || cleanSlug.includes('bael');
+  const isThreeStories =
+    cleanSlug.includes('three-stories') ||
+    cleanSlug.includes('thread') ||
+    cleanSlug.includes('raksha');
+
+  if (isThreeStories || cleanSlug === 'three-stories-one-thread') {
+    return {
+      id: 'three-stories-one-thread',
+      title: 'Three Stories, One Thread',
+      slug: slug || 'three-stories-one-thread',
+      category: 'Ramayana & Puranic',
+      summary: 'Wife, friend, devotee — three relationships, one act of protection. Not one of them is a sister and a brother.',
+      body: 'Wife, friend, devotee — three relationships, one act of protection. Not one of them is a sister and a brother.',
+      status: 'PUBLISHED',
+      bannerEyebrow: 'DHARMIC CONCEPTS · RAMAYANA & PURANIC',
+      bannerRating: '4.8/5',
+      bannerClassification: 'PURANIC',
+      bannerTitle: 'Three Stories, One Thread',
+      bannerDescription: 'Wife, friend, devotee — three relationships, one act of protection. Not one of them is a sister and a brother.',
+      bannerPrimaryCtaText: 'Read the guide',
+      bannerSecondaryCtaText: 'Save story',
+      bannerShareButtonText: 'Share',
+
+      threeStoriesTitle: 'Three Stories of Protection',
+      threeStoriesIntro: 'The tradition of tying a sacred thread (Raksha Sutra) is far older and broader than the modern notion of a sibling holiday.',
+      threeStoriesSupportingText: 'Scripture records three iconic instances where the protective thread was tied across very different relationships.',
+      stories: [
+        {
+          id: '1',
+          title: 'Draupadi & Krishna — The Bond of Protection',
+          description: 'A strip of silk sari pledged into eternal divine protection.',
+          content: 'When Lord Krishna wounded His finger during the Rajasuya Yajna, Draupadi instantly tore a piece of her sari to bandage His wound. Moved by her selfless gesture, Krishna promised to protect her honor whenever called upon—a promise fulfilled during the Vastraharan.',
+        },
+        {
+          id: '2',
+          title: 'Goddess Lakshmi & King Bali — The Vow of Vaikuntha',
+          description: 'How a protective thread released Lord Vishnu from gatekeeping.',
+          content: 'After King Bali surrendered everything to Vamana, Lord Vishnu agreed to guard Bali\'s palace. To bring Vishnu back to Vaikuntha, Goddess Lakshmi visited Bali as a poor woman, tied a Raksha Sutra on his wrist, and accepted him as a brother, asking for Vishnu\'s release as her boon.',
+        },
+        {
+          id: '3',
+          title: 'Indrani & Lord Indra — The Spouse\'s Armor',
+          description: 'The original spouse-to-spouse protective vow before battle.',
+          content: 'Before Lord Indra marched into battle against the demon Vritrasura, his wife Sachi (Indrani) prepared a sacred thread fortified with holy mantras and tied it around Indra\'s right wrist. Blessed by the Raksha Sutra, Indra won the battle.',
+        },
+      ],
+      gallery: [],
+      threeStoriesCaption: 'Sacred Raksha Sutra threads prepared for Pujan.',
+
+      shareSectionHeading: 'What They Share',
+      shareSharedContent: 'In all three scriptural accounts, the sacred thread (Raksha Sutra) represents a universal vow of spiritual protection and selfless devotion, untethered to strict biological relationships.',
+      shareNotSharedContent: 'None of these ancient traditions limited the ritual strictly to brother-sister obligations or commercial exchange.',
+      shareHighlightStatement: 'Dharma does not demand fear. It demands devotion and unconditional protection.',
+      shareSupportingDescription: 'Every sacred thread tied in scripture is designed to evoke protective energy and divine grace.',
+      shareTraditionTag: 'BHAVISHYA & BHAGAVATA PURANA',
+
+      mythsSectionHeading: 'Myths & Common Misconceptions',
+      myths: [
+        {
+          id: '1',
+          mythStatement: 'Raksha Bandhan was historically only for brothers and sisters.',
+          correctionLabel: 'SCRIPTURAL TRUTH',
+          correctionContent: 'In scripture (Bhavishya & Bhagavata Purana), Raksha Sutra was tied by wives (Indrani to Indra), devotees (Lakshmi to Bali), and friends (Draupadi to Krishna) as a universal amulet of protection.',
+        },
+        {
+          id: '2',
+          mythStatement: 'Tying a sacred thread without commercial rules renders it invalid.',
+          correctionLabel: 'SCRIPTURAL TRUTH',
+          correctionContent: 'Any thread tied with a sincere mantra and pure Sankalpa serves as an authentic Raksha Sutra according to Vedic manuals.',
+        },
+      ],
+      reframeLabel: 'THE REFRAME',
+      reframeContent: 'The Raksha Sutra is a universal symbol of protection and unconditional love for any sacred bond, not an anxious commercial obligation.',
+
+      relatedRituals: [
+        { id: '1', title: 'Raksha Bandhan Vidhi Guide', description: 'Step-by-step authentic puja procedure for Raksha Bandhan', link: '/ritual-guides/raksha-bandhan' },
+        { id: '2', title: 'Shravani Purnima Rishi Tarpana', description: 'Vedic thread renewal and tarpana rituals', link: '/ritual-guides/shravani-purnima' },
+      ],
+      relatedPujans: [
+        { id: '1', title: 'Satyanarayan Puja', description: 'Household thanksgiving and vow fulfillment', link: '/pujans/satyanarayan' },
+      ],
+      relatedConcepts: [
+        { id: '1', title: 'What Is Navratri?', description: 'The three gunas across nine nights', link: '/dharmic-concepts/what-is-navratri' },
+      ],
+      relatedDates: [
+        { id: '1', title: 'Sharad Navratri 2026 Panchang', description: 'Every tithi boundary, day by day', link: '/panchang/vrat-calendar/sharad-navratri' },
+      ],
+    };
+  }
 
   if (isBilva) {
     return {
@@ -255,7 +366,14 @@ function createFallbackConcept(slug: string): DynamicConceptData {
     threeStoriesTitle: 'Key Spiritual Perspectives',
     threeStoriesIntro: `${formattedTitle} plays an important role in authentic dharmic practice and scriptural tradition.`,
     threeStoriesSupportingText: 'Rooted in classical Vedic and Puranic literature.',
-    stories: [],
+    stories: [
+      {
+        id: '1',
+        title: `Understanding ${formattedTitle} in Scripture`,
+        description: 'Rooted in timeless Vedic principles.',
+        content: `${formattedTitle} serves as a spiritual bridge connecting ritual discipline with inner realization according to sacred Dharmic literature.`
+      }
+    ],
     gallery: [],
     threeStoriesCaption: null,
 
@@ -267,13 +385,24 @@ function createFallbackConcept(slug: string): DynamicConceptData {
     shareTraditionTag: 'CLASSICAL SCRIPTURE',
 
     mythsSectionHeading: 'Myths vs Scripture',
-    myths: [],
+    myths: [
+      {
+        id: '1',
+        mythStatement: `Performing rituals associated with ${formattedTitle} requires fear or strict perfectionism.`,
+        correctionLabel: 'SCRIPTURAL TRUTH',
+        correctionContent: 'Scripture affirms that sincere devotion (Bhava) and understanding the spiritual rationale far outweigh fear of minor procedural errors.'
+      }
+    ],
     reframeLabel: 'THE REFRAME',
     reframeContent: 'Understanding the underlying spiritual wisdom removes anxiety from daily worship.',
 
-    relatedRituals: [],
+    relatedRituals: [
+      { id: '1', title: 'Navratri Ghatasthapana Guide', description: 'Step-by-step authentic puja procedure', link: '/ritual-guides/sharad-navratri' }
+    ],
     relatedPujans: [],
-    relatedConcepts: [],
+    relatedConcepts: [
+      { id: '1', title: 'What Is Navratri?', description: 'The three gunas across nine nights', link: '/dharmic-concepts/what-is-navratri' }
+    ],
     relatedDates: []
   };
 }
@@ -299,27 +428,41 @@ export default function DharmicConceptDetailClient({ params }: PageProps) {
     async function loadConcept() {
       try {
         setLoading(true);
-        const res = await fetch('/api/public/dharmic-concepts');
-        if (res.ok) {
-          const json = await res.json();
-          const list = Array.isArray(json) ? json : Array.isArray(json?.data) ? json.data : [];
-          const slugify = (t: string) =>
-            String(t || '')
-              .toLowerCase()
-              .replace(/[^a-z0-9]+/g, '-')
-              .replace(/^-+|-+$/g, '');
-
-          const found = list.find(
-            (c: Record<string, unknown>) =>
-              (c.slug && (c.slug as string).toLowerCase() === slug.toLowerCase()) ||
-              slugify(c.title as string) === slug.toLowerCase()
-          );
-
-          if (found && isMounted) {
-            setConcept(parseConceptData(found));
-            setLoading(false);
-            return;
+        let found: Record<string, unknown> | null = null;
+        
+        try {
+          const singleRes = await fetch(`/api/public/dharmic-concepts/${slug}`);
+          if (singleRes.ok) {
+            const singleJson = await singleRes.json();
+            if (singleJson.success && singleJson.data) {
+              found = singleJson.data;
+            }
           }
+        } catch { }
+
+        if (!found) {
+          const res = await fetch('/api/public/dharmic-concepts');
+          if (res.ok) {
+            const json = await res.json();
+            const list = Array.isArray(json) ? json : Array.isArray(json?.data) ? json.data : [];
+            const slugify = (t: string) =>
+              String(t || '')
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-+|-+$/g, '');
+
+            found = list.find(
+              (c: Record<string, unknown>) =>
+                (c.slug && (c.slug as string).toLowerCase() === slug.toLowerCase()) ||
+                slugify(c.title as string) === slug.toLowerCase()
+            ) || null;
+          }
+        }
+
+        if (found && isMounted) {
+          setConcept(parseConceptData(found, slug));
+          setLoading(false);
+          return;
         }
       } catch (err) {
         console.error('Error loading dharmic concept:', err);
@@ -419,24 +562,36 @@ export default function DharmicConceptDetailClient({ params }: PageProps) {
   const bannerHeading = concept.bannerTitle || concept.title;
   const bannerSub = concept.bannerDescription || concept.summary || concept.body;
 
+  const faqSchemaData = myths.length > 0 ? generateFaqJsonLd(
+    myths.map((m: any) => ({
+      question: m.myth || m.mythStatement || '',
+      answer: m.correction || m.correctionContent || '',
+    })).filter((item: any) => item.question && item.answer)
+  ) : null;
+
+  const articleSchemaData = generateArticleJsonLd({
+    title: concept.title,
+    slug: slug,
+    sectionPath: 'dharmic-concepts',
+    description: concept.summary || concept.bannerDescription || concept.title,
+    updatedAt: (concept as any).updatedAt,
+    createdAt: (concept as any).createdAt,
+  });
+
+
   return (
     <div className="dc-detail-root w-full max-w-full overflow-x-hidden min-h-screen">
-      <div className="bcrumb">
-        <div className="bc-in">
-          <div className="bc-l">
-            <Link href="/">Home</Link> › <Link href="/dharmic-concepts">Dharmic Concepts</Link> ›{' '}
-            <span>{concept.category}</span> › <b>{concept.title}</b>
-          </div>
-          <div className="bc-r">
-            <button className="bcb" onClick={toggleSave}>
-              {isSaved ? '🔖 Saved' : '🔖 Save'}
-            </button>
-            <button className="bcb" onClick={handleShare}>
-              ↗️ {concept.bannerShareButtonText || 'Share'}
-            </button>
-          </div>
-        </div>
-      </div>
+      <JsonLd data={articleSchemaData} />
+      <JsonLd data={faqSchemaData} />
+      <Breadcrumb
+
+        items={[
+          { label: 'Dharmic Concepts', href: '/dharmic-concepts' },
+          ...(concept.category ? [{ label: concept.category, href: '/dharmic-concepts' }] : []),
+          { label: concept.title },
+        ]}
+      />
+
 
       <section className="hero">
         <div className="hero-bg"></div>

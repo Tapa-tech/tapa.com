@@ -15,7 +15,7 @@ interface TopNavProps {
   userName?: string | null;
 }
 
-export const TopNav: React.FC<TopNavProps> = ({
+export const TopNav: React.FC<TopNavProps> = React.memo(({
   openDropdownKey,
   onHoverCategory,
   onToggleSearch,
@@ -130,13 +130,13 @@ export const TopNav: React.FC<TopNavProps> = ({
 
         {/* Search */}
         <div
-          className="srch hidden md:flex items-center gap-2"
+          className="srch flex items-center gap-1.5 md:gap-2 cursor-pointer"
           onClick={onToggleSearch}
           style={{ cursor: 'pointer' }}
         >
           <span>⌕</span>
 
-          <span>
+          <span className="hidden sm:inline">
             {phase === 2
               ? 'Search rituals'
               : 'Search rituals'}
@@ -227,4 +227,6 @@ export const TopNav: React.FC<TopNavProps> = ({
       </div>
     </div>
   );
-};
+});
+
+TopNav.displayName = 'TopNav';

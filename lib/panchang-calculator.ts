@@ -150,46 +150,63 @@ export function generateYearPanchang(year: number): PanchangCalcResult[] {
 
 export async function syncPanchangEntriesForYear(year: number): Promise<number> {
   const entries = generateYearPanchang(year);
+  let syncedCount = 0;
 
-  for (const entry of entries) {
-    await prisma.panchangEntry.upsert({
-      where: { dateObj: entry.dateObj },
-      update: {
-        date: entry.dateStr,
-        year: entry.year,
-        tithiName: entry.tithiName,
-        tithiDetail: entry.tithiDetail,
-        paksha: entry.paksha,
-        pakshaDetail: entry.pakshaDetail,
-        nakshatra: entry.nakshatra,
-        isAuspicious: entry.isAuspicious,
-        sunrise: entry.sunrise,
-        sunset: entry.sunset,
-        location: entry.location,
-        source: entry.source,
-        lastSynced: entry.lastSynced,
-      },
-      create: {
-        date: entry.dateStr,
-        dateObj: entry.dateObj,
-        year: entry.year,
-        tithiName: entry.tithiName,
-        tithiDetail: entry.tithiDetail,
-        paksha: entry.paksha,
-        pakshaDetail: entry.pakshaDetail,
-        nakshatra: entry.nakshatra,
-        isAuspicious: entry.isAuspicious,
-        sunrise: entry.sunrise,
-        sunset: entry.sunset,
-        location: entry.location,
-        source: entry.source,
-        lastSynced: entry.lastSynced,
-        status: 'PUBLISHED',
-      },
+  if (process.env.DATABASE_URL?.startsWith('postgres')) {
+    const existingEntries = await prisma.panchangEntry.findMany({
+      where: { year },
+      select: { dateObj: true, source: true },
     });
+    const manualDateSet = new Set(
+      existingEntries.filter((e) => e.source === 'MANUAL').map((e) => e.dateObj.toISOString())
+    );
+
+    for (const entry of entries) {
+      if (manualDateSet.has(entry.dateObj.toISOString())) {
+        // Skip manual override entry to protect user edits
+        continue;
+      }
+
+      await prisma.panchangEntry.upsert({
+        where: { dateObj: entry.dateObj },
+        update: {
+          date: entry.dateStr,
+          year: entry.year,
+          tithiName: entry.tithiName,
+          tithiDetail: entry.tithiDetail,
+          paksha: entry.paksha,
+          pakshaDetail: entry.pakshaDetail,
+          nakshatra: entry.nakshatra,
+          isAuspicious: entry.isAuspicious,
+          sunrise: entry.sunrise,
+          sunset: entry.sunset,
+          location: entry.location,
+          source: entry.source,
+          lastSynced: entry.lastSynced,
+        },
+        create: {
+          date: entry.dateStr,
+          dateObj: entry.dateObj,
+          year: entry.year,
+          tithiName: entry.tithiName,
+          tithiDetail: entry.tithiDetail,
+          paksha: entry.paksha,
+          pakshaDetail: entry.pakshaDetail,
+          nakshatra: entry.nakshatra,
+          isAuspicious: entry.isAuspicious,
+          sunrise: entry.sunrise,
+          sunset: entry.sunset,
+          location: entry.location,
+          source: entry.source,
+          lastSynced: entry.lastSynced,
+          status: 'PUBLISHED',
+        },
+      });
+      syncedCount++;
+    }
   }
 
-  return entries.length;
+  return syncedCount;
 }
 
 export async function syncNextNDays(days = 45): Promise<number> {
@@ -204,43 +221,66 @@ export async function syncNextNDays(days = 45): Promise<number> {
     results.push(calculatePanchangForDate(y, m, dayNum));
   }
 
-  for (const entry of results) {
-    await prisma.panchangEntry.upsert({
-      where: { dateObj: entry.dateObj },
-      update: {
-        date: entry.dateStr,
-        year: entry.year,
-        tithiName: entry.tithiName,
-        tithiDetail: entry.tithiDetail,
-        paksha: entry.paksha,
-        pakshaDetail: entry.pakshaDetail,
-        nakshatra: entry.nakshatra,
-        isAuspicious: entry.isAuspicious,
-        sunrise: entry.sunrise,
-        sunset: entry.sunset,
-        location: entry.location,
-        source: entry.source,
-        lastSynced: entry.lastSynced,
+  let syncedCount = 0;
+
+  if (process.env.DATABASE_URL?.startsWith('postgres')) {
+    const existingEntries = await prisma.panchangEntry.findMany({
+      where: {
+        dateObj: {
+          in: results.map((r) => r.dateObj),
+        },
       },
-      create: {
-        date: entry.dateStr,
-        dateObj: entry.dateObj,
-        year: entry.year,
-        tithiName: entry.tithiName,
-        tithiDetail: entry.tithiDetail,
-        paksha: entry.paksha,
-        pakshaDetail: entry.pakshaDetail,
-        nakshatra: entry.nakshatra,
-        isAuspicious: entry.isAuspicious,
-        sunrise: entry.sunrise,
-        sunset: entry.sunset,
-        location: entry.location,
-        source: entry.source,
-        lastSynced: entry.lastSynced,
-        status: 'PUBLISHED',
-      },
+      select: { dateObj: true, source: true },
     });
+    const manualDateSet = new Set(
+      existingEntries.filter((e) => e.source === 'MANUAL').map((e) => e.dateObj.toISOString())
+    );
+
+    for (const entry of results) {
+      if (manualDateSet.has(entry.dateObj.toISOString())) {
+        // Skip manual override entry to protect user edits
+        continue;
+      }
+
+      await prisma.panchangEntry.upsert({
+        where: { dateObj: entry.dateObj },
+        update: {
+          date: entry.dateStr,
+          year: entry.year,
+          tithiName: entry.tithiName,
+          tithiDetail: entry.tithiDetail,
+          paksha: entry.paksha,
+          pakshaDetail: entry.pakshaDetail,
+          nakshatra: entry.nakshatra,
+          isAuspicious: entry.isAuspicious,
+          sunrise: entry.sunrise,
+          sunset: entry.sunset,
+          location: entry.location,
+          source: entry.source,
+          lastSynced: entry.lastSynced,
+        },
+        create: {
+          date: entry.dateStr,
+          dateObj: entry.dateObj,
+          year: entry.year,
+          tithiName: entry.tithiName,
+          tithiDetail: entry.tithiDetail,
+          paksha: entry.paksha,
+          pakshaDetail: entry.pakshaDetail,
+          nakshatra: entry.nakshatra,
+          isAuspicious: entry.isAuspicious,
+          sunrise: entry.sunrise,
+          sunset: entry.sunset,
+          location: entry.location,
+          source: entry.source,
+          lastSynced: entry.lastSynced,
+          status: 'PUBLISHED',
+        },
+      });
+      syncedCount++;
+    }
   }
 
-  return results.length;
+  return syncedCount;
 }
+

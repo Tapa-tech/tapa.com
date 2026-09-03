@@ -1,10 +1,13 @@
 'use client';
 
+import { Breadcrumb } from '@/components/common/Breadcrumb';
 import './editorial-method.css';
 
 export default function EditorialMethodPage() {
   return (
     <div className="w-full max-w-full overflow-x-hidden min-h-screen" style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--body-text)' }}>
+      <Breadcrumb items={[{ label: 'Editorial Method' }]} />
+
       <section className="hero">
         <div className="wrap max-w-[1280px] mx-auto px-4 md:px-10 w-full overflow-x-hidden">
           <div className="hero-in">

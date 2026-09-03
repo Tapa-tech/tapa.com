@@ -12,12 +12,7 @@ export async function GET(
       return NextResponse.json({ error: 'Order ID is required' }, { status: 400 });
     }
 
-    // 1. Check in-memory store
-    if (IN_MEMORY_ORDERS_STORE.orders && IN_MEMORY_ORDERS_STORE.orders.has(orderId)) {
-      return NextResponse.json({ success: true, order: IN_MEMORY_ORDERS_STORE.orders.get(orderId) });
-    }
-
-    // 2. Check Database if PostgreSQL database URL is configured
+    // 1. Check PostgreSQL Database if configured
     if (process.env.DATABASE_URL?.startsWith('postgres')) {
       try {
         const order = await prisma.order.findUnique({
@@ -40,6 +35,11 @@ export async function GET(
       } catch (dbErr) {
         console.warn('Prisma DB lookup fallback used:', dbErr);
       }
+    }
+
+    // 2. Fallback to in-memory store
+    if (IN_MEMORY_ORDERS_STORE.orders && IN_MEMORY_ORDERS_STORE.orders.has(orderId)) {
+      return NextResponse.json({ success: true, order: IN_MEMORY_ORDERS_STORE.orders.get(orderId) });
     }
 
     return NextResponse.json({ error: 'Order not found' }, { status: 404 });

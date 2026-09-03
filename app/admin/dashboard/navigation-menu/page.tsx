@@ -25,6 +25,7 @@ const INITIAL_MENU: MenuItem[] = [
 function NavigationMenuContent() {
   const { data: session, status } = useSession();
   const [items, setItems] = useState<MenuItem[]>(INITIAL_MENU);
+  const [headerCategories, setHeaderCategories] = useState<any[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Form
@@ -32,6 +33,21 @@ function NavigationMenuContent() {
   const [url, setUrl] = useState('');
   const [location, setLocation] = useState<'Header Navigation' | 'Footer Links' | 'Mobile Menu'>('Header Navigation');
   const [order, setOrder] = useState(1);
+
+  React.useEffect(() => {
+    async function loadAdminCategories() {
+      try {
+        const res = await fetch('/api/admin/header-categories');
+        const data = await res.json();
+        if (res.ok && data.success && data.data) {
+          setHeaderCategories(data.data);
+        }
+      } catch (err) {
+        console.warn('Failed to load admin header categories:', err);
+      }
+    }
+    loadAdminCategories();
+  }, []);
 
   if (status === 'loading') {
     return (

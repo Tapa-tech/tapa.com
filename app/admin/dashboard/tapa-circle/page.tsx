@@ -1,35 +1,46 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { SessionProvider, useSession } from 'next-auth/react';
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 
-interface Subscriber {
+interface SubscriberItem {
   id: string;
   name: string;
-  contact: string;
+  whatsappNumber: string;
   optInDate: string;
-  consent: boolean;
-  status: 'Active' | 'Paused' | 'Cancelled';
+  consentGiven: boolean;
+  status: string;
 }
-
-const INITIAL_SUBSCRIBERS: Subscriber[] = [
-  {
-    id: 'sub-1',
-    name: 'Test Subscriber Name',
-    contact: '9876543210',
-    optInDate: '25/9/2026',
-    consent: true,
-    status: 'Active',
-  },
-];
 
 function TapaCircleContent() {
   const { data: session, status } = useSession();
-  const [subscribers, setSubscribers] = useState<Subscriber[]>(INITIAL_SUBSCRIBERS);
+  const [subscribers, setSubscribers] = useState<SubscriberItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [broadcastMessage, setBroadcastMessage] = useState('');
 
-  if (status === 'loading') {
+  const fetchSubscribers = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admin/subscribers');
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setSubscribers(data.subscribers || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch subscribers:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (status === 'authenticated') {
+      fetchSubscribers();
+    }
+  }, [status, fetchSubscribers]);
+
+  if (status === 'loading' || loading) {
     return (
       <div style={{ minHeight: '100vh', background: '#FBF9F5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ color: '#DE1B59', fontWeight: 600 }}>Loading Tapa Circle Console...</div>
@@ -40,8 +51,20 @@ function TapaCircleContent() {
   const userEmail = session?.user?.email || 'admin@tapa.co';
   const userRole = (session?.user as any)?.role?.toUpperCase() || 'SUPER_ADMIN';
 
-  const handleStatusChange = (id: string, newStatus: Subscriber['status']) => {
-    setSubscribers(subscribers.map((s) => (s.id === id ? { ...s, status: newStatus } : s)));
+  const handleStatusChange = async (id: string, newStatus: string) => {
+    try {
+      const res = await fetch('/api/admin/subscribers', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, status: newStatus }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setSubscribers(subscribers.map((s) => (s.id === id ? { ...s, status: newStatus } : s)));
+      }
+    } catch (err) {
+      console.error('Failed to update subscriber status:', err);
+    }
   };
 
   const handleSendBroadcast = (e: React.FormEvent) => {
@@ -71,7 +94,7 @@ function TapaCircleContent() {
           </p>
         </div>
 
-        {/* Grid (Matching Screenshot 2) */}
+        {/* Grid */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '28px' }}>
           {/* Left Table */}
           <div>
@@ -94,17 +117,17 @@ function TapaCircleContent() {
                   {subscribers.map((s) => (
                     <tr key={s.id} style={{ borderBottom: '1px solid #F9FAFB' }}>
                       <td style={{ padding: '14px 8px', fontWeight: 700, color: '#111827' }}>{s.name}</td>
-                      <td style={{ padding: '14px 8px', color: '#4B5563' }}>{s.contact}</td>
-                      <td style={{ padding: '14px 8px', color: '#4B5563' }}>{s.optInDate}</td>
+                      <td style={{ padding: '14px 8px', color: '#4B5563' }}>{s.whatsappNumber}</td>
+                      <td style={{ padding: '14px 8px', color: '#4B5563' }}>{new Date(s.optInDate).toLocaleDateString()}</td>
                       <td style={{ padding: '14px 8px' }}>
                         <span style={{ background: '#ECFDF5', color: '#059669', fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '4px' }}>
-                          Consented ✓
+                          {s.consentGiven ? 'Consented ✓' : 'Pending'}
                         </span>
                       </td>
                       <td style={{ padding: '14px 8px' }}>
                         <select
                           value={s.status}
-                          onChange={(e) => handleStatusChange(s.id, e.target.value as any)}
+                          onChange={(e) => handleStatusChange(s.id, e.target.value)}
                           style={{ border: '1px solid #E5E7EB', borderRadius: '6px', padding: '4px 8px', fontSize: '11px', fontWeight: 700, background: '#FFFFFF' }}
                         >
                           <option value="Active">Active</option>
